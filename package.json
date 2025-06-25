@@ -1,10 +1,10 @@
 {
-  "name": "@iamthamanic/wau",
-  "version": "2.1.0",
+  "name": "woaru",
+  "version": "3.0.0",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {
-    "wau": "dist/cli.js"
+    "woaru": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

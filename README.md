@@ -1,31 +1,45 @@
-# WAU (WorkaroundUltra) 🚀
+# WOARU 🚀
+**WorkaroundUltra - Universal Project Setup Autopilot**
 
-**Universal Project Setup Autopilot** - Analyze and automatically configure development tools for ANY programming language.
+Analyze and automatically configure development tools for **ANY programming language**.
 
-WAU is an intelligent CLI tool that **scans your actual codebase**, detects issues, and automatically sets up the best development tools with **specific explanations** based on what it finds in your code.
+WOARU is an intelligent CLI tool that **scans your actual codebase**, detects issues, and automatically sets up the best development tools with **specific explanations** based on what it finds in your code.
 
-## ⚡ **Just Published to NPM - Now with Supervisor Mode!**
+## ⚡ **Quick Start - Zero Installation Required**
 
 ```bash
-# Try it now - no installation required:
-npx @iamthamanic/wau analyze
+# Check what tools you have active:
+npx woaru helpers
 
-# 🆕 NEW: Check all your active development tools
-npx @iamthamanic/wau helpers
+# Analyze your project:
+npx woaru analyze
 
-# 🆕 NEW: Start intelligent supervisor mode
-npx @iamthamanic/wau watch
+# Start intelligent monitoring:
+npx woaru watch
 
 # Perfect for Claude Code sessions:
 # 1. Open any project in Claude
-# 2. Type: npx @iamthamanic/wau helpers  
+# 2. Type: npx woaru helpers  
 # 3. See all active tools and missing recommendations
-# 4. Type: npx @iamthamanic/wau watch (for continuous monitoring)
+# 4. Type: npx woaru watch (for continuous monitoring)
+```
+
+## 🔧 **Or Install Globally for Clean Commands**
+
+```bash
+# Install once:
+npm install -g woaru
+
+# Then use anywhere:
+woaru helpers
+woaru analyze
+woaru watch
+woaru setup
 ```
 
 ## 🌍 Multi-Language Support
 
-WAU supports **all major programming languages** with intelligent detection:
+WOARU supports **all major programming languages** with intelligent detection:
 - **JavaScript/TypeScript** - Next.js, React, Vue, Angular, Node.js
 - **Python** - Django, Flask, FastAPI, pytest (fixed mixed-project detection)
 - **C#/.NET** - ASP.NET, Unity, Blazor, xUnit
@@ -83,118 +97,99 @@ wau --help
 
 ## 📋 Commands
 
-### `wau analyze`
+### `woaru analyze`
 Analyze any project and get recommendations.
 
 ```bash
-# With NPX (no installation needed):
-npx @iamthamanic/wau analyze                    # Current directory
-npx @iamthamanic/wau analyze --path ./my-app    # Specific path
-npx @iamthamanic/wau analyze --json             # JSON output for automation
+woaru analyze                    # Current directory
+woaru analyze --path ./my-app    # Specific path
+woaru analyze --json             # JSON output for automation
 
-# If installed globally:
-wau analyze                    # Current directory
-wau analyze --path ./my-app    # Specific path
-wau analyze --json             # JSON output for automation
+# Or without install:
+npx woaru analyze
 ```
 
-### `wau setup`
-Automatically install and configure recommended tools.
-
-```bash
-# With NPX:
-npx @iamthamanic/wau setup                      # Interactive setup
-npx @iamthamanic/wau setup --dry-run           # Preview changes
-npx @iamthamanic/wau setup --force             # Force even if tools exist
-npx @iamthamanic/wau setup -y                  # Skip all prompts
-
-# If installed globally:
-wau setup                      # Interactive setup
-wau setup --dry-run           # Preview changes
-wau setup --force             # Force even if tools exist
-wau setup -y                  # Skip all prompts
-```
-
-### `wau watch` ⭐ **NEW!**
-Start the intelligent supervisor to continuously monitor your project.
-
-```bash
-# With NPX:
-npx @iamthamanic/wau watch                    # Start watching current directory
-npx @iamthamanic/wau watch --auto-setup       # Auto-install recommended tools
-npx @iamthamanic/wau watch --dashboard        # Show live dashboard
-npx @iamthamanic/wau watch --webhook <url>    # Send notifications to webhook
-
-# If installed globally:
-wau watch                      # Start watching current directory
-wau watch --auto-setup         # Auto-install recommended tools
-wau watch --dashboard          # Show live dashboard
-```
-
-### `wau status`
-Show supervisor status and project health.
-
-```bash
-# With NPX:
-npx @iamthamanic/wau status
-
-# If installed globally:
-wau status
-```
-
-### `wau recommendations`
-Show current tool recommendations.
-
-```bash
-# With NPX:
-npx @iamthamanic/wau recommendations
-npx @iamthamanic/wau recommendations --json
-
-# If installed globally:
-wau recommendations
-wau recommendations --json
-```
-
-### `wau helpers` ⭐ **NEW!**
+### `woaru helpers` ⭐
 Show all detected/activated development tools and helpers.
 
 ```bash
-# With NPX:
-npx @iamthamanic/wau helpers                   # Show all tools
-npx @iamthamanic/wau helpers --active          # Only active tools
-npx @iamthamanic/wau helpers --missing         # Only missing/recommended
-npx @iamthamanic/wau helpers --json            # JSON output
+woaru helpers                    # Show all tools
+woaru helpers --active           # Only active tools
+woaru helpers --missing          # Only missing/recommended
+woaru helpers --json             # JSON output
 
-# If installed globally:
-wau helpers                    # Show all tools
-wau helpers --active           # Only active tools
-wau helpers --missing          # Only missing/recommended
-wau helpers --json             # JSON output
+# Or without install:
+npx woaru helpers
 ```
 
-### `wau stop`
+### `woaru watch` ⭐
+Start the intelligent supervisor to continuously monitor your project.
+
+```bash
+woaru watch                      # Start watching current directory
+woaru watch --auto-setup         # Auto-install recommended tools
+woaru watch --dashboard          # Show live dashboard
+woaru watch --webhook <url>      # Send notifications to webhook
+
+# Or without install:
+npx woaru watch
+```
+
+### `woaru setup`
+Automatically install and configure recommended tools.
+
+```bash
+woaru setup                      # Interactive setup
+woaru setup --dry-run           # Preview changes
+woaru setup --force             # Force even if tools exist
+woaru setup -y                  # Skip all prompts
+
+# Or without install:
+npx woaru setup
+```
+
+### `woaru status`
+Show supervisor status and project health.
+
+```bash
+woaru status
+
+# Or without install:
+npx woaru status
+```
+
+### `woaru recommendations`
+Show current tool recommendations.
+
+```bash
+woaru recommendations
+woaru recommendations --json
+
+# Or without install:
+npx woaru recommendations
+```
+
+### `woaru stop`
 Stop the running supervisor.
 
 ```bash
-# With NPX:
-npx @iamthamanic/wau stop
+woaru stop
 
-# If installed globally:
-wau stop
+# Or without install:
+npx woaru stop
 ```
 
-### `wau update-db`
+### `woaru update-db`
 Update the tools database from GitHub.
 
 ```bash
-# With NPX:
-npx @iamthamanic/wau update-db
+woaru update-db
 
-# If installed globally:
-wau update-db
+# Or without install:
+npx woaru update-db
 ```
 
-## 🛠️ What WAU Can Setup
+## 🛠️ What WOARU Can Setup
 
 ### JavaScript/TypeScript Projects:
 - **ESLint** - with framework-specific configs
@@ -241,11 +236,11 @@ wau update-db
 
 ### And more for every language!
 
-## 🔥 **NEW: Supervisor Mode & Tool Inspector**
+## 🔥 **Supervisor Mode & Tool Inspector**
 
-WAU v2.1 introduces **Supervisor Mode** and **Tool Inspector** - intelligent project monitoring and comprehensive tool visibility.
+WOARU introduces **Supervisor Mode** and **Tool Inspector** - intelligent project monitoring and comprehensive tool visibility.
 
-### 🔧 **Tool Inspector (`wau helpers`):**
+### 🔧 **Tool Inspector (`woaru helpers`):**
 
 1. **Active Tool Detection** - Shows all currently installed/configured tools
 2. **Missing Tool Recommendations** - Identifies gaps in your tooling setup
@@ -267,7 +262,7 @@ WAU v2.1 introduces **Supervisor Mode** and **Tool Inspector** - intelligent pro
 
 ```bash
 # 1. Check current tool status
-npx @iamthamanic/wau helpers
+npx woaru helpers
 
 # Output:
 # ✅ Active Tools: eslint, prettier, typescript
@@ -275,12 +270,12 @@ npx @iamthamanic/wau helpers
 # 📈 Coverage: 60% (3 active, 2 recommended)
 
 # 2. Install missing tools
-npx @iamthamanic/wau setup
+npx woaru setup
 
 # 3. Start continuous monitoring
-npx @iamthamanic/wau watch
+npx woaru watch
 
-# WAU continuously monitors:
+# WOARU continuously monitors:
 # ✅ File changes (*.js, *.ts, *.py, *.rs, etc.)
 # ✅ New dependencies added
 # ✅ Configuration files
@@ -348,9 +343,9 @@ npx @iamthamanic/wau watch --webhook https://hooks.slack.com/...
 
 ## 📊 Example Output
 
-### `wau helpers` Output:
+### `woaru helpers` Output:
 ```bash
-$ npx @iamthamanic/wau helpers
+$ npx woaru helpers
 
 🔧 Development Tools for my-react-app
    Language: TypeScript | Health Score: 85/100
@@ -373,12 +368,12 @@ $ npx @iamthamanic/wau helpers
    build: typescript
 
 📈 Summary: 4 active, 3 recommended (57% coverage)
-💡 Run "wau setup" to install recommended tools
+💡 Run "woaru setup" to install recommended tools
 ```
 
 ### TypeScript/Next.js Project:
 ```bash
-$ wau analyze
+$ woaru analyze
 
 🔍 Analyzing project...
 📦 Project: my-todo-app (1.0.0)
@@ -406,7 +401,7 @@ $ wau analyze
 
 ### Python Project:
 ```bash
-$ wau analyze
+$ woaru analyze
 
 🔍 Analyzing project...
 📦 Project: raggadon (1.2.0)
@@ -478,9 +473,9 @@ WAU doesn't just detect frameworks - it **scans your actual code** to find speci
 ### Perfect for Claude Sessions:
 ```bash
 # In any project directory in Claude:
-npx @iamthamanic/wau analyze
+npx woaru analyze
 
-# WAU will automatically:
+# WOARU will automatically:
 # 1. Detect the language (JS/TS/Python/C#/etc.)
 # 2. Scan your actual code for issues
 # 3. Explain WHY each tool is recommended
@@ -489,17 +484,17 @@ npx @iamthamanic/wau analyze
 
 ### Auto-Setup with Evidence:
 ```bash
-# See what WAU found:
-npx @iamthamanic/wau analyze
+# See what WOARU found:
+npx woaru analyze
 
-# Let WAU fix everything it found:
-npx @iamthamanic/wau setup -y
+# Let WOARU fix everything it found:
+npx woaru setup -y
 ```
 
 ### JSON for Advanced Analysis:
 ```bash
 # Get structured data for Claude to process:
-npx @iamthamanic/wau analyze --json
+npx woaru analyze --json
 
 # Includes code_insights with evidence:
 {
@@ -630,7 +625,7 @@ MIT License - see LICENSE file for details
 - 🔧 **Legacy Code**: Scan existing projects for improvement opportunities  
 - 📊 **Code Review**: Get objective analysis before PR submission
 - 🧹 **Technical Debt**: Identify and fix code quality issues systematically
-- 🔍 **Tool Discovery**: `wau helpers` shows what's working vs what's missing
+- 🔍 **Tool Discovery**: `woaru helpers` shows what's working vs what's missing
 
 ### For Teams:
 - 🤝 **Onboarding**: New team members get consistent development setup
@@ -640,28 +635,28 @@ MIT License - see LICENSE file for details
 - 👥 **Tool Audits**: Team-wide visibility into tool adoption and gaps
 
 ### For Claude Code Users:
-- ⚡ **Instant Context**: WAU gives Claude immediate understanding of your codebase
-- 🎯 **Targeted Suggestions**: Claude can focus on specific issues WAU found
-- 🔧 **Automated Fixes**: Let WAU implement the tools Claude recommends
+- ⚡ **Instant Context**: WOARU gives Claude immediate understanding of your codebase
+- 🎯 **Targeted Suggestions**: Claude can focus on specific issues WOARU found
+- 🔧 **Automated Fixes**: Let WOARU implement the tools Claude recommends
 - 📋 **Structured Analysis**: JSON output perfect for Claude's processing
-- 🛠️ **Tool Status**: Quick `wau helpers` check before asking Claude for help
+- 🛠️ **Tool Status**: Quick `woaru helpers` check before asking Claude for help
 
 ---
 
-## 🌟 **What Makes WAU Special**
+## 🌟 **What Makes WOARU Special**
 
 1. **Evidence-Based**: Never says "you should use X" without showing you WHY in your code
 2. **Universal Language Support**: 8 programming languages with intelligent detection
 3. **Production-Grade**: Comprehensive testing, CI/CD, automated updates
 4. **Claude-Optimized**: Built specifically for seamless Claude Code integration
 5. **Smart Detection**: Handles mixed-language projects (e.g., Python + JS examples)
-6. **Zero Configuration**: Just run `wau analyze` in any project directory
+6. **Zero Configuration**: Just run `woaru analyze` in any project directory
 7. **Security Focus**: Vulnerability scanning for Go, Rust, Java, Python
 8. **Framework-Aware**: Specific recommendations for Spring, Django, React, etc.
-9. **🆕 Tool Visibility**: `wau helpers` command shows all active/missing tools at a glance
+9. **🆕 Tool Visibility**: `woaru helpers` command shows all active/missing tools at a glance
 10. **🆕 Real-time Monitoring**: Supervisor mode with intelligent file watching
 
-**WAU v2.1 - Making project setup intelligent across ALL languages! 🌊**
+**WOARU v3.0 - Making project setup intelligent across ALL languages! 🌊**
 
 ---
 

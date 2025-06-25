@@ -16,9 +16,9 @@ const program = new Command();
 const wauEngine = new WAUEngine();
 
 program
-  .name('wau')
+  .name('woaru')
   .description('WorkaroundUltra - Project Setup Autopilot')
-  .version('2.1.0');
+  .version('3.0.0');
 
 program
   .command('analyze')
@@ -165,7 +165,7 @@ program
   .action(async (options) => {
     try {
       if (supervisor) {
-        console.log(chalk.yellow('Supervisor is already running. Use "wau stop" first.'));
+        console.log(chalk.yellow('Supervisor is already running. Use "woaru stop" first.'));
         return;
       }
 
@@ -240,10 +240,10 @@ program
           console.log(chalk.gray(`   Language: ${state.language}`));
           console.log(chalk.gray(`   Health Score: ${state.healthScore}/100`));
           console.log(chalk.gray(`   Detected Tools: ${state.detectedTools.length}`));
-          console.log(chalk.cyan('\n💡 Run "wau watch" to start monitoring'));
+          console.log(chalk.cyan('\n💡 Run "woaru watch" to start monitoring'));
         } else {
           console.log(chalk.red('📊 WAU Status: Not running'));
-          console.log(chalk.cyan('💡 Run "wau watch" to start monitoring'));
+          console.log(chalk.cyan('💡 Run "woaru watch" to start monitoring'));
         }
         return;
       }
@@ -370,7 +370,7 @@ program
         console.log();
       }
 
-      console.log(chalk.cyan('💡 Run "wau setup" to install recommended tools'));
+      console.log(chalk.cyan('💡 Run "woaru setup" to install recommended tools'));
 
     } catch (error) {
       console.error(chalk.red(`❌ Failed to get recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -434,7 +434,7 @@ program
           console.log(chalk.gray('No tools detected or recommended.'));
         }
 
-        console.log(chalk.cyan('💡 Start supervisor with "wau watch" for real-time monitoring'));
+        console.log(chalk.cyan('💡 Start supervisor with "woaru watch" for real-time monitoring'));
         return;
       }
 
