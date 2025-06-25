@@ -46,7 +46,7 @@ export class WAUEngine {
       const frameworkSpecificPackages = this.pluginManager.getAllSpecificPackages(analysis);
 
       // Detect already installed tools
-      const installedTools = this.detectInstalledTools(analysis);
+      const installedTools = await this.detectInstalledTools(analysis);
 
       // Generate Claude automation suggestions
       const claudeAutomations = this.generateClaudeAutomations(analysis);
@@ -121,29 +121,89 @@ export class WAUEngine {
     return success;
   }
 
-  private detectInstalledTools(analysis: ProjectAnalysis): string[] {
+  private async detectInstalledTools(analysis: ProjectAnalysis): Promise<string[]> {
     const installedTools: string[] = [];
     const allDeps = [...analysis.dependencies, ...analysis.devDependencies];
+    const fs = require('fs-extra');
+    const path = require('path');
 
-    // Common tools to check for
+    // Check for both dependencies AND configuration files
     const toolChecks = {
-      'eslint': ['eslint'],
-      'prettier': ['prettier'],
-      'husky': ['husky'],
-      'jest': ['jest'],
-      'typescript': ['typescript'],
-      'tailwindcss': ['tailwindcss'],
-      'webpack': ['webpack'],
-      'vite': ['vite'],
-      'rollup': ['rollup'],
-      'babel': ['@babel/core', 'babel-core']
+      'eslint': {
+        packages: ['eslint'],
+        configs: ['.eslintrc.js', '.eslintrc.json', '.eslintrc.yml', '.eslintrc.yaml', '.eslintrc', 'eslint.config.js']
+      },
+      'prettier': {
+        packages: ['prettier'],
+        configs: ['.prettierrc', '.prettierrc.json', '.prettierrc.yml', '.prettierrc.yaml', '.prettierrc.js', 'prettier.config.js']
+      },
+      'husky': {
+        packages: ['husky'],
+        configs: ['.husky', '.git/hooks']
+      },
+      'jest': {
+        packages: ['jest'],
+        configs: ['jest.config.js', 'jest.config.ts', 'jest.config.json']
+      },
+      'typescript': {
+        packages: ['typescript'],
+        configs: ['tsconfig.json']
+      },
+      'tailwindcss': {
+        packages: ['tailwindcss'],
+        configs: ['tailwind.config.js', 'tailwind.config.ts']
+      },
+      'postcss': {
+        packages: ['postcss'],
+        configs: ['postcss.config.js', 'postcss.config.ts']
+      },
+      'commitlint': {
+        packages: ['@commitlint/cli', '@commitlint/config-conventional'],
+        configs: ['commitlint.config.js', '.commitlintrc.js', '.commitlintrc.json']
+      },
+      'webpack': {
+        packages: ['webpack'],
+        configs: ['webpack.config.js', 'webpack.config.ts']
+      },
+      'vite': {
+        packages: ['vite'],
+        configs: ['vite.config.js', 'vite.config.ts']
+      },
+      'rollup': {
+        packages: ['rollup'],
+        configs: ['rollup.config.js', 'rollup.config.ts']
+      },
+      'babel': {
+        packages: ['@babel/core', 'babel-core'],
+        configs: ['.babelrc', '.babelrc.js', '.babelrc.json', 'babel.config.js']
+      }
     };
 
-    Object.entries(toolChecks).forEach(([tool, packages]) => {
-      if (packages.some(pkg => allDeps.includes(pkg))) {
+    for (const [tool, check] of Object.entries(toolChecks)) {
+      // Check if tool is installed via package dependencies
+      const hasPackage = check.packages.some(pkg => allDeps.includes(pkg));
+      
+      // Check if tool has configuration files
+      let hasConfig = false;
+      if (check.configs) {
+        for (const configFile of check.configs) {
+          const configPath = path.join(analysis.projectPath || process.cwd(), configFile);
+          try {
+            if (await fs.pathExists(configPath)) {
+              hasConfig = true;
+              break;
+            }
+          } catch (error) {
+            // Ignore file system errors
+          }
+        }
+      }
+
+      // Tool is considered installed if it has either package dependency OR config file
+      if (hasPackage || hasConfig) {
         installedTools.push(tool);
       }
-    });
+    }
 
     return installedTools;
   }
