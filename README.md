@@ -10,13 +10,17 @@ WAU is an intelligent CLI tool that **scans your actual codebase**, detects issu
 # Try it now - no installation required:
 npx @iamthamanic/wau analyze
 
+# 🆕 NEW: Check all your active development tools
+npx @iamthamanic/wau helpers
+
 # 🆕 NEW: Start intelligent supervisor mode
 npx @iamthamanic/wau watch
 
 # Perfect for Claude Code sessions:
 # 1. Open any project in Claude
-# 2. Type: npx @iamthamanic/wau watch  
-# 3. WAU continuously monitors and gives real-time recommendations
+# 2. Type: npx @iamthamanic/wau helpers  
+# 3. See all active tools and missing recommendations
+# 4. Type: npx @iamthamanic/wau watch (for continuous monitoring)
 ```
 
 ## 🌍 Multi-Language Support
@@ -237,9 +241,18 @@ wau update-db
 
 ### And more for every language!
 
-## 🔥 **NEW: Supervisor Mode**
+## 🔥 **NEW: Supervisor Mode & Tool Inspector**
 
-WAU v2.0 introduces **Supervisor Mode** - an intelligent file watcher that continuously monitors your project and provides real-time recommendations.
+WAU v2.1 introduces **Supervisor Mode** and **Tool Inspector** - intelligent project monitoring and comprehensive tool visibility.
+
+### 🔧 **Tool Inspector (`wau helpers`):**
+
+1. **Active Tool Detection** - Shows all currently installed/configured tools
+2. **Missing Tool Recommendations** - Identifies gaps in your tooling setup
+3. **Priority-Based Suggestions** - Critical → High → Medium → Low recommendations
+4. **Category Breakdown** - Groups tools by type (linter, formatter, test, etc.)
+5. **Coverage Metrics** - Shows percentage of recommended tools already active
+6. **Flexible Filtering** - View only active tools, only missing, or get JSON output
 
 ### ⚡ **What the Supervisor Does:**
 
@@ -250,10 +263,21 @@ WAU v2.0 introduces **Supervisor Mode** - an intelligent file watcher that conti
 5. **Context-Aware Notifications** - Only shows relevant suggestions
 6. **State Persistence** - Remembers your project between sessions
 
-### 🎯 **Supervisor Workflow:**
+### 🎯 **Typical Workflow:**
 
 ```bash
-# Start the supervisor
+# 1. Check current tool status
+npx @iamthamanic/wau helpers
+
+# Output:
+# ✅ Active Tools: eslint, prettier, typescript
+# 🔧 Recommended: husky (git-hook), jest (test)
+# 📈 Coverage: 60% (3 active, 2 recommended)
+
+# 2. Install missing tools
+npx @iamthamanic/wau setup
+
+# 3. Start continuous monitoring
 npx @iamthamanic/wau watch
 
 # WAU continuously monitors:
@@ -606,18 +630,21 @@ MIT License - see LICENSE file for details
 - 🔧 **Legacy Code**: Scan existing projects for improvement opportunities  
 - 📊 **Code Review**: Get objective analysis before PR submission
 - 🧹 **Technical Debt**: Identify and fix code quality issues systematically
+- 🔍 **Tool Discovery**: `wau helpers` shows what's working vs what's missing
 
 ### For Teams:
 - 🤝 **Onboarding**: New team members get consistent development setup
 - 📏 **Standards**: Enforce coding standards across all projects
 - 🔄 **Modernization**: Keep projects updated with latest tooling
 - 📈 **Quality Gates**: Automated quality checks in CI/CD
+- 👥 **Tool Audits**: Team-wide visibility into tool adoption and gaps
 
 ### For Claude Code Users:
 - ⚡ **Instant Context**: WAU gives Claude immediate understanding of your codebase
 - 🎯 **Targeted Suggestions**: Claude can focus on specific issues WAU found
 - 🔧 **Automated Fixes**: Let WAU implement the tools Claude recommends
 - 📋 **Structured Analysis**: JSON output perfect for Claude's processing
+- 🛠️ **Tool Status**: Quick `wau helpers` check before asking Claude for help
 
 ---
 
@@ -631,8 +658,10 @@ MIT License - see LICENSE file for details
 6. **Zero Configuration**: Just run `wau analyze` in any project directory
 7. **Security Focus**: Vulnerability scanning for Go, Rust, Java, Python
 8. **Framework-Aware**: Specific recommendations for Spring, Django, React, etc.
+9. **🆕 Tool Visibility**: `wau helpers` command shows all active/missing tools at a glance
+10. **🆕 Real-time Monitoring**: Supervisor mode with intelligent file watching
 
-**WAU - Making project setup intelligent across ALL languages! 🌊**
+**WAU v2.1 - Making project setup intelligent across ALL languages! 🌊**
 
 ---
 

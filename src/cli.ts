@@ -18,7 +18,7 @@ const wauEngine = new WAUEngine();
 program
   .name('wau')
   .description('WorkaroundUltra - Project Setup Autopilot')
-  .version('2.0.0');
+  .version('2.1.0');
 
 program
   .command('analyze')
