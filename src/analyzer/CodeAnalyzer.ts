@@ -7,6 +7,7 @@ export interface CodeInsight {
   evidence: string[];
   files: string[];
   severity: 'critical' | 'high' | 'medium' | 'low';
+  patterns?: string[];
 }
 
 export class CodeAnalyzer {

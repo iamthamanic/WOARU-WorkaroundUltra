@@ -4,16 +4,19 @@
 
 WAU is an intelligent CLI tool that **scans your actual codebase**, detects issues, and automatically sets up the best development tools with **specific explanations** based on what it finds in your code.
 
-## ⚡ **Just Published to NPM!**
+## ⚡ **Just Published to NPM - Now with Supervisor Mode!**
 
 ```bash
 # Try it now - no installation required:
 npx @iamthamanic/wau analyze
 
+# 🆕 NEW: Start intelligent supervisor mode
+npx @iamthamanic/wau watch
+
 # Perfect for Claude Code sessions:
 # 1. Open any project in Claude
-# 2. Type: npx @iamthamanic/wau analyze  
-# 3. Get instant, evidence-based recommendations
+# 2. Type: npx @iamthamanic/wau watch  
+# 3. WAU continuously monitors and gives real-time recommendations
 ```
 
 ## 🌍 Multi-Language Support
@@ -108,6 +111,57 @@ wau setup --force             # Force even if tools exist
 wau setup -y                  # Skip all prompts
 ```
 
+### `wau watch` ⭐ **NEW!**
+Start the intelligent supervisor to continuously monitor your project.
+
+```bash
+# With NPX:
+npx @iamthamanic/wau watch                    # Start watching current directory
+npx @iamthamanic/wau watch --auto-setup       # Auto-install recommended tools
+npx @iamthamanic/wau watch --dashboard        # Show live dashboard
+npx @iamthamanic/wau watch --webhook <url>    # Send notifications to webhook
+
+# If installed globally:
+wau watch                      # Start watching current directory
+wau watch --auto-setup         # Auto-install recommended tools
+wau watch --dashboard          # Show live dashboard
+```
+
+### `wau status`
+Show supervisor status and project health.
+
+```bash
+# With NPX:
+npx @iamthamanic/wau status
+
+# If installed globally:
+wau status
+```
+
+### `wau recommendations`
+Show current tool recommendations.
+
+```bash
+# With NPX:
+npx @iamthamanic/wau recommendations
+npx @iamthamanic/wau recommendations --json
+
+# If installed globally:
+wau recommendations
+wau recommendations --json
+```
+
+### `wau stop`
+Stop the running supervisor.
+
+```bash
+# With NPX:
+npx @iamthamanic/wau stop
+
+# If installed globally:
+wau stop
+```
+
 ### `wau update-db`
 Update the tools database from GitHub.
 
@@ -165,6 +219,91 @@ wau update-db
 - **cargo-tarpaulin** - Code coverage reporting
 
 ### And more for every language!
+
+## 🔥 **NEW: Supervisor Mode**
+
+WAU v2.0 introduces **Supervisor Mode** - an intelligent file watcher that continuously monitors your project and provides real-time recommendations.
+
+### ⚡ **What the Supervisor Does:**
+
+1. **Real-time File Watching** - Monitors changes to your codebase
+2. **Intelligent Recommendations** - Suggests tools based on actual code patterns
+3. **Health Score Tracking** - Monitors project quality metrics
+4. **Auto-Setup Mode** - Automatically installs recommended tools
+5. **Context-Aware Notifications** - Only shows relevant suggestions
+6. **State Persistence** - Remembers your project between sessions
+
+### 🎯 **Supervisor Workflow:**
+
+```bash
+# Start the supervisor
+npx @iamthamanic/wau watch
+
+# WAU continuously monitors:
+# ✅ File changes (*.js, *.ts, *.py, *.rs, etc.)
+# ✅ New dependencies added
+# ✅ Configuration files
+# ✅ Code quality patterns
+# ✅ Missing tools
+
+# Get real-time notifications like:
+# 🔴 "Found console.log statements - ESLint recommended"
+# 🟡 "Inconsistent formatting detected - Prettier suggested"
+# 🔵 "New test files - Jest configuration recommended"
+```
+
+### 🎮 **Dashboard Mode:**
+
+```bash
+npx @iamthamanic/wau watch --dashboard
+```
+
+```
+┌─ WAU Supervisor ────────────────────────────────┐
+│ Project: my-app (TypeScript + React)            │
+│ Health Score: 85/100 ▓▓▓▓▓▓▓▓░░                │
+├─────────────────────────────────────────────────┤
+│ 🔴 Critical: ESLint not configured              │
+│ 🟡 High: 23 console.log statements found        │
+│ 🟢 Good: Prettier is properly configured        │
+├─────────────────────────────────────────────────┤
+│ File Activity: ████░░░░ (42 changes/min)        │
+│ Watching: 1,247 files | Ignored: 18,432         │
+└─────────────────────────────────────────────────┘
+```
+
+### 🤖 **Auto-Setup Mode:**
+
+```bash
+# Automatically install recommended tools
+npx @iamthamanic/wau watch --auto-setup
+
+# WAU will:
+# ✅ Detect missing tools
+# ✅ Install them automatically
+# ✅ Configure them properly
+# ✅ Update your health score
+```
+
+### 📡 **Webhook Integration:**
+
+```bash
+# Send notifications to Slack, Discord, etc.
+npx @iamthamanic/wau watch --webhook https://hooks.slack.com/...
+
+# JSON payload:
+{
+  "type": "recommendations",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": [
+    {
+      "tool": "eslint",
+      "priority": "high",
+      "reason": "Found 15 console.log statements"
+    }
+  ]
+}
+```
 
 ## 📊 Example Output
 

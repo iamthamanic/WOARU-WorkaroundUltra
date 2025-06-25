@@ -1,0 +1,75 @@
+tools:
+  clippy:
+    category: linter
+    languages: ['rust']
+    priority: high
+    detectPatterns:
+      - type: code_smell
+        pattern: "unwrap()"
+        severity: high
+        message: "Found .unwrap() calls that could panic"
+      - type: code_smell
+        pattern: "todo!()"
+        severity: medium
+        message: "Found todo!() macros in code"
+    setupInstructions:
+      - packageManager: cargo
+        command: rustup component add clippy && cargo clippy
+
+  rustfmt:
+    category: formatter
+    languages: ['rust']
+    priority: high
+    detectPatterns:
+      - type: missing_config
+        pattern: rustfmt.toml
+        severity: low
+        message: "Custom rustfmt configuration could be added"
+      - type: code_smell
+        pattern: inconsistent_formatting
+        severity: medium
+    setupInstructions:
+      - packageManager: cargo
+        command: rustup component add rustfmt && cargo fmt
+
+  cargo-audit:
+    category: linter
+    languages: ['rust']
+    priority: critical
+    detectPatterns:
+      - type: missing_dependency
+        pattern: cargo-audit
+        severity: critical
+        message: "Security audit tool not installed"
+    setupInstructions:
+      - packageManager: cargo
+        command: cargo install cargo-audit && cargo audit
+
+  cargo-deny:
+    category: linter
+    languages: ['rust']
+    priority: medium
+    detectPatterns:
+      - type: missing_config
+        pattern: deny.toml
+        severity: medium
+        message: "License and dependency policy not configured"
+    setupInstructions:
+      - packageManager: cargo
+        command: cargo install cargo-deny && cargo deny init
+
+  cargo-tarpaulin:
+    category: test
+    languages: ['rust']
+    priority: medium
+    detectPatterns:
+      - type: file_pattern
+        pattern: "**/tests/**"
+        severity: medium
+        message: "Tests found but coverage not measured"
+      - type: file_pattern
+        pattern: "**/*test*.rs"
+        severity: low
+    setupInstructions:
+      - packageManager: cargo
+        command: cargo install cargo-tarpaulin && cargo tarpaulin
