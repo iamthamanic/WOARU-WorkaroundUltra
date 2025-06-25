@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-12-24",
+  "categories": {
+    "linting": {
+      "eslint": {
+        "description": "JavaScript/TypeScript linting",
+        "packages": ["eslint"],
+        "configs": {
+          "react": ["@eslint/js", "eslint-plugin-react", "eslint-plugin-react-hooks"],
+          "nextjs": ["eslint-config-next"],
+          "typescript": ["@typescript-eslint/eslint-plugin", "@typescript-eslint/parser"],
+          "vue": ["eslint-plugin-vue"]
+        },
+        "configFiles": [".eslintrc.json", ".eslintrc.js", "eslint.config.js"]
+      }
+    },
+    "formatting": {
+      "prettier": {
+        "description": "Code formatting",
+        "packages": ["prettier"],
+        "configs": {
+          "default": ["prettier"],
+          "tailwind": ["prettier-plugin-tailwindcss"]
+        },
+        "configFiles": [".prettierrc", ".prettierrc.json", "prettier.config.js"]
+      }
+    },
+    "git-hooks": {
+      "husky": {
+        "description": "Git hooks management",
+        "packages": ["husky"],
+        "configs": {
+          "default": ["husky"]
+        }
+      },
+      "lint-staged": {
+        "description": "Run linters on staged files",
+        "packages": ["lint-staged"],
+        "configs": {
+          "default": ["lint-staged"]
+        }
+      }
+    },
+    "testing": {
+      "jest": {
+        "description": "JavaScript testing framework",
+        "packages": ["jest"],
+        "configs": {
+          "react": ["@testing-library/react", "@testing-library/jest-dom"],
+          "typescript": ["ts-jest", "@types/jest"]
+        }
+      },
+      "vitest": {
+        "description": "Fast unit testing framework",
+        "packages": ["vitest"],
+        "configs": {
+          "react": ["@testing-library/react", "@testing-library/jest-dom"],
+          "vue": ["@vue/test-utils"]
+        }
+      }
+    },
+    "security": {
+      "audit": {
+        "description": "Security audit tools",
+        "packages": ["npm-audit", "audit-ci"],
+        "configs": {
+          "default": ["audit-ci"]
+        }
+      }
+    }
+  },
+  "frameworks": {
+    "nextjs": {
+      "name": "Next.js",
+      "detectionFiles": ["next.config.js", "next.config.ts"],
+      "detectionPackages": ["next"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "formatting": ["prettier"],
+        "git-hooks": ["husky", "lint-staged"],
+        "testing": ["jest"]
+      },
+      "specificPackages": ["next-seo", "@next/bundle-analyzer"]
+    },
+    "react": {
+      "name": "React",
+      "detectionPackages": ["react"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "formatting": ["prettier"],
+        "testing": ["jest"]
+      }
+    },
+    "vue": {
+      "name": "Vue",
+      "detectionFiles": ["vue.config.js", "vite.config.ts"],
+      "detectionPackages": ["vue"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "formatting": ["prettier"],
+        "testing": ["vitest"]
+      }
+    },
+    "typescript": {
+      "name": "TypeScript",
+      "detectionFiles": ["tsconfig.json"],
+      "detectionPackages": ["typescript"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "formatting": ["prettier"]
+      }
+    }
+  }
+}
