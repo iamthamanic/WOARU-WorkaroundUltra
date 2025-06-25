@@ -43,8 +43,8 @@ wau analyze --json
 ### Installation:
 ```bash
 # Clone and install globally
-git clone https://github.com/yourusername/workaround-ultra.git
-cd workaround-ultra
+git clone https://github.com/iamthamanic/WAU-WorkaroundUltra.git
+cd WAU-WorkaroundUltra
 npm install
 npm link
 
@@ -280,8 +280,8 @@ export class MyPlugin extends BasePlugin {
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/workaround-ultra.git
-cd workaround-ultra
+git clone https://github.com/iamthamanic/WAU-WorkaroundUltra.git
+cd WAU-WorkaroundUltra
 
 # Install dependencies
 npm install
@@ -355,5 +355,5 @@ MIT License - see LICENSE file for details
 
 ---
 
-**GitHub**: https://github.com/yourusername/workaround-ultra  
-**Issues**: https://github.com/yourusername/workaround-ultra/issues
+**GitHub**: https://github.com/iamthamanic/WAU-WorkaroundUltra  
+**Issues**: https://github.com/iamthamanic/WAU-WorkaroundUltra/issues
