@@ -72,11 +72,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/iamthamanic/WAU-WorkaroundUltra.git"
+    "url": "https://github.com/iamthamanic/WOARU-WorkaroundUltra.git"
   },
-  "homepage": "https://github.com/iamthamanic/WAU-WorkaroundUltra#readme",
+  "homepage": "https://github.com/iamthamanic/WOARU-WorkaroundUltra#readme",
   "bugs": {
-    "url": "https://github.com/iamthamanic/WAU-WorkaroundUltra/issues"
+    "url": "https://github.com/iamthamanic/WOARU-WorkaroundUltra/issues"
   },
   "files": [
     "dist",

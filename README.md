@@ -86,8 +86,8 @@ wau analyze
 ### Manual Installation (Development):
 ```bash
 # Clone and install globally
-git clone https://github.com/iamthamanic/WAU-WorkaroundUltra.git
-cd WAU-WorkaroundUltra
+git clone https://github.com/iamthamanic/WOARU-WorkaroundUltra.git
+cd WOARU-WorkaroundUltra
 npm install
 npm link
 
@@ -563,8 +563,8 @@ export class MyPlugin extends BasePlugin {
 
 ```bash
 # Clone repository
-git clone https://github.com/iamthamanic/WAU-WorkaroundUltra.git
-cd WAU-WorkaroundUltra
+git clone https://github.com/iamthamanic/WOARU-WorkaroundUltra.git
+cd WOARU-WorkaroundUltra
 
 # Install dependencies
 npm install
@@ -660,5 +660,5 @@ MIT License - see LICENSE file for details
 
 ---
 
-**GitHub**: https://github.com/iamthamanic/WAU-WorkaroundUltra  
-**Issues**: https://github.com/iamthamanic/WAU-WorkaroundUltra/issues
+**GitHub**: https://github.com/iamthamanic/WOARU-WorkaroundUltra  
+**Issues**: https://github.com/iamthamanic/WOARU-WorkaroundUltra/issues
