@@ -151,6 +151,23 @@ wau recommendations
 wau recommendations --json
 ```
 
+### `wau helpers` ⭐ **NEW!**
+Show all detected/activated development tools and helpers.
+
+```bash
+# With NPX:
+npx @iamthamanic/wau helpers                   # Show all tools
+npx @iamthamanic/wau helpers --active          # Only active tools
+npx @iamthamanic/wau helpers --missing         # Only missing/recommended
+npx @iamthamanic/wau helpers --json            # JSON output
+
+# If installed globally:
+wau helpers                    # Show all tools
+wau helpers --active           # Only active tools
+wau helpers --missing          # Only missing/recommended
+wau helpers --json             # JSON output
+```
+
 ### `wau stop`
 Stop the running supervisor.
 
@@ -306,6 +323,34 @@ npx @iamthamanic/wau watch --webhook https://hooks.slack.com/...
 ```
 
 ## 📊 Example Output
+
+### `wau helpers` Output:
+```bash
+$ npx @iamthamanic/wau helpers
+
+🔧 Development Tools for my-react-app
+   Language: TypeScript | Health Score: 85/100
+
+✅ Active Tools:
+   ✓ eslint
+   ✓ prettier
+   ✓ typescript
+   ✓ jest
+
+🔧 Recommended Tools:
+   🟡 husky (git-hook) - Git hooks not configured
+   🔵 lint-staged (git-hook)
+   ⚪ storybook (test)
+
+📊 Tool Categories:
+   linter: eslint
+   formatter: prettier
+   test: jest
+   build: typescript
+
+📈 Summary: 4 active, 3 recommended (57% coverage)
+💡 Run "wau setup" to install recommended tools
+```
 
 ### TypeScript/Next.js Project:
 ```bash

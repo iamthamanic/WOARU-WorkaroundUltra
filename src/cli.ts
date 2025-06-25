@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { WAUEngine } from './core/WAUEngine';
 import { WAUSupervisor } from './supervisor/WAUSupervisor';
+import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
@@ -373,6 +374,191 @@ program
 
     } catch (error) {
       console.error(chalk.red(`❌ Failed to get recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('helpers')
+  .description('Show all detected/activated development tools and helpers')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-j, --json', 'Output as JSON')
+  .option('--missing', 'Show only missing/recommended tools')
+  .option('--active', 'Show only active/detected tools')
+  .action(async (options) => {
+    try {
+      const projectPath = path.resolve(options.path);
+      
+      if (!supervisor) {
+        // Use quick analysis if supervisor not running
+        console.log(chalk.yellow('📊 Supervisor not running. Performing quick analysis...'));
+        
+        // Get both analysis result and project analysis
+        const result = await wauEngine.analyzeProject(projectPath);
+        const projectAnalyzer = new ProjectAnalyzer();
+        const projectAnalysis = await projectAnalyzer.analyzeProject(projectPath);
+        
+        if (options.json) {
+          const output = {
+            active_tools: result.installed_tools_detected || [],
+            recommended_tools: result.setup_recommendations || [],
+            project: {
+              language: projectAnalysis.language || 'Unknown',
+              frameworks: projectAnalysis.framework || []
+            }
+          };
+          console.log(JSON.stringify(output, null, 2));
+          return;
+        }
+
+        console.log(chalk.cyan(`🔧 Development Tools for ${path.basename(projectPath)}\n`));
+        
+        if (result.installed_tools_detected && result.installed_tools_detected.length > 0) {
+          console.log(chalk.green('✅ Active Tools:'));
+          result.installed_tools_detected.forEach(tool => {
+            console.log(chalk.green(`   ✓ ${tool}`));
+          });
+          console.log();
+        }
+
+        if (result.setup_recommendations && result.setup_recommendations.length > 0) {
+          console.log(chalk.yellow('🔧 Recommended Tools:'));
+          result.setup_recommendations.forEach(rec => {
+            console.log(chalk.yellow(`   → ${rec}`));
+          });
+          console.log();
+        }
+
+        if ((!result.installed_tools_detected || result.installed_tools_detected.length === 0) && 
+            (!result.setup_recommendations || result.setup_recommendations.length === 0)) {
+          console.log(chalk.gray('No tools detected or recommended.'));
+        }
+
+        console.log(chalk.cyan('💡 Start supervisor with "wau watch" for real-time monitoring'));
+        return;
+      }
+
+      // Use supervisor data if available
+      const status = supervisor.getStatus();
+      const recommendations = await supervisor.getCurrentRecommendations();
+      
+      if (options.json) {
+        const output = {
+          active_tools: Array.from(status.state.detectedTools),
+          missing_tools: Array.from(status.state.missingTools),
+          recommended_tools: recommendations.map(r => ({
+            tool: r.tool,
+            priority: r.priority,
+            reason: r.reason,
+            category: r.category
+          })),
+          project: {
+            language: status.state.language,
+            frameworks: status.state.frameworks,
+            health_score: status.state.healthScore,
+            watched_files: status.watchedFiles
+          },
+          supervisor_running: status.isRunning
+        };
+        console.log(JSON.stringify(output, null, 2));
+        return;
+      }
+
+      // Terminal output
+      console.log(chalk.cyan(`🔧 Development Tools for ${path.basename(status.state.projectPath)}`));
+      console.log(chalk.gray(`   Language: ${status.state.language} | Health Score: ${status.state.healthScore}/100\n`));
+
+      // Active tools
+      if (!options.missing && status.state.detectedTools.size > 0) {
+        console.log(chalk.green('✅ Active Tools:'));
+        Array.from(status.state.detectedTools).sort().forEach(tool => {
+          console.log(chalk.green(`   ✓ ${tool}`));
+        });
+        console.log();
+      }
+
+      // Missing/Recommended tools
+      if (!options.active) {
+        const missingTools = Array.from(status.state.missingTools);
+        const recommendedTools = recommendations.filter(r => !status.state.detectedTools.has(r.tool));
+
+        if (missingTools.length > 0 || recommendedTools.length > 0) {
+          console.log(chalk.yellow('🔧 Recommended Tools:'));
+          
+          // Group by priority
+          const byPriority = {
+            critical: recommendedTools.filter(r => r.priority === 'critical'),
+            high: recommendedTools.filter(r => r.priority === 'high'),
+            medium: recommendedTools.filter(r => r.priority === 'medium'),
+            low: recommendedTools.filter(r => r.priority === 'low')
+          };
+
+          if (byPriority.critical.length > 0) {
+            byPriority.critical.forEach(rec => {
+              console.log(chalk.red(`   🔴 ${rec.tool} (${rec.category}) - ${rec.reason}`));
+            });
+          }
+
+          if (byPriority.high.length > 0) {
+            byPriority.high.forEach(rec => {
+              console.log(chalk.yellow(`   🟡 ${rec.tool} (${rec.category}) - ${rec.reason}`));
+            });
+          }
+
+          if (byPriority.medium.length > 0) {
+            byPriority.medium.forEach(rec => {
+              console.log(chalk.blue(`   🔵 ${rec.tool} (${rec.category})`));
+            });
+          }
+
+          if (byPriority.low.length > 0) {
+            byPriority.low.forEach(rec => {
+              console.log(chalk.gray(`   ⚪ ${rec.tool} (${rec.category})`));
+            });
+          }
+
+          // Show missing tools not in recommendations
+          missingTools.filter(tool => !recommendedTools.some(r => r.tool === tool)).forEach(tool => {
+            console.log(chalk.gray(`   → ${tool}`));
+          });
+
+          console.log();
+        }
+      }
+
+      // Tool categories breakdown
+      if (!options.missing && !options.active) {
+        const allTools = Array.from(status.state.detectedTools);
+        const categories = {
+          linter: allTools.filter(t => ['eslint', 'ruff', 'clippy', 'golangci-lint'].includes(t)),
+          formatter: allTools.filter(t => ['prettier', 'black', 'rustfmt'].includes(t)),
+          test: allTools.filter(t => ['jest', 'pytest', 'vitest'].includes(t)),
+          'git-hook': allTools.filter(t => ['husky', 'pre-commit'].includes(t)),
+          build: allTools.filter(t => ['typescript', 'webpack', 'vite'].includes(t))
+        };
+
+        console.log(chalk.cyan('📊 Tool Categories:'));
+        Object.entries(categories).forEach(([category, tools]) => {
+          if (tools.length > 0) {
+            console.log(chalk.gray(`   ${category}: ${tools.join(', ')}`));
+          }
+        });
+        console.log();
+      }
+
+      // Summary
+      const totalActive = status.state.detectedTools.size;
+      const totalMissing = status.state.missingTools.size;
+      const coverage = totalActive + totalMissing > 0 ? Math.round((totalActive / (totalActive + totalMissing)) * 100) : 100;
+
+      console.log(chalk.cyan(`📈 Summary: ${totalActive} active, ${totalMissing} recommended (${coverage}% coverage)`));
+      
+      if (recommendations.length > 0) {
+        console.log(chalk.gray(`💡 Run "wau setup" to install recommended tools`));
+      }
+
+    } catch (error) {
+      console.error(chalk.red(`❌ Failed to show helpers: ${error instanceof Error ? error.message : 'Unknown error'}`));
       process.exit(1);
     }
   });
