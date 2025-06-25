@@ -131,7 +131,8 @@ export class ProjectAnalyzer {
     }
     
     // Rust
-    if (await fs.pathExists(path.join(projectPath, 'Cargo.lock'))) {
+    if (await fs.pathExists(path.join(projectPath, 'Cargo.lock')) ||
+        await fs.pathExists(path.join(projectPath, 'Cargo.toml'))) {
       return 'cargo';
     }
     
@@ -144,7 +145,8 @@ export class ProjectAnalyzer {
     }
     
     // C#/.NET
-    if (await fs.pathExists(path.join(projectPath, '*.csproj'))) {
+    const csprojFiles = await glob('*.csproj', { cwd: projectPath });
+    if (csprojFiles.length > 0) {
       return 'dotnet';
     }
     

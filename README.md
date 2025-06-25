@@ -4,6 +4,18 @@
 
 WAU is an intelligent CLI tool that **scans your actual codebase**, detects issues, and automatically sets up the best development tools with **specific explanations** based on what it finds in your code.
 
+## ⚡ **Just Published to NPM!**
+
+```bash
+# Try it now - no installation required:
+npx @iamthamanic/wau analyze
+
+# Perfect for Claude Code sessions:
+# 1. Open any project in Claude
+# 2. Type: npx @iamthamanic/wau analyze  
+# 3. Get instant, evidence-based recommendations
+```
+
 ## 🌍 Multi-Language Support
 
 WAU supports **all major programming languages** with intelligent detection:
@@ -40,7 +52,17 @@ wau analyze --json
 
 ## 🚀 Quick Start
 
-### Installation:
+### NPX (Recommended - No Installation Required):
+```bash
+# Use directly without installing:
+npx @iamthamanic/wau analyze
+
+# In Claude Code, you can also install globally:
+npm install -g @iamthamanic/wau
+wau analyze
+```
+
+### Manual Installation (Development):
 ```bash
 # Clone and install globally
 git clone https://github.com/iamthamanic/WAU-WorkaroundUltra.git
@@ -52,20 +74,18 @@ npm link
 wau --help
 ```
 
-### NPM Installation:
-```bash
-npm install -g @iamthamanic/wau
-
-# Or use directly without installing:
-npx @iamthamanic/wau analyze
-```
-
 ## 📋 Commands
 
 ### `wau analyze`
 Analyze any project and get recommendations.
 
 ```bash
+# With NPX (no installation needed):
+npx @iamthamanic/wau analyze                    # Current directory
+npx @iamthamanic/wau analyze --path ./my-app    # Specific path
+npx @iamthamanic/wau analyze --json             # JSON output for automation
+
+# If installed globally:
 wau analyze                    # Current directory
 wau analyze --path ./my-app    # Specific path
 wau analyze --json             # JSON output for automation
@@ -75,6 +95,13 @@ wau analyze --json             # JSON output for automation
 Automatically install and configure recommended tools.
 
 ```bash
+# With NPX:
+npx @iamthamanic/wau setup                      # Interactive setup
+npx @iamthamanic/wau setup --dry-run           # Preview changes
+npx @iamthamanic/wau setup --force             # Force even if tools exist
+npx @iamthamanic/wau setup -y                  # Skip all prompts
+
+# If installed globally:
 wau setup                      # Interactive setup
 wau setup --dry-run           # Preview changes
 wau setup --force             # Force even if tools exist
@@ -85,6 +112,10 @@ wau setup -y                  # Skip all prompts
 Update the tools database from GitHub.
 
 ```bash
+# With NPX:
+npx @iamthamanic/wau update-db
+
+# If installed globally:
 wau update-db
 ```
 
@@ -239,7 +270,7 @@ WAU doesn't just detect frameworks - it **scans your actual code** to find speci
 ### Perfect for Claude Sessions:
 ```bash
 # In any project directory in Claude:
-wau analyze
+npx @iamthamanic/wau analyze
 
 # WAU will automatically:
 # 1. Detect the language (JS/TS/Python/C#/etc.)
@@ -251,16 +282,16 @@ wau analyze
 ### Auto-Setup with Evidence:
 ```bash
 # See what WAU found:
-wau analyze
+npx @iamthamanic/wau analyze
 
 # Let WAU fix everything it found:
-wau setup -y
+npx @iamthamanic/wau setup -y
 ```
 
 ### JSON for Advanced Analysis:
 ```bash
 # Get structured data for Claude to process:
-wau analyze --json
+npx @iamthamanic/wau analyze --json
 
 # Includes code_insights with evidence:
 {
