@@ -24,11 +24,6 @@ program
     try {
       const projectPath = path.resolve(options.path);
       
-      if (!await fs.pathExists(path.join(projectPath, 'package.json'))) {
-        console.error(chalk.red('❌ No package.json found. Make sure you\'re in a Node.js project directory.'));
-        process.exit(1);
-      }
-
       const result = await wauEngine.analyzeProject(projectPath);
       
       if (options.json) {
@@ -62,6 +57,21 @@ program
           console.log();
         }
 
+        if (result.code_insights && result.code_insights.length > 0) {
+          console.log(chalk.yellow('🔬 Code Analysis Insights:'));
+          result.code_insights.forEach(insight => {
+            const severityColor = insight.severity === 'high' ? chalk.red : 
+                                 insight.severity === 'medium' ? chalk.yellow : chalk.gray;
+            console.log(`  • ${severityColor(insight.tool.toUpperCase())}: ${insight.reason}`);
+            if (insight.evidence.length > 0) {
+              insight.evidence.slice(0, 3).forEach(evidence => {
+                console.log(`    - ${chalk.gray(evidence)}`);
+              });
+            }
+          });
+          console.log();
+        }
+
         if (result.claude_automations && result.claude_automations.length > 0) {
           console.log(chalk.blue('🤖 Claude Automation Ideas:'));
           result.claude_automations.forEach(automation => console.log(`  • ${automation}`));
@@ -85,11 +95,6 @@ program
     try {
       const projectPath = path.resolve(options.path);
       
-      if (!await fs.pathExists(path.join(projectPath, 'package.json'))) {
-        console.error(chalk.red('❌ No package.json found. Make sure you\'re in a Node.js project directory.'));
-        process.exit(1);
-      }
-
       if (!options.yes && !options.dryRun) {
         const { confirm } = await inquirer.prompt([
           {

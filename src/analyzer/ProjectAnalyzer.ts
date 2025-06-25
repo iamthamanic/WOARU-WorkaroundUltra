@@ -15,9 +15,14 @@ export class ProjectAnalyzer {
     const primaryLanguage = await this.languageDetector.detectPrimaryLanguage(projectPath);
     const allLanguages = await this.languageDetector.detectLanguages(projectPath);
     
-    // For Node.js projects
-    const packageJsonPath = path.join(projectPath, 'package.json');
-    const packageJson = await this.readPackageJson(packageJsonPath);
+    if (primaryLanguage === 'unknown') {
+      throw new Error('Could not detect project language. Make sure you are in a valid project directory.');
+    }
+    
+    // Get language-specific dependencies
+    const dependencies = await this.getDependencies(projectPath, primaryLanguage);
+    const devDependencies = await this.getDevDependencies(projectPath, primaryLanguage);
+    const scripts = await this.getScripts(projectPath, primaryLanguage);
     
     // Detect frameworks based on language
     const frameworks = await this.languageDetector.detectFrameworks(projectPath, primaryLanguage);
@@ -27,9 +32,9 @@ export class ProjectAnalyzer {
                 this.languageDetector.getLanguageInfo(primaryLanguage)?.name || primaryLanguage,
       framework: frameworks,
       packageManager: await this.detectPackageManager(projectPath),
-      dependencies: packageJson ? Object.keys(packageJson.dependencies || {}) : [],
-      devDependencies: packageJson ? Object.keys(packageJson.devDependencies || {}) : [],
-      scripts: packageJson ? packageJson.scripts || {} : {},
+      dependencies,
+      devDependencies,
+      scripts,
       configFiles: await this.findConfigFiles(projectPath),
       structure: await this.analyzeStructure(projectPath),
       detectedLanguages: allLanguages
@@ -192,6 +197,141 @@ export class ProjectAnalyzer {
     }
 
     return [...new Set(configFiles)].sort();
+  }
+
+  private async getDependencies(projectPath: string, language: string): Promise<string[]> {
+    switch (language) {
+      case 'javascript':
+        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
+        return packageJson ? Object.keys(packageJson.dependencies || {}) : [];
+      
+      case 'python':
+        return await this.getPythonDependencies(projectPath);
+      
+      case 'csharp':
+        return await this.getCSharpDependencies(projectPath);
+      
+      default:
+        return [];
+    }
+  }
+
+  private async getDevDependencies(projectPath: string, language: string): Promise<string[]> {
+    switch (language) {
+      case 'javascript':
+        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
+        return packageJson ? Object.keys(packageJson.devDependencies || {}) : [];
+      
+      case 'python':
+        // Python doesn't really have dev dependencies in the same way
+        // But we can check for test/dev packages
+        return await this.getPythonDevDependencies(projectPath);
+      
+      default:
+        return [];
+    }
+  }
+
+  private async getScripts(projectPath: string, language: string): Promise<Record<string, string>> {
+    switch (language) {
+      case 'javascript':
+        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
+        return packageJson ? packageJson.scripts || {} : {};
+      
+      case 'python':
+        return await this.getPythonScripts(projectPath);
+      
+      default:
+        return {};
+    }
+  }
+
+  private async getPythonDependencies(projectPath: string): Promise<string[]> {
+    const dependencies: string[] = [];
+    
+    // Check requirements.txt
+    const requirementsPath = path.join(projectPath, 'requirements.txt');
+    if (await fs.pathExists(requirementsPath)) {
+      const content = await fs.readFile(requirementsPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+      dependencies.push(...lines.map(line => line.split('==')[0].split('>=')[0].split('~=')[0].trim()));
+    }
+
+    // Check pyproject.toml
+    const pyprojectPath = path.join(projectPath, 'pyproject.toml');
+    if (await fs.pathExists(pyprojectPath)) {
+      const content = await fs.readFile(pyprojectPath, 'utf-8');
+      // Simple regex to extract dependencies - would need proper TOML parser for production
+      const depMatches = content.match(/dependencies\s*=\s*\[([\s\S]*?)\]/);
+      if (depMatches) {
+        const depLines = depMatches[1].split(',');
+        dependencies.push(...depLines.map(line => 
+          line.replace(/['"]/g, '').split('==')[0].split('>=')[0].trim()
+        ).filter(dep => dep));
+      }
+    }
+
+    return [...new Set(dependencies)];
+  }
+
+  private async getPythonDevDependencies(projectPath: string): Promise<string[]> {
+    const devDeps: string[] = [];
+    
+    // Check for common dev/test packages
+    const allDeps = await this.getPythonDependencies(projectPath);
+    const devPackages = ['pytest', 'black', 'flake8', 'mypy', 'ruff', 'pre-commit', 'isort'];
+    
+    devDeps.push(...allDeps.filter(dep => 
+      devPackages.some(devPkg => dep.toLowerCase().includes(devPkg))
+    ));
+
+    return devDeps;
+  }
+
+  private async getPythonScripts(projectPath: string): Promise<Record<string, string>> {
+    const scripts: Record<string, string> = {};
+    
+    // Check pyproject.toml for scripts
+    const pyprojectPath = path.join(projectPath, 'pyproject.toml');
+    if (await fs.pathExists(pyprojectPath)) {
+      const content = await fs.readFile(pyprojectPath, 'utf-8');
+      // Look for common script patterns
+      if (content.includes('pytest')) scripts.test = 'pytest';
+      if (content.includes('black')) scripts.format = 'black .';
+      if (content.includes('ruff')) scripts.lint = 'ruff check .';
+    }
+
+    // Check for common Python patterns
+    if (await fs.pathExists(path.join(projectPath, 'manage.py'))) {
+      scripts.runserver = 'python manage.py runserver';
+      scripts.migrate = 'python manage.py migrate';
+    }
+
+    return scripts;
+  }
+
+  private async getCSharpDependencies(projectPath: string): Promise<string[]> {
+    const dependencies: string[] = [];
+    
+    // Check .csproj files
+    const csprojFiles = await glob('**/*.csproj', { cwd: projectPath });
+    
+    for (const file of csprojFiles) {
+      try {
+        const content = await fs.readFile(path.join(projectPath, file), 'utf-8');
+        // Simple regex to extract PackageReference - would need proper XML parser
+        const packageMatches = content.match(/<PackageReference\s+Include="([^"]+)"/g);
+        if (packageMatches) {
+          dependencies.push(...packageMatches.map(match => 
+            match.match(/Include="([^"]+)"/)?.[1] || ''
+          ).filter(pkg => pkg));
+        }
+      } catch (error) {
+        // Skip files that can't be read
+      }
+    }
+
+    return [...new Set(dependencies)];
   }
 
   private async analyzeStructure(projectPath: string): Promise<string[]> {

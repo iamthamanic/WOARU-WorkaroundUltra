@@ -1,4 +1,5 @@
 import { ProjectAnalyzer } from '../analyzer/ProjectAnalyzer';
+import { CodeAnalyzer } from '../analyzer/CodeAnalyzer';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { PluginManager } from '../plugins/PluginManager';
 import { ActionManager } from '../actions/ActionManager';
@@ -7,12 +8,14 @@ import chalk from 'chalk';
 
 export class WAUEngine {
   private projectAnalyzer: ProjectAnalyzer;
+  private codeAnalyzer: CodeAnalyzer;
   private databaseManager: DatabaseManager;
   private pluginManager: PluginManager;
   private actionManager: ActionManager;
 
   constructor() {
     this.projectAnalyzer = new ProjectAnalyzer();
+    this.codeAnalyzer = new CodeAnalyzer();
     this.databaseManager = new DatabaseManager();
     this.pluginManager = new PluginManager();
     this.actionManager = new ActionManager();
@@ -29,8 +32,16 @@ export class WAUEngine {
       console.log(chalk.gray(`🔧 Language: ${analysis.language}`));
       console.log(chalk.gray(`⚡ Frameworks: ${analysis.framework.join(', ') || 'None detected'}`));
 
-      // Get recommendations from plugins
+      // Analyze code for specific insights
+      console.log(chalk.blue('🔬 Analyzing codebase for insights...'));
+      const codeInsights = await this.codeAnalyzer.analyzeCodebase(projectPath, analysis.language);
+
+      // Get recommendations from plugins with code insights
       const recommendations = this.pluginManager.getAllRecommendations(analysis);
+      
+      // Enhance recommendations with code insights
+      this.enhanceRecommendationsWithInsights(recommendations, codeInsights);
+      
       const refactorSuggestions = this.pluginManager.getAllRefactorSuggestions(analysis);
       const frameworkSpecificPackages = this.pluginManager.getAllSpecificPackages(analysis);
 
@@ -48,7 +59,13 @@ export class WAUEngine {
         framework_specific_tools: frameworkSpecificPackages,
         refactor_suggestions: refactorSuggestions,
         installed_tools_detected: installedTools,
-        claude_automations: claudeAutomations
+        claude_automations: claudeAutomations,
+        code_insights: Array.from(codeInsights.entries()).map(([tool, insight]) => ({
+          tool,
+          reason: insight.reason,
+          evidence: insight.evidence,
+          severity: insight.severity
+        }))
       };
 
     } catch (error) {
@@ -166,5 +183,18 @@ export class WAUEngine {
     automations.push('Generate API documentation from code comments');
 
     return automations;
+  }
+
+  private enhanceRecommendationsWithInsights(recommendations: any[], codeInsights: Map<string, any>): void {
+    recommendations.forEach(rec => {
+      const insight = codeInsights.get(rec.tool);
+      if (insight) {
+        rec.reason = insight.reason;
+        rec.evidence = insight.evidence;
+        rec.priority = insight.severity === 'critical' ? 'high' : 
+                      insight.severity === 'high' ? 'high' :
+                      insight.severity === 'medium' ? 'medium' : 'low';
+      }
+    });
   }
 }

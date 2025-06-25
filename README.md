@@ -2,7 +2,7 @@
 
 **Universal Project Setup Autopilot** - Analyze and automatically configure development tools for ANY programming language.
 
-WAU is an intelligent CLI tool that detects your project's language, frameworks, and automatically sets up the best development tools with proper configurations.
+WAU is an intelligent CLI tool that **scans your actual codebase**, detects issues, and automatically sets up the best development tools with **specific explanations** based on what it finds in your code.
 
 ## 🌍 Multi-Language Support
 
@@ -113,6 +113,7 @@ wau update-db
 
 ## 📊 Example Output
 
+### TypeScript/Next.js Project:
 ```bash
 $ wau analyze
 
@@ -120,68 +121,134 @@ $ wau analyze
 📦 Project: my-todo-app (1.0.0)
 🔧 Language: TypeScript
 ⚡ Frameworks: nextjs, react
-
-📋 Analysis Results:
+🔬 Analyzing codebase for insights...
 
 🔧 Setup Recommendations:
-  • Install eslint for linting: Next.js has official ESLint configuration
-  • Install prettier for formatting: Code formatting for consistent style
-  • Install husky for git-hooks: Pre-commit hooks to ensure code quality
+  • Install prettier for formatting: Inkonsistente Code-Formatierung gefunden. 
+    Unterschiedliche Einrückungen und Stile in mehreren Dateien.
+  • Install eslint for linting: Debug-Statements (console.log) im Code gefunden. 
+    ESLint kann diese automatisch erkennen.
 
-⚡ Framework-Specific Tools:
-  • next-seo
-  • @next/bundle-analyzer
-
-🔄 Refactor Suggestions:
-  • src/hooks/useTodos.ts: Use useCallback for event handlers
-  • src/components/TodoItem.tsx: Consider using React.memo
+🔬 Code Analysis Insights:
+  • PRETTIER: Inkonsistente Code-Formatierung gefunden.
+    - src/pages/index.tsx:21: Trailing whitespace
+    - Inkonsistente Einrückung: spaces-2, tabs
+  • ESLINT: Debug-Statements (console.log) im Code gefunden.
+    - src/components/TodoItem.tsx:15: console.log('rendering item')
 
 ✅ Already Installed:
   • typescript
   • tailwindcss
-
-🤖 Claude Automation Ideas:
-  • Generate TypeScript interfaces from API responses
-  • Create unit tests for existing components
-  • Setup Next.js middleware for authentication
 ```
 
-## 🤖 Claude Code Best Practices
-
-### 1. Start Every Project:
+### Python Project:
 ```bash
-# First thing in any project:
+$ wau analyze
+
+🔍 Analyzing project...
+📦 Project: raggadon (1.2.0)
+🔧 Language: Python
+⚡ Frameworks: django, pytest
+🔬 Analyzing codebase for insights...
+
+🔧 Setup Recommendations:
+  • Install black for formatting: PEP8 Style-Verletzungen gefunden. 
+    Black formatiert automatisch nach Python-Standards.
+  • Install ruff for linting: Print-Statements im Code gefunden. 
+    Ruff kann diese und andere Code-Smells erkennen.
+
+🔬 Code Analysis Insights:
+  • BLACK: PEP8 Style-Verletzungen gefunden.
+    - main.py:13: Zeile zu lang (130 > 79)
+    - views.py:5: Tabs statt Spaces
+  • RUFF: Print-Statements im Code gefunden.
+    - utils.py:22: print(f"Debug: {data}")
+    - models.py:45: print("Processing...")
+
+✅ Already Installed:
+  • pytest
+  • django
+```
+
+## 🔬 **NEW: Code Analysis Engine**
+
+WAU doesn't just detect frameworks - it **scans your actual code** to find specific issues:
+
+### JavaScript/TypeScript:
+- 🔍 **Formatting Issues**: Finds inconsistent indentation, trailing whitespace
+- 🐛 **Debug Statements**: Locates console.log, debugger statements with exact line numbers  
+- 📏 **Code Complexity**: Detects functions with too many parameters or deep nesting
+- ⚡ **Performance**: Missing React.memo, useCallback opportunities
+- 🧪 **Testing**: Large codebases without test files
+
+### Python:
+- 📏 **PEP8 Violations**: Lines too long, tabs vs spaces, exact line numbers
+- 🔍 **Type Hints**: Functions missing return type annotations
+- 🐛 **Debug Prints**: print() statements in production code
+- 🏗️ **Framework Patterns**: Django views that could use class-based patterns
+
+### C#:
+- ⚡ **Async Issues**: async void methods, .Result/.Wait() deadlock risks
+- 📝 **Style**: Missing .editorconfig for team consistency
+- 🏗️ **Architecture**: Controllers without dependency injection
+
+## 🤖 Claude Code Integration
+
+### Perfect for Claude Sessions:
+```bash
+# In any project directory in Claude:
 wau analyze
+
+# WAU will automatically:
+# 1. Detect the language (JS/TS/Python/C#/etc.)
+# 2. Scan your actual code for issues
+# 3. Explain WHY each tool is recommended
+# 4. Show exact file:line numbers for problems
 ```
 
-### 2. Auto-Setup Development Environment:
+### Auto-Setup with Evidence:
 ```bash
-# Let WAU configure everything:
+# See what WAU found:
+wau analyze
+
+# Let WAU fix everything it found:
 wau setup -y
 ```
 
-### 3. Get Detailed Analysis for Claude:
+### JSON for Advanced Analysis:
 ```bash
-# Copy JSON to clipboard for Claude:
-wau analyze --json | pbcopy  # macOS
-wau analyze --json | xclip   # Linux
+# Get structured data for Claude to process:
+wau analyze --json
+
+# Includes code_insights with evidence:
+{
+  "code_insights": [
+    {
+      "tool": "prettier",
+      "reason": "Inkonsistente Code-Formatierung gefunden...",
+      "evidence": ["src/main.ts:15: Trailing whitespace"],
+      "severity": "medium"
+    }
+  ]
+}
 ```
 
-### 4. Use in CLAUDE.md:
-Add to your project's CLAUDE.md file:
-```markdown
-## Project Setup
-Run `wau analyze` to see project analysis and recommendations.
-Run `wau setup -y` to auto-configure development tools.
-```
+## 🔄 **Auto-Updates & Future-Proof**
 
-## 🔧 Configuration
+WAU stays current automatically:
 
-WAU uses a live tools database that updates automatically:
-- Framework detection patterns
-- Tool compatibility matrices
-- Best-practice configurations
-- Language-specific setups
+### Live Tools Database:
+- 📡 **Weekly Updates**: GitHub Actions automatically update the tools database
+- 📊 **Popularity Tracking**: NPM downloads, GitHub stars, deprecation detection
+- 🔄 **Tool Evolution**: Automatically suggests Biome over ESLint+Prettier when it becomes popular
+- ⚠️ **Deprecation Alerts**: Warns about outdated tools (tslint → eslint, moment → date-fns)
+
+### Community Driven:
+- 🤝 **Community Contributions**: Tools database accepts PRs for new recommendations
+- 📈 **Trending Detection**: Automatically discovers rising tools in the ecosystem
+- 🎯 **Evidence-Based**: Recommendations based on actual usage statistics, not opinions
+
+This means WAU **won't become outdated** - it evolves with the ecosystem!
 
 ## 🛡️ Safety Features
 
@@ -254,8 +321,39 @@ MIT License - see LICENSE file for details
 - Inspired by the need for universal project setup
 - Community-driven tool recommendations
 
+## 🎯 **Use Cases**
+
+### For Developers:
+- 🚀 **New Project Setup**: Instant development environment with best practices
+- 🔧 **Legacy Code**: Scan existing projects for improvement opportunities  
+- 📊 **Code Review**: Get objective analysis before PR submission
+- 🧹 **Technical Debt**: Identify and fix code quality issues systematically
+
+### For Teams:
+- 🤝 **Onboarding**: New team members get consistent development setup
+- 📏 **Standards**: Enforce coding standards across all projects
+- 🔄 **Modernization**: Keep projects updated with latest tooling
+- 📈 **Quality Gates**: Automated quality checks in CI/CD
+
+### For Claude Code Users:
+- ⚡ **Instant Context**: WAU gives Claude immediate understanding of your codebase
+- 🎯 **Targeted Suggestions**: Claude can focus on specific issues WAU found
+- 🔧 **Automated Fixes**: Let WAU implement the tools Claude recommends
+- 📋 **Structured Analysis**: JSON output perfect for Claude's processing
+
 ---
 
-**WAU - Making project setup a breeze across ALL languages! 🌊**
+## 🌟 **What Makes WAU Special**
 
-For issues and feature requests: https://github.com/yourusername/workaround-ultra/issues
+1. **Evidence-Based**: Never says "you should use X" without showing you WHY in your code
+2. **Language Agnostic**: Works with any programming language, not just JavaScript
+3. **Future-Proof**: Automatically stays current with ecosystem changes
+4. **Claude-Optimized**: Built specifically for seamless Claude Code integration
+5. **Zero Configuration**: Just run `wau analyze` in any project directory
+
+**WAU - Making project setup intelligent across ALL languages! 🌊**
+
+---
+
+**GitHub**: https://github.com/yourusername/workaround-ultra  
+**Issues**: https://github.com/yourusername/workaround-ultra/issues

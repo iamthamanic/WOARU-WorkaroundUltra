@@ -3,6 +3,15 @@ export interface ToolConfig {
   packages: string[];
   configs?: Record<string, string[]>;
   configFiles?: string[];
+  metadata?: {
+    popularity?: number;
+    lastChecked?: string;
+    npmDownloads?: number;
+    githubStars?: number;
+    alternatives?: string[];
+    deprecated?: boolean;
+    successor?: string;
+  };
 }
 
 export interface CategoryTools {
@@ -58,6 +67,12 @@ export interface AnalysisResult {
   refactor_suggestions: RefactorSuggestion[];
   installed_tools_detected: string[];
   claude_automations?: string[];
+  code_insights?: Array<{
+    tool: string;
+    reason: string;
+    evidence: string[];
+    severity: string;
+  }>;
 }
 
 export interface SetupOptions {
