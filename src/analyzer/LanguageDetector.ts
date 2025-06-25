@@ -32,7 +32,7 @@ export class LanguageDetector {
     ['csharp', {
       name: 'C#',
       extensions: ['.cs', '.csx'],
-      configFiles: ['.csproj', '.sln', 'global.json', '.editorconfig'],
+      configFiles: ['*.csproj', '*.sln', 'global.json', '.editorconfig'],
       packageManagers: ['nuget', 'dotnet'],
       buildFiles: ['*.csproj', '*.sln'],
       frameworks: ['dotnet', 'aspnet', 'unity', 'xamarin', 'blazor']
@@ -124,16 +124,66 @@ export class LanguageDetector {
       return 'unknown';
     }
 
-    // Priority order for multi-language projects
-    const priority = ['javascript', 'python', 'csharp', 'java', 'go', 'rust', 'php', 'ruby'];
+    // If only one language, return it
+    if (languages.length === 1) {
+      return languages[0];
+    }
+
+    // For multi-language projects, use file count and config file priority
+    const languageScores = new Map<string, number>();
     
-    for (const lang of priority) {
-      if (languages.includes(lang)) {
-        return lang;
+    // Count files for each language
+    const allFiles = await glob('**/*', {
+      cwd: projectPath,
+      ignore: ['node_modules/**', '**/node_modules/**', '.git/**', 'dist/**', 'build/**'],
+      nodir: true
+    });
+
+    for (const [lang, info] of this.languages) {
+      let score = 0;
+      
+      // Score based on file count
+      const fileCount = allFiles.filter(file => 
+        info.extensions.some(ext => file.toLowerCase().endsWith(ext))
+      ).length;
+      score += fileCount * 10;
+      
+      // Score based on config files (higher weight)
+      for (const configFile of info.configFiles) {
+        const configExists = await glob(configFile, { 
+          cwd: projectPath,
+          ignore: ['node_modules/**', '**/node_modules/**']
+        });
+        if (configExists.length > 0) {
+          score += 100; // High weight for config files
+        }
+      }
+      
+      // Special handling for examples/test directories (lower weight)
+      const mainFiles = allFiles.filter(file => 
+        info.extensions.some(ext => file.toLowerCase().endsWith(ext)) &&
+        !file.includes('example') &&
+        !file.includes('test') &&
+        !file.includes('demo') &&
+        !file.includes('sample')
+      ).length;
+      score += mainFiles * 20; // Higher weight for main files
+      
+      languageScores.set(lang, score);
+    }
+
+    // Return language with highest score
+    let maxScore = 0;
+    let primaryLanguage = 'unknown';
+    
+    for (const [lang, score] of languageScores) {
+      if (languages.includes(lang) && score > maxScore) {
+        maxScore = score;
+        primaryLanguage = lang;
       }
     }
 
-    return languages[0];
+    return primaryLanguage !== 'unknown' ? primaryLanguage : languages[0];
   }
 
   getLanguageInfo(language: string): LanguageInfo | undefined {

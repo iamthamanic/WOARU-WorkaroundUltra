@@ -52,9 +52,12 @@ npm link
 wau --help
 ```
 
-### NPM Installation (coming soon):
+### NPM Installation:
 ```bash
-npm install -g workaround-ultra
+npm install -g @iamthamanic/wau
+
+# Or use directly without installing:
+npx @iamthamanic/wau analyze
 ```
 
 ## 📋 Commands

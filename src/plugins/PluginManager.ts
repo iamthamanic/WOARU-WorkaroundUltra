@@ -2,6 +2,9 @@ import { BasePlugin } from './BasePlugin';
 import { NextJsPlugin } from './NextJsPlugin';
 import { PythonPlugin } from './PythonPlugin';
 import { CSharpPlugin } from './CSharpPlugin';
+import { JavaPlugin } from './JavaPlugin';
+import { GoPlugin } from './GoPlugin';
+import { RustPlugin } from './RustPlugin';
 import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
 
 export class PluginManager {
@@ -11,6 +14,9 @@ export class PluginManager {
     this.registerPlugin(new NextJsPlugin());
     this.registerPlugin(new PythonPlugin());
     this.registerPlugin(new CSharpPlugin());
+    this.registerPlugin(new JavaPlugin());
+    this.registerPlugin(new GoPlugin());
+    this.registerPlugin(new RustPlugin());
     // Add more plugins here as they're created
   }
 

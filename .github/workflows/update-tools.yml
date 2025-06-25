@@ -1,0 +1,111 @@
+name: Update Tools Database
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-tools-db:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Update tools database
+        run: |
+          node -e "
+          const { ToolsUpdater } = require('./dist/database/ToolsUpdater.js');
+          const { DatabaseManager } = require('./dist/database/DatabaseManager.js');
+          
+          async function updateDb() {
+            const dbManager = new DatabaseManager();
+            const updater = new ToolsUpdater();
+            
+            try {
+              const currentDb = await dbManager.getDatabase();
+              const shouldUpdate = await updater.checkForUpdates(currentDb);
+              
+              if (shouldUpdate) {
+                console.log('🔄 Updating tools database...');
+                const updatedDb = await updater.generateUpdatedDatabase(currentDb);
+                
+                // Write updated database
+                const fs = require('fs-extra');
+                await fs.writeJson('src/database/tools-db.json', updatedDb, { spaces: 2 });
+                
+                console.log('✅ Tools database updated successfully');
+                process.exit(0);
+              } else {
+                console.log('ℹ️ Database is already up to date');
+                process.exit(0);
+              }
+            } catch (error) {
+              console.error('❌ Failed to update database:', error);
+              process.exit(1);
+            }
+          }
+          
+          updateDb();
+          "
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/database/tools-db.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            🤖 Auto-update tools database
+            
+            - Updated tool popularity statistics
+            - Checked for deprecated packages
+            - Added new trending tools
+            - Updated alternative recommendations
+          title: '🤖 Auto-update Tools Database'
+          body: |
+            ## 🔄 Automated Tools Database Update
+            
+            This PR contains automated updates to the tools database:
+            
+            ### ✅ Updates Performed:
+            - 📊 **Tool Statistics**: Updated NPM downloads and GitHub stars
+            - ⚠️ **Deprecation Check**: Verified tool status and marked deprecated packages
+            - 🆕 **New Tools**: Added trending tools based on popularity metrics
+            - 🔄 **Alternatives**: Updated alternative tool recommendations
+            
+            ### 🤖 Automation Details:
+            - **Trigger**: Weekly scheduled update (Sunday)
+            - **Sources**: NPM Registry, GitHub API, PyPI
+            - **Review**: Please review changes before merging
+            
+            This ensures WAU stays current with the latest development tools and practices.
+            
+            ---
+            *Generated automatically by GitHub Actions*
+          branch: auto-update-tools-db
+          delete-branch: true
+          draft: false

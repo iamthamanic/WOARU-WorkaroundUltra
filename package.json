@@ -1,7 +1,7 @@
 {
-  "name": "workaround-ultra",
+  "name": "@iamthamanic/wau",
   "version": "1.0.0",
-  "description": "Project Setup Autopilot - Analyze and automatically configure development tools",
+  "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {
     "wau": "dist/cli.js"
@@ -11,7 +11,10 @@
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "echo 'No linting configured yet'",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "cli",
@@ -20,9 +23,20 @@
     "project-setup",
     "linting",
     "formatting",
-    "development-tools"
+    "development-tools",
+    "code-analysis",
+    "multi-language",
+    "python",
+    "typescript",
+    "javascript",
+    "csharp",
+    "claude-code",
+    "eslint",
+    "prettier",
+    "black",
+    "ruff"
   ],
-  "author": "Your Name",
+  "author": "iamthamanic",
   "license": "MIT",
   "dependencies": {
     "commander": "^11.1.0",
@@ -51,6 +65,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/workaround-ultra.git"
-  }
+    "url": "https://github.com/iamthamanic/WAU-WorkaroundUltra.git"
+  },
+  "homepage": "https://github.com/iamthamanic/WAU-WorkaroundUltra#readme",
+  "bugs": {
+    "url": "https://github.com/iamthamanic/WAU-WorkaroundUltra/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }
