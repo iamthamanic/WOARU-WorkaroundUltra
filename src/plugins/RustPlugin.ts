@@ -1,16 +1,21 @@
 import { BasePlugin } from './BasePlugin';
-import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
+import {
+  ProjectAnalysis,
+  SetupRecommendation,
+  RefactorSuggestion,
+} from '../types';
 
 export class RustPlugin extends BasePlugin {
   name = 'Rust';
   frameworks = ['rust', 'actix', 'rocket', 'tokio'];
 
   canHandle(analysis: ProjectAnalysis): boolean {
-    return analysis.language === 'Rust' || 
-           analysis.configFiles.some(file => 
-             file.includes('Cargo.toml') || 
-             file.includes('Cargo.lock')
-           );
+    return (
+      analysis.language === 'Rust' ||
+      analysis.configFiles.some(
+        file => file.includes('Cargo.toml') || file.includes('Cargo.lock')
+      )
+    );
   }
 
   getRecommendations(analysis: ProjectAnalysis): SetupRecommendation[] {
@@ -20,10 +25,10 @@ export class RustPlugin extends BasePlugin {
     recommendations.push({
       tool: 'clippy',
       category: 'linting',
-      reason: 'Rust\'s official linter with hundreds of helpful suggestions',
+      reason: "Rust's official linter with hundreds of helpful suggestions",
       packages: [],
       configFiles: ['clippy.toml'],
-      priority: 'high'
+      priority: 'high',
     });
 
     // rustfmt for formatting (comes with Rust)
@@ -33,7 +38,7 @@ export class RustPlugin extends BasePlugin {
       reason: 'Official Rust code formatter for consistent style',
       packages: [],
       configFiles: ['rustfmt.toml'],
-      priority: 'high'
+      priority: 'high',
     });
 
     // Pre-commit hooks
@@ -44,7 +49,7 @@ export class RustPlugin extends BasePlugin {
         reason: 'Run Rust checks before committing code',
         packages: [],
         configFiles: ['.pre-commit-config.yaml'],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -55,7 +60,7 @@ export class RustPlugin extends BasePlugin {
       reason: 'Audit Cargo.lock for crates with security vulnerabilities',
       packages: [],
       configFiles: [],
-      priority: 'high'
+      priority: 'high',
     });
 
     // cargo-deny for dependency management
@@ -65,7 +70,7 @@ export class RustPlugin extends BasePlugin {
       reason: 'Lint your dependencies for licenses, duplicates, and security',
       packages: [],
       configFiles: ['deny.toml'],
-      priority: 'medium'
+      priority: 'medium',
     });
 
     // cargo-tarpaulin for test coverage
@@ -76,7 +81,7 @@ export class RustPlugin extends BasePlugin {
         reason: 'Code coverage reporting tool for Rust',
         packages: [],
         configFiles: [],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -87,7 +92,7 @@ export class RustPlugin extends BasePlugin {
       reason: 'Watch for changes and automatically run cargo commands',
       packages: [],
       configFiles: [],
-      priority: 'low'
+      priority: 'low',
     });
 
     return recommendations;
@@ -105,7 +110,7 @@ export class RustPlugin extends BasePlugin {
           suggestions.push({
             filename: file,
             suggestion: 'Use actix-web extractors for clean request handling',
-            type: 'best-practice'
+            type: 'best-practice',
           });
         }
       }
@@ -114,8 +119,8 @@ export class RustPlugin extends BasePlugin {
         if (file.includes('route')) {
           suggestions.push({
             filename: file,
-            suggestion: 'Use Rocket\'s request guards for validation and auth',
-            type: 'best-practice'
+            suggestion: "Use Rocket's request guards for validation and auth",
+            type: 'best-practice',
           });
         }
       }
@@ -124,8 +129,9 @@ export class RustPlugin extends BasePlugin {
       if (analysis.framework.includes('tokio')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use async/await syntax consistently throughout async functions',
-          type: 'performance'
+          suggestion:
+            'Use async/await syntax consistently throughout async functions',
+          type: 'performance',
         });
       }
 
@@ -133,8 +139,9 @@ export class RustPlugin extends BasePlugin {
       if (file.includes('test') || file.includes('tests')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use #[tokio::test] for async tests in tokio applications',
-          type: 'best-practice'
+          suggestion:
+            'Use #[tokio::test] for async tests in tokio applications',
+          type: 'best-practice',
         });
       }
 
@@ -143,7 +150,7 @@ export class RustPlugin extends BasePlugin {
         suggestions.push({
           filename: file,
           suggestion: 'Consider using #[tokio::main] for async main functions',
-          type: 'best-practice'
+          type: 'best-practice',
         });
       }
 
@@ -152,12 +159,13 @@ export class RustPlugin extends BasePlugin {
         suggestions.push({
           filename: file,
           suggestion: 'Use the ? operator for clean error propagation',
-          type: 'best-practice'
+          type: 'best-practice',
         });
         suggestions.push({
           filename: file,
-          suggestion: 'Consider using thiserror or anyhow for better error handling',
-          type: 'maintainability'
+          suggestion:
+            'Consider using thiserror or anyhow for better error handling',
+          type: 'maintainability',
         });
       }
     });
@@ -178,7 +186,7 @@ export class RustPlugin extends BasePlugin {
       'thiserror',
       'reqwest',
       'sqlx',
-      'diesel'
+      'diesel',
     ];
   }
 }

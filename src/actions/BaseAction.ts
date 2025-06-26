@@ -5,35 +5,41 @@ export abstract class BaseAction {
   abstract description: string;
 
   abstract canExecute(projectPath: string): Promise<boolean>;
-  abstract execute(projectPath: string, options: SetupOptions): Promise<boolean>;
+  abstract execute(
+    projectPath: string,
+    options: SetupOptions
+  ): Promise<boolean>;
   abstract rollback(projectPath: string): Promise<boolean>;
 
-  protected async runCommand(command: string, cwd: string): Promise<{ success: boolean; output: string }> {
+  protected async runCommand(
+    command: string,
+    cwd: string
+  ): Promise<{ success: boolean; output: string }> {
     const { spawn } = await import('child_process');
-    
-    return new Promise((resolve) => {
+
+    return new Promise(resolve => {
       const [cmd, ...args] = command.split(' ');
-      const child = spawn(cmd, args, { 
-        cwd, 
+      const child = spawn(cmd, args, {
+        cwd,
         stdio: 'pipe',
-        shell: true 
+        shell: true,
       });
-      
+
       let output = '';
       let errorOutput = '';
 
-      child.stdout?.on('data', (data) => {
+      child.stdout?.on('data', data => {
         output += data.toString();
       });
 
-      child.stderr?.on('data', (data) => {
+      child.stderr?.on('data', data => {
         errorOutput += data.toString();
       });
 
-      child.on('close', (code) => {
+      child.on('close', code => {
         resolve({
           success: code === 0,
-          output: output + errorOutput
+          output: output + errorOutput,
         });
       });
     });
@@ -61,11 +67,11 @@ export abstract class BaseAction {
   protected async createBackup(filePath: string): Promise<string> {
     const fs = await import('fs-extra');
     const backupPath = `${filePath}.wau-backup-${Date.now()}`;
-    
+
     if (await fs.pathExists(filePath)) {
       await fs.copy(filePath, backupPath);
     }
-    
+
     return backupPath;
   }
 }

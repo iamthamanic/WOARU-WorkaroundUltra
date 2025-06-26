@@ -25,7 +25,7 @@ export class StateManager extends EventEmitter {
       lastAnalysis: new Date(),
       healthScore: 0,
       fileCount: 0,
-      watchedFiles: new Set()
+      watchedFiles: new Set(),
     };
   }
 
@@ -33,7 +33,7 @@ export class StateManager extends EventEmitter {
     try {
       if (await fs.pathExists(this.stateFile)) {
         const savedState = await fs.readJson(this.stateFile);
-        
+
         // Reconstruct Sets and Maps
         this.state = {
           ...savedState,
@@ -41,7 +41,7 @@ export class StateManager extends EventEmitter {
           missingTools: new Set(savedState.missingTools),
           codeIssues: new Map(savedState.codeIssues),
           watchedFiles: new Set(savedState.watchedFiles),
-          lastAnalysis: new Date(savedState.lastAnalysis)
+          lastAnalysis: new Date(savedState.lastAnalysis),
         };
       }
     } catch (error) {
@@ -54,14 +54,14 @@ export class StateManager extends EventEmitter {
 
     try {
       await fs.ensureDir(path.dirname(this.stateFile));
-      
+
       // Convert Sets and Maps for JSON serialization
       const serializableState = {
         ...this.state,
         detectedTools: Array.from(this.state.detectedTools),
         missingTools: Array.from(this.state.missingTools),
         codeIssues: Array.from(this.state.codeIssues.entries()),
-        watchedFiles: Array.from(this.state.watchedFiles)
+        watchedFiles: Array.from(this.state.watchedFiles),
       };
 
       await fs.writeJson(this.stateFile, serializableState, { spaces: 2 });
@@ -84,7 +84,8 @@ export class StateManager extends EventEmitter {
   }
 
   updateFrameworks(frameworks: string[]): void {
-    const frameworksChanged = JSON.stringify(this.state.frameworks) !== JSON.stringify(frameworks);
+    const frameworksChanged =
+      JSON.stringify(this.state.frameworks) !== JSON.stringify(frameworks);
     if (frameworksChanged) {
       this.state.frameworks = frameworks;
       this.dirty = true;
@@ -102,7 +103,10 @@ export class StateManager extends EventEmitter {
   }
 
   addMissingTool(tool: string): void {
-    if (!this.state.missingTools.has(tool) && !this.state.detectedTools.has(tool)) {
+    if (
+      !this.state.missingTools.has(tool) &&
+      !this.state.detectedTools.has(tool)
+    ) {
       this.state.missingTools.add(tool);
       this.dirty = true;
       this.emit('tool_missing', tool);
@@ -111,7 +115,7 @@ export class StateManager extends EventEmitter {
 
   updateCodeIssues(file: string, issues: CodeIssue[]): void {
     const previousIssues = this.state.codeIssues.get(file) || [];
-    
+
     if (issues.length === 0) {
       this.state.codeIssues.delete(file);
     } else {
@@ -119,9 +123,10 @@ export class StateManager extends EventEmitter {
     }
 
     // Check for new critical issues
-    const newCritical = issues.filter(i => 
-      i.severity === 'critical' && 
-      !previousIssues.some(p => p.type === i.type && p.line === i.line)
+    const newCritical = issues.filter(
+      i =>
+        i.severity === 'critical' &&
+        !previousIssues.some(p => p.type === i.type && p.line === i.line)
     );
 
     if (newCritical.length > 0) {
@@ -166,28 +171,29 @@ export class StateManager extends EventEmitter {
   private updateHealthScore(): void {
     const toolCoverage = this.calculateToolCoverage();
     const issueScore = this.calculateIssueScore();
-    
+
     this.state.healthScore = Math.round((toolCoverage + issueScore) / 2);
     this.emit('health_score_updated', this.state.healthScore);
   }
 
   private calculateToolCoverage(): number {
-    const totalTools = this.state.detectedTools.size + this.state.missingTools.size;
+    const totalTools =
+      this.state.detectedTools.size + this.state.missingTools.size;
     if (totalTools === 0) return 100;
-    
+
     return Math.round((this.state.detectedTools.size / totalTools) * 100);
   }
 
   private calculateIssueScore(): number {
     let totalScore = 100;
     const allIssues = Array.from(this.state.codeIssues.values()).flat();
-    
+
     // Deduct points based on severity
     const severityPenalty = {
       critical: 10,
       high: 5,
       medium: 2,
-      low: 1
+      low: 1,
     };
 
     allIssues.forEach(issue => {

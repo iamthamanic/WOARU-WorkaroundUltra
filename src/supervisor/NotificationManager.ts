@@ -14,13 +14,17 @@ export class NotificationManager extends EventEmitter {
     this.config = config;
   }
 
-  async notifyRecommendations(recommendations: ToolRecommendation[]): Promise<void> {
+  async notifyRecommendations(
+    recommendations: ToolRecommendation[]
+  ): Promise<void> {
     if (recommendations.length === 0) return;
 
     // Group by priority
     const critical = recommendations.filter(r => r.priority === 'critical');
     const high = recommendations.filter(r => r.priority === 'high');
-    const other = recommendations.filter(r => r.priority === 'medium' || r.priority === 'low');
+    const other = recommendations.filter(
+      r => r.priority === 'medium' || r.priority === 'low'
+    );
 
     // Terminal notification
     if (this.config.terminal) {
@@ -40,11 +44,15 @@ export class NotificationManager extends EventEmitter {
 
   async notifyIssues(issues: CodeIssue[]): Promise<void> {
     const criticalIssues = issues.filter(i => i.severity === 'critical');
-    
+
     if (criticalIssues.length > 0 && this.config.terminal) {
       console.log(chalk.red('\n⚠️  Critical Issues Detected:'));
       criticalIssues.forEach(issue => {
-        console.log(chalk.red(`   - ${issue.file}:${issue.line || '?'} - ${issue.message}`));
+        console.log(
+          chalk.red(
+            `   - ${issue.file}:${issue.line || '?'} - ${issue.message}`
+          )
+        );
       });
     }
   }
@@ -86,23 +94,26 @@ export class NotificationManager extends EventEmitter {
     console.log(chalk.gray('💡 Run "wau recommendations" for details\n'));
   }
 
-  private async showDesktopNotification(critical: ToolRecommendation[]): Promise<void> {
+  private async showDesktopNotification(
+    critical: ToolRecommendation[]
+  ): Promise<void> {
     // Check cooldown
     const lastNotification = this.notificationHistory.get('desktop');
     if (lastNotification) {
-      const minutesSince = (Date.now() - lastNotification.getTime()) / 1000 / 60;
+      const minutesSince =
+        (Date.now() - lastNotification.getTime()) / 1000 / 60;
       if (minutesSince < this.cooldownMinutes) {
         return;
       }
     }
 
     const tools = critical.map(r => r.tool).join(', ');
-    
+
     notifier.notify({
       title: 'WAU: Critical Tools Missing',
       message: `Missing: ${tools}. Run "wau setup" to fix.`,
       sound: true,
-      wait: false
+      wait: false,
     });
 
     this.notificationHistory.set('desktop', new Date());
@@ -115,7 +126,7 @@ export class NotificationManager extends EventEmitter {
       await axios.post(this.config.webhook, {
         type,
         timestamp: new Date().toISOString(),
-        data
+        data,
       });
     } catch (error) {
       console.error('Failed to send webhook:', error);
@@ -143,7 +154,7 @@ export class NotificationManager extends EventEmitter {
       notifier.notify({
         title: 'WAU Error',
         message,
-        sound: true
+        sound: true,
       });
     }
   }
@@ -152,10 +163,11 @@ export class NotificationManager extends EventEmitter {
     if (!this.config.terminal) return;
 
     const bar = this.createProgressBar(score);
-    const color = score >= 80 ? chalk.green : score >= 60 ? chalk.yellow : chalk.red;
-    
+    const color =
+      score >= 80 ? chalk.green : score >= 60 ? chalk.yellow : chalk.red;
+
     let message = color(`Health Score: ${score}/100 ${bar}`);
-    
+
     if (previous !== undefined) {
       const diff = score - previous;
       if (diff > 0) {

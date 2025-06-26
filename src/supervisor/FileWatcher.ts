@@ -14,7 +14,7 @@ export class FileWatcher extends EventEmitter {
   private processChanges = debounce(() => {
     const changes = Array.from(this.fileChangeQueue.values());
     this.fileChangeQueue.clear();
-    
+
     if (changes.length > 0) {
       this.emit('batch_changes', changes);
     }
@@ -35,7 +35,7 @@ export class FileWatcher extends EventEmitter {
       '**/.DS_Store',
       '**/package-lock.json',
       '**/yarn.lock',
-      '**/pnpm-lock.yaml'
+      '**/pnpm-lock.yaml',
     ];
   }
 
@@ -51,15 +51,15 @@ export class FileWatcher extends EventEmitter {
       ignoreInitial: false,
       awaitWriteFinish: {
         stabilityThreshold: 300,
-        pollInterval: 100
-      }
+        pollInterval: 100,
+      },
     });
 
     this.watcher
-      .on('add', (filePath) => this.handleFileEvent('add', filePath))
-      .on('change', (filePath) => this.handleFileEvent('change', filePath))
-      .on('unlink', (filePath) => this.handleFileEvent('unlink', filePath))
-      .on('error', (error) => this.emit('error', error))
+      .on('add', filePath => this.handleFileEvent('add', filePath))
+      .on('change', filePath => this.handleFileEvent('change', filePath))
+      .on('unlink', filePath => this.handleFileEvent('unlink', filePath))
+      .on('error', error => this.emit('error', error))
       .on('ready', () => {
         console.log('File watcher ready');
         this.emit('ready');
@@ -74,7 +74,10 @@ export class FileWatcher extends EventEmitter {
     }
   }
 
-  private handleFileEvent(type: 'add' | 'change' | 'unlink', filePath: string): void {
+  private handleFileEvent(
+    type: 'add' | 'change' | 'unlink',
+    filePath: string
+  ): void {
     // Only watch relevant files
     if (!this.isRelevantFile(filePath)) {
       return;
@@ -84,12 +87,12 @@ export class FileWatcher extends EventEmitter {
     const change: FileChange = {
       type,
       path: relativePath,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Queue the change
     this.fileChangeQueue.set(relativePath, change);
-    
+
     // Emit immediate event for critical files
     if (this.isCriticalFile(filePath)) {
       this.emit('critical_file_change', change);
@@ -103,9 +106,15 @@ export class FileWatcher extends EventEmitter {
     const ext = path.extname(filePath).toLowerCase();
     const relevantExtensions = [
       // JavaScript/TypeScript
-      '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+      '.mjs',
+      '.cjs',
       // Python
-      '.py', '.pyw',
+      '.py',
+      '.pyw',
       // Rust
       '.rs',
       // Go
@@ -115,9 +124,14 @@ export class FileWatcher extends EventEmitter {
       // Java
       '.java',
       // Config files
-      '.json', '.yaml', '.yml', '.toml', '.xml',
+      '.json',
+      '.yaml',
+      '.yml',
+      '.toml',
+      '.xml',
       // Other
-      '.md', '.txt'
+      '.md',
+      '.txt',
     ];
 
     return relevantExtensions.includes(ext);
@@ -136,7 +150,7 @@ export class FileWatcher extends EventEmitter {
       '.eslintrc.json',
       '.prettierrc',
       'pyproject.toml',
-      '.gitignore'
+      '.gitignore',
     ];
 
     return criticalFiles.includes(fileName);
@@ -144,7 +158,7 @@ export class FileWatcher extends EventEmitter {
 
   addIgnorePattern(pattern: string): void {
     this.ignorePatterns.push(pattern);
-    
+
     // Restart watcher with new patterns
     if (this.watcher) {
       this.stop();
@@ -154,14 +168,14 @@ export class FileWatcher extends EventEmitter {
 
   getWatchedFileCount(): number {
     if (!this.watcher) return 0;
-    
+
     const watched = this.watcher.getWatched();
     let count = 0;
-    
+
     Object.values(watched).forEach(files => {
       count += files.length;
     });
-    
+
     return count;
   }
 }

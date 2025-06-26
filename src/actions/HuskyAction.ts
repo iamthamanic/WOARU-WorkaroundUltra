@@ -9,11 +9,12 @@ export class HuskyAction extends BaseAction {
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
     const packageJson = await this.readJsonFile(packageJsonPath);
-    
+
     if (!packageJson) return false;
-    
+
     // Check if husky is already installed
-    const hasHusky = packageJson.devDependencies?.husky || packageJson.dependencies?.husky;
+    const hasHusky =
+      packageJson.devDependencies?.husky || packageJson.dependencies?.husky;
     return !hasHusky;
   }
 
@@ -38,26 +39,33 @@ export class HuskyAction extends BaseAction {
       const packages = ['husky', 'lint-staged'];
       const installCommand = `npm install --save-dev ${packages.join(' ')}`;
       const installResult = await this.runCommand(installCommand, projectPath);
-      
+
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);
       }
 
       // Initialize husky
-      const huskyInitResult = await this.runCommand('npx husky init', projectPath);
+      const huskyInitResult = await this.runCommand(
+        'npx husky init',
+        projectPath
+      );
       if (!huskyInitResult.success) {
-        throw new Error(`Failed to initialize husky: ${huskyInitResult.output}`);
+        throw new Error(
+          `Failed to initialize husky: ${huskyInitResult.output}`
+        );
       }
 
       // Read package.json to detect available scripts
       const packageJson = await this.readJsonFile(packageJsonPath);
       const hasLint = packageJson.scripts?.lint;
       const hasFormat = packageJson.scripts?.format;
-      const hasTypeCheck = packageJson.scripts?.['type-check'] || packageJson.scripts?.tsc;
+      const hasTypeCheck =
+        packageJson.scripts?.['type-check'] || packageJson.scripts?.tsc;
 
       // Create pre-commit hook
       const preCommitPath = path.join(huskyDir, 'pre-commit');
-      const preCommitContent = '#!/usr/bin/env sh\n. "$(dirname -- "$0")/_/husky.sh"\n\nnpx lint-staged\n';
+      const preCommitContent =
+        '#!/usr/bin/env sh\n. "$(dirname -- "$0")/_/husky.sh"\n\nnpx lint-staged\n';
 
       const fs = await import('fs-extra');
       await fs.writeFile(preCommitPath, preCommitContent);
@@ -85,7 +93,7 @@ export class HuskyAction extends BaseAction {
       if (hasTypeCheck) {
         lintStagedConfig['*.{ts,tsx}'] = [
           ...(lintStagedConfig['*.{ts,tsx}'] || commands),
-          () => 'tsc --noEmit'
+          () => 'tsc --noEmit',
         ];
       }
 
@@ -103,9 +111,10 @@ export class HuskyAction extends BaseAction {
 
       await this.writeJsonFile(packageJsonPath, packageJson);
 
-      console.log('✅ Husky and lint-staged installed and configured successfully');
+      console.log(
+        '✅ Husky and lint-staged installed and configured successfully'
+      );
       return true;
-
     } catch (error) {
       console.error('❌ Failed to setup Husky:', error);
       return false;
@@ -116,10 +125,12 @@ export class HuskyAction extends BaseAction {
     try {
       const fs = await import('fs-extra');
       const glob = await import('glob');
-      
+
       // Find backup files
-      const backupFiles = await glob.glob(path.join(projectPath, '*.wau-backup-*'));
-      
+      const backupFiles = await glob.glob(
+        path.join(projectPath, '*.wau-backup-*')
+      );
+
       for (const backupFile of backupFiles) {
         const originalFile = backupFile.replace(/\.wau-backup-\d+$/, '');
         await fs.move(backupFile, originalFile, { overwrite: true });

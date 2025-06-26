@@ -46,13 +46,18 @@ export class ToolRecommendationEngine extends EventEmitter {
 
   private async loadToolDefinitions(): Promise<void> {
     const toolFiles = await fs.readdir(this.toolsPath);
-    
+
     for (const file of toolFiles) {
       if (file.endsWith('.yaml') || file.endsWith('.yml')) {
         try {
-          const content = await fs.readFile(path.join(this.toolsPath, file), 'utf-8');
-          const definitions = yaml.load(content) as { tools: Record<string, ToolDefinition> };
-          
+          const content = await fs.readFile(
+            path.join(this.toolsPath, file),
+            'utf-8'
+          );
+          const definitions = yaml.load(content) as {
+            tools: Record<string, ToolDefinition>;
+          };
+
           Object.entries(definitions.tools).forEach(([name, def]) => {
             this.toolDefinitions.set(name, { ...def, name });
           });
@@ -65,10 +70,13 @@ export class ToolRecommendationEngine extends EventEmitter {
 
   async getRecommendations(state: ProjectState): Promise<ToolRecommendation[]> {
     const recommendations: ToolRecommendation[] = [];
-    
+
     // Get language and framework specific tools
-    const relevantTools = this.getRelevantTools(state.language, state.frameworks);
-    
+    const relevantTools = this.getRelevantTools(
+      state.language,
+      state.frameworks
+    );
+
     // Check each tool
     for (const tool of relevantTools) {
       if (state.detectedTools.has(tool.name)) {
@@ -85,18 +93,21 @@ export class ToolRecommendationEngine extends EventEmitter {
     return this.prioritizeRecommendations(recommendations);
   }
 
-  private getRelevantTools(language: string, frameworks: string[]): ToolDefinition[] {
+  private getRelevantTools(
+    language: string,
+    frameworks: string[]
+  ): ToolDefinition[] {
     const relevant: ToolDefinition[] = [];
-    
+
     this.toolDefinitions.forEach(tool => {
       // Check language match
-      const langMatch = tool.languages.includes(language) || 
-                       tool.languages.includes('*');
-      
+      const langMatch =
+        tool.languages.includes(language) || tool.languages.includes('*');
+
       // Check framework match
-      const frameworkMatch = !tool.frameworks || 
-                            tool.frameworks.some(f => frameworks.includes(f));
-      
+      const frameworkMatch =
+        !tool.frameworks || tool.frameworks.some(f => frameworks.includes(f));
+
       if (langMatch && frameworkMatch && !tool.deprecated) {
         relevant.push(tool);
       }
@@ -106,7 +117,7 @@ export class ToolRecommendationEngine extends EventEmitter {
   }
 
   private async evaluateTool(
-    tool: ToolDefinition, 
+    tool: ToolDefinition,
     state: ProjectState
   ): Promise<ToolRecommendation | null> {
     const evidence: CodeEvidence[] = [];
@@ -116,10 +127,10 @@ export class ToolRecommendationEngine extends EventEmitter {
     // Check detection patterns
     for (const pattern of tool.detectPatterns) {
       const detected = await this.checkPattern(pattern, state);
-      
+
       if (detected.found) {
         evidence.push(...detected.evidence);
-        
+
         // Update priority
         const patternPriority = pattern.severity || 'medium';
         if (this.comparePriority(patternPriority, highestPriority) > 0) {
@@ -149,7 +160,7 @@ export class ToolRecommendationEngine extends EventEmitter {
       evidence,
       autoFixable: !!setupCommand,
       setupCommand,
-      category: tool.category
+      category: tool.category,
     };
   }
 
@@ -166,7 +177,7 @@ export class ToolRecommendationEngine extends EventEmitter {
         if (!exists) {
           evidence.push({
             file: pattern.pattern,
-            pattern: 'missing_config'
+            pattern: 'missing_config',
           });
         }
         break;
@@ -174,19 +185,24 @@ export class ToolRecommendationEngine extends EventEmitter {
       case 'code_smell':
         // Use code analyzer to find patterns
         const insights = await this.codeAnalyzer.analyzeCodebase(
-          state.projectPath, 
+          state.projectPath,
           state.language
         );
-        
+
         // Check if this tool would help with found issues
         insights.forEach((insight, toolName) => {
-          if (toolName === pattern.pattern || (insight.patterns && insight.patterns.includes(pattern.pattern))) {
-            evidence.push(...insight.evidence.map(e => ({
-              file: e.split(':')[0],
-              line: parseInt(e.split(':')[1]) || undefined,
-              snippet: e,
-              pattern: pattern.pattern
-            })));
+          if (
+            toolName === pattern.pattern ||
+            (insight.patterns && insight.patterns.includes(pattern.pattern))
+          ) {
+            evidence.push(
+              ...insight.evidence.map(e => ({
+                file: e.split(':')[0],
+                line: parseInt(e.split(':')[1]) || undefined,
+                snippet: e,
+                pattern: pattern.pattern,
+              }))
+            );
           }
         });
         break;
@@ -196,7 +212,7 @@ export class ToolRecommendationEngine extends EventEmitter {
         if (!state.detectedTools.has(pattern.pattern)) {
           evidence.push({
             file: 'package.json',
-            pattern: `missing_dependency:${pattern.pattern}`
+            pattern: `missing_dependency:${pattern.pattern}`,
           });
         }
         break;
@@ -208,7 +224,7 @@ export class ToolRecommendationEngine extends EventEmitter {
           files.forEach(file => {
             evidence.push({
               file,
-              pattern: pattern.pattern
+              pattern: pattern.pattern,
             });
           });
         }
@@ -225,26 +241,29 @@ export class ToolRecommendationEngine extends EventEmitter {
     switch (pattern.type) {
       case 'missing_config':
         return `Configuration file ${pattern.pattern} not found`;
-      
+
       case 'code_smell':
         const count = evidence.length;
         return `Found ${count} ${pattern.pattern} patterns in your code`;
-      
+
       case 'missing_dependency':
         return `Dependency ${pattern.pattern} is recommended but not installed`;
-      
+
       case 'file_pattern':
         return `Found files matching ${pattern.pattern} that could benefit from this tool`;
-      
+
       default:
         return `Detected pattern: ${pattern.pattern}`;
     }
   }
 
-  private getSetupCommand(tool: ToolDefinition, projectPath: string): string | undefined {
+  private getSetupCommand(
+    tool: ToolDefinition,
+    projectPath: string
+  ): string | undefined {
     // Detect package manager
     const packageManager = this.detectPackageManager(projectPath);
-    
+
     const instruction = tool.setupInstructions.find(
       inst => inst.packageManager === packageManager
     );
@@ -256,14 +275,18 @@ export class ToolRecommendationEngine extends EventEmitter {
     // Simple detection - could be enhanced
     if (fs.existsSync(path.join(projectPath, 'pnpm-lock.yaml'))) return 'pnpm';
     if (fs.existsSync(path.join(projectPath, 'yarn.lock'))) return 'yarn';
-    if (fs.existsSync(path.join(projectPath, 'package-lock.json'))) return 'npm';
+    if (fs.existsSync(path.join(projectPath, 'package-lock.json')))
+      return 'npm';
     if (fs.existsSync(path.join(projectPath, 'requirements.txt'))) return 'pip';
     if (fs.existsSync(path.join(projectPath, 'Cargo.toml'))) return 'cargo';
     if (fs.existsSync(path.join(projectPath, 'go.mod'))) return 'go';
     return 'npm'; // default
   }
 
-  private async findFiles(projectPath: string, pattern: string): Promise<string[]> {
+  private async findFiles(
+    projectPath: string,
+    pattern: string
+  ): Promise<string[]> {
     // Simplified file finding - would use glob in production
     const files: string[] = [];
     // Implementation would scan for files matching pattern
@@ -274,7 +297,7 @@ export class ToolRecommendationEngine extends EventEmitter {
     recommendations: ToolRecommendation[]
   ): ToolRecommendation[] {
     const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    
+
     return recommendations.sort((a, b) => {
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
@@ -294,13 +317,16 @@ export class ToolRecommendationEngine extends EventEmitter {
   ): Promise<ToolRecommendation[]> {
     // Quick check for single file changes
     const recommendations: ToolRecommendation[] = [];
-    
+
     // Check if this file triggers any tool recommendations
-    const relevantTools = this.getRelevantTools(state.language, state.frameworks);
-    
+    const relevantTools = this.getRelevantTools(
+      state.language,
+      state.frameworks
+    );
+
     for (const tool of relevantTools) {
       if (state.detectedTools.has(tool.name)) continue;
-      
+
       // Quick pattern check for this file only
       for (const pattern of tool.detectPatterns) {
         if (pattern.type === 'code_smell') {
@@ -312,13 +338,15 @@ export class ToolRecommendationEngine extends EventEmitter {
               tool: tool.name,
               reason: `Found ${pattern.pattern} in ${path.basename(filePath)}`,
               priority: pattern.severity || 'medium',
-              evidence: [{
-                file: filePath,
-                pattern: pattern.pattern
-              }],
+              evidence: [
+                {
+                  file: filePath,
+                  pattern: pattern.pattern,
+                },
+              ],
               autoFixable: true,
               setupCommand: this.getSetupCommand(tool, state.projectPath),
-              category: tool.category
+              category: tool.category,
             });
             break;
           }

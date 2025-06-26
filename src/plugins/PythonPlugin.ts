@@ -1,17 +1,24 @@
 import { BasePlugin } from './BasePlugin';
-import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
+import {
+  ProjectAnalysis,
+  SetupRecommendation,
+  RefactorSuggestion,
+} from '../types';
 
 export class PythonPlugin extends BasePlugin {
   name = 'Python';
   frameworks = ['python'];
 
   canHandle(analysis: ProjectAnalysis): boolean {
-    return analysis.language === 'Python' || 
-           analysis.configFiles.some(file => 
-             file.includes('requirements.txt') || 
-             file.includes('setup.py') || 
-             file.includes('pyproject.toml')
-           );
+    return (
+      analysis.language === 'Python' ||
+      analysis.configFiles.some(
+        file =>
+          file.includes('requirements.txt') ||
+          file.includes('setup.py') ||
+          file.includes('pyproject.toml')
+      )
+    );
   }
 
   getRecommendations(analysis: ProjectAnalysis): SetupRecommendation[] {
@@ -25,19 +32,22 @@ export class PythonPlugin extends BasePlugin {
         reason: 'The uncompromising Python code formatter',
         packages: ['black'],
         configFiles: ['pyproject.toml'],
-        priority: 'high'
+        priority: 'high',
       });
     }
 
     // Flake8 or Ruff linter
-    if (!this.hasPackage(analysis, 'flake8') && !this.hasPackage(analysis, 'ruff')) {
+    if (
+      !this.hasPackage(analysis, 'flake8') &&
+      !this.hasPackage(analysis, 'ruff')
+    ) {
       recommendations.push({
         tool: 'ruff',
         category: 'linting',
         reason: 'Extremely fast Python linter, written in Rust',
         packages: ['ruff'],
         configFiles: ['pyproject.toml', '.ruff.toml'],
-        priority: 'high'
+        priority: 'high',
       });
     }
 
@@ -49,7 +59,7 @@ export class PythonPlugin extends BasePlugin {
         reason: 'Simple powerful testing with Python',
         packages: ['pytest', 'pytest-cov'],
         configFiles: ['pytest.ini', 'pyproject.toml'],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -61,7 +71,7 @@ export class PythonPlugin extends BasePlugin {
         reason: 'Static type checker for Python',
         packages: ['mypy'],
         configFiles: ['mypy.ini', 'pyproject.toml'],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -73,19 +83,22 @@ export class PythonPlugin extends BasePlugin {
         reason: 'Git hook scripts for identifying issues before submission',
         packages: ['pre-commit'],
         configFiles: ['.pre-commit-config.yaml'],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
     // Poetry for dependency management
-    if (!this.hasConfigFile(analysis, 'poetry.lock') && !this.hasConfigFile(analysis, 'Pipfile')) {
+    if (
+      !this.hasConfigFile(analysis, 'poetry.lock') &&
+      !this.hasConfigFile(analysis, 'Pipfile')
+    ) {
       recommendations.push({
         tool: 'poetry',
         category: 'dependency-management',
         reason: 'Modern dependency management for Python',
         packages: [],
         configFiles: ['pyproject.toml', 'poetry.lock'],
-        priority: 'low'
+        priority: 'low',
       });
     }
 
@@ -96,9 +109,7 @@ export class PythonPlugin extends BasePlugin {
     const suggestions: RefactorSuggestion[] = [];
 
     // Look for Python files
-    const pythonFiles = analysis.structure.filter(file => 
-      file.endsWith('.py')
-    );
+    const pythonFiles = analysis.structure.filter(file => file.endsWith('.py'));
 
     pythonFiles.forEach(file => {
       // Django specific
@@ -106,15 +117,17 @@ export class PythonPlugin extends BasePlugin {
         if (file.includes('views.py')) {
           suggestions.push({
             filename: file,
-            suggestion: 'Consider using Django class-based views for better code reuse',
-            type: 'maintainability'
+            suggestion:
+              'Consider using Django class-based views for better code reuse',
+            type: 'maintainability',
           });
         }
         if (file.includes('models.py')) {
           suggestions.push({
             filename: file,
-            suggestion: 'Add proper __str__ methods to models for better debugging',
-            type: 'maintainability'
+            suggestion:
+              'Add proper __str__ methods to models for better debugging',
+            type: 'maintainability',
           });
         }
       }
@@ -125,7 +138,7 @@ export class PythonPlugin extends BasePlugin {
           suggestions.push({
             filename: file,
             suggestion: 'Consider using Flask blueprints for better modularity',
-            type: 'maintainability'
+            type: 'maintainability',
           });
         }
       }
@@ -134,8 +147,9 @@ export class PythonPlugin extends BasePlugin {
       if (file.includes('test_') || file.includes('_test.py')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use pytest fixtures for better test organization and reuse',
-          type: 'best-practice'
+          suggestion:
+            'Use pytest fixtures for better test organization and reuse',
+          type: 'best-practice',
         });
       }
 
@@ -143,8 +157,9 @@ export class PythonPlugin extends BasePlugin {
       if (file.endsWith('__main__.py') || file === 'main.py') {
         suggestions.push({
           filename: file,
-          suggestion: 'Add if __name__ == "__main__": guard for better modularity',
-          type: 'best-practice'
+          suggestion:
+            'Add if __name__ == "__main__": guard for better modularity',
+          type: 'best-practice',
         });
       }
     });
@@ -162,7 +177,7 @@ export class PythonPlugin extends BasePlugin {
       'pre-commit',
       'poetry',
       'ipython',
-      'jupyter'
+      'jupyter',
     ];
   }
 }

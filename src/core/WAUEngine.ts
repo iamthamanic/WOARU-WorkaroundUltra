@@ -24,26 +24,39 @@ export class WAUEngine {
   async analyzeProject(projectPath: string): Promise<AnalysisResult> {
     try {
       console.log(chalk.blue('🔍 Analyzing project...'));
-      
+
       const analysis = await this.projectAnalyzer.analyzeProject(projectPath);
-      const metadata = await this.projectAnalyzer.getProjectMetadata(projectPath);
-      
-      console.log(chalk.gray(`📦 Project: ${metadata.name} (${metadata.version})`));
+      const metadata =
+        await this.projectAnalyzer.getProjectMetadata(projectPath);
+
+      console.log(
+        chalk.gray(`📦 Project: ${metadata.name} (${metadata.version})`)
+      );
       console.log(chalk.gray(`🔧 Language: ${analysis.language}`));
-      console.log(chalk.gray(`⚡ Frameworks: ${analysis.framework.join(', ') || 'None detected'}`));
+      console.log(
+        chalk.gray(
+          `⚡ Frameworks: ${analysis.framework.join(', ') || 'None detected'}`
+        )
+      );
 
       // Analyze code for specific insights
       console.log(chalk.blue('🔬 Analyzing codebase for insights...'));
-      const codeInsights = await this.codeAnalyzer.analyzeCodebase(projectPath, analysis.language);
+      const codeInsights = await this.codeAnalyzer.analyzeCodebase(
+        projectPath,
+        analysis.language
+      );
 
       // Get recommendations from plugins with code insights
-      const recommendations = this.pluginManager.getAllRecommendations(analysis);
-      
+      const recommendations =
+        this.pluginManager.getAllRecommendations(analysis);
+
       // Enhance recommendations with code insights
       this.enhanceRecommendationsWithInsights(recommendations, codeInsights);
-      
-      const refactorSuggestions = this.pluginManager.getAllRefactorSuggestions(analysis);
-      const frameworkSpecificPackages = this.pluginManager.getAllSpecificPackages(analysis);
+
+      const refactorSuggestions =
+        this.pluginManager.getAllRefactorSuggestions(analysis);
+      const frameworkSpecificPackages =
+        this.pluginManager.getAllSpecificPackages(analysis);
 
       // Detect already installed tools
       const installedTools = await this.detectInstalledTools(analysis);
@@ -52,41 +65,52 @@ export class WAUEngine {
       const claudeAutomations = this.generateClaudeAutomations(analysis);
 
       return {
-        setup_recommendations: recommendations.map(r => 
-          `Install ${r.tool} for ${r.category}: ${r.reason}`
+        setup_recommendations: recommendations.map(
+          r => `Install ${r.tool} for ${r.category}: ${r.reason}`
         ),
         tool_suggestions: recommendations.map(r => r.tool),
         framework_specific_tools: frameworkSpecificPackages,
         refactor_suggestions: refactorSuggestions,
         installed_tools_detected: installedTools,
         claude_automations: claudeAutomations,
-        code_insights: Array.from(codeInsights.entries()).map(([tool, insight]) => ({
-          tool,
-          reason: insight.reason,
-          evidence: insight.evidence,
-          severity: insight.severity
-        }))
+        code_insights: Array.from(codeInsights.entries()).map(
+          ([tool, insight]) => ({
+            tool,
+            reason: insight.reason,
+            evidence: insight.evidence,
+            severity: insight.severity,
+          })
+        ),
       };
-
     } catch (error) {
-      throw new Error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async setupProject(projectPath: string, options: SetupOptions = {}): Promise<boolean> {
+  async setupProject(
+    projectPath: string,
+    options: SetupOptions = {}
+  ): Promise<boolean> {
     try {
       const analysis = await this.projectAnalyzer.analyzeProject(projectPath);
-      const recommendations = this.pluginManager.getAllRecommendations(analysis);
+      const recommendations =
+        this.pluginManager.getAllRecommendations(analysis);
 
       if (recommendations.length === 0) {
         console.log(chalk.green('✅ Project is already well configured!'));
         return true;
       }
 
-      console.log(chalk.blue(`🎯 Found ${recommendations.length} recommendations`));
+      console.log(
+        chalk.blue(`🎯 Found ${recommendations.length} recommendations`)
+      );
 
       if (options.dryRun) {
-        console.log(chalk.yellow('🔍 Dry run mode - showing what would be done:'));
+        console.log(
+          chalk.yellow('🔍 Dry run mode - showing what would be done:')
+        );
         recommendations.forEach(rec => {
           console.log(chalk.gray(`  • ${rec.tool}: ${rec.reason}`));
         });
@@ -94,34 +118,39 @@ export class WAUEngine {
       }
 
       const result = await this.actionManager.executeRecommendations(
-        projectPath, 
-        recommendations, 
+        projectPath,
+        recommendations,
         options
       );
 
       return result.success;
-
     } catch (error) {
-      console.error(chalk.red(`❌ Setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      console.error(
+        chalk.red(
+          `❌ Setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
       return false;
     }
   }
 
   async updateDatabase(): Promise<boolean> {
     console.log(chalk.blue('📡 Updating tools database...'));
-    
+
     const success = await this.databaseManager.updateDatabase();
-    
+
     if (success) {
       console.log(chalk.green('✅ Database updated successfully'));
     } else {
       console.log(chalk.red('❌ Failed to update database'));
     }
-    
+
     return success;
   }
 
-  private async detectInstalledTools(analysis: ProjectAnalysis): Promise<string[]> {
+  private async detectInstalledTools(
+    analysis: ProjectAnalysis
+  ): Promise<string[]> {
     const installedTools: string[] = [];
     const allDeps = [...analysis.dependencies, ...analysis.devDependencies];
     const fs = require('fs-extra');
@@ -129,65 +158,91 @@ export class WAUEngine {
 
     // Check for both dependencies AND configuration files
     const toolChecks = {
-      'eslint': {
+      eslint: {
         packages: ['eslint'],
-        configs: ['.eslintrc.js', '.eslintrc.json', '.eslintrc.yml', '.eslintrc.yaml', '.eslintrc', 'eslint.config.js']
+        configs: [
+          '.eslintrc.js',
+          '.eslintrc.json',
+          '.eslintrc.yml',
+          '.eslintrc.yaml',
+          '.eslintrc',
+          'eslint.config.js',
+        ],
       },
-      'prettier': {
+      prettier: {
         packages: ['prettier'],
-        configs: ['.prettierrc', '.prettierrc.json', '.prettierrc.yml', '.prettierrc.yaml', '.prettierrc.js', 'prettier.config.js']
+        configs: [
+          '.prettierrc',
+          '.prettierrc.json',
+          '.prettierrc.yml',
+          '.prettierrc.yaml',
+          '.prettierrc.js',
+          'prettier.config.js',
+        ],
       },
-      'husky': {
+      husky: {
         packages: ['husky'],
-        configs: ['.husky', '.git/hooks']
+        configs: ['.husky', '.git/hooks'],
       },
-      'jest': {
+      jest: {
         packages: ['jest'],
-        configs: ['jest.config.js', 'jest.config.ts', 'jest.config.json']
+        configs: ['jest.config.js', 'jest.config.ts', 'jest.config.json'],
       },
-      'typescript': {
+      typescript: {
         packages: ['typescript'],
-        configs: ['tsconfig.json']
+        configs: ['tsconfig.json'],
       },
-      'tailwindcss': {
+      tailwindcss: {
         packages: ['tailwindcss'],
-        configs: ['tailwind.config.js', 'tailwind.config.ts']
+        configs: ['tailwind.config.js', 'tailwind.config.ts'],
       },
-      'postcss': {
+      postcss: {
         packages: ['postcss'],
-        configs: ['postcss.config.js', 'postcss.config.ts']
+        configs: ['postcss.config.js', 'postcss.config.ts'],
       },
-      'commitlint': {
+      commitlint: {
         packages: ['@commitlint/cli', '@commitlint/config-conventional'],
-        configs: ['commitlint.config.js', '.commitlintrc.js', '.commitlintrc.json']
+        configs: [
+          'commitlint.config.js',
+          '.commitlintrc.js',
+          '.commitlintrc.json',
+        ],
       },
-      'webpack': {
+      webpack: {
         packages: ['webpack'],
-        configs: ['webpack.config.js', 'webpack.config.ts']
+        configs: ['webpack.config.js', 'webpack.config.ts'],
       },
-      'vite': {
+      vite: {
         packages: ['vite'],
-        configs: ['vite.config.js', 'vite.config.ts']
+        configs: ['vite.config.js', 'vite.config.ts'],
       },
-      'rollup': {
+      rollup: {
         packages: ['rollup'],
-        configs: ['rollup.config.js', 'rollup.config.ts']
+        configs: ['rollup.config.js', 'rollup.config.ts'],
       },
-      'babel': {
+      babel: {
         packages: ['@babel/core', 'babel-core'],
-        configs: ['.babelrc', '.babelrc.js', '.babelrc.json', 'babel.config.js']
-      }
+        configs: [
+          '.babelrc',
+          '.babelrc.js',
+          '.babelrc.json',
+          'babel.config.js',
+        ],
+      },
     };
 
     for (const [tool, check] of Object.entries(toolChecks)) {
       // Check if tool is installed via package dependencies
       const hasPackage = check.packages.some(pkg => allDeps.includes(pkg));
-      
+
       // Check if tool has configuration files
       let hasConfig = false;
       if (check.configs) {
         for (const configFile of check.configs) {
-          const configPath = path.join(analysis.projectPath || process.cwd(), configFile);
+          const configPath = path.join(
+            analysis.projectPath || process.cwd(),
+            configFile
+          );
           try {
             if (await fs.pathExists(configPath)) {
               hasConfig = true;
@@ -213,13 +268,19 @@ export class WAUEngine {
 
     // Framework-specific automations
     if (analysis.framework.includes('nextjs')) {
-      automations.push('Generate Next.js API routes with proper TypeScript types');
-      automations.push('Create reusable Next.js components with proper prop types');
+      automations.push(
+        'Generate Next.js API routes with proper TypeScript types'
+      );
+      automations.push(
+        'Create reusable Next.js components with proper prop types'
+      );
       automations.push('Setup Next.js middleware for authentication');
     }
 
     if (analysis.framework.includes('react')) {
-      automations.push('Refactor class components to functional components with hooks');
+      automations.push(
+        'Refactor class components to functional components with hooks'
+      );
       automations.push('Generate custom hooks for common functionality');
       automations.push('Create component documentation with Storybook');
     }
@@ -232,7 +293,10 @@ export class WAUEngine {
     }
 
     // Testing automations
-    if (!analysis.devDependencies.includes('jest') && !analysis.devDependencies.includes('vitest')) {
+    if (
+      !analysis.devDependencies.includes('jest') &&
+      !analysis.devDependencies.includes('vitest')
+    ) {
       automations.push('Setup testing framework with example tests');
       automations.push('Generate unit tests for existing components');
     }
@@ -245,15 +309,23 @@ export class WAUEngine {
     return automations;
   }
 
-  private enhanceRecommendationsWithInsights(recommendations: any[], codeInsights: Map<string, any>): void {
+  private enhanceRecommendationsWithInsights(
+    recommendations: any[],
+    codeInsights: Map<string, any>
+  ): void {
     recommendations.forEach(rec => {
       const insight = codeInsights.get(rec.tool);
       if (insight) {
         rec.reason = insight.reason;
         rec.evidence = insight.evidence;
-        rec.priority = insight.severity === 'critical' ? 'high' : 
-                      insight.severity === 'high' ? 'high' :
-                      insight.severity === 'medium' ? 'medium' : 'low';
+        rec.priority =
+          insight.severity === 'critical'
+            ? 'high'
+            : insight.severity === 'high'
+              ? 'high'
+              : insight.severity === 'medium'
+                ? 'medium'
+                : 'low';
       }
     });
   }

@@ -36,7 +36,19 @@ export interface ToolsDatabase {
 export interface ProjectAnalysis {
   language: string;
   framework: string[];
-  packageManager: 'npm' | 'yarn' | 'pnpm' | 'pip' | 'poetry' | 'cargo' | 'maven' | 'gradle' | 'dotnet' | 'go' | 'composer' | 'gem';
+  packageManager:
+    | 'npm'
+    | 'yarn'
+    | 'pnpm'
+    | 'pip'
+    | 'poetry'
+    | 'cargo'
+    | 'maven'
+    | 'gradle'
+    | 'dotnet'
+    | 'go'
+    | 'composer'
+    | 'gem';
   dependencies: string[];
   devDependencies: string[];
   scripts: Record<string, string>;

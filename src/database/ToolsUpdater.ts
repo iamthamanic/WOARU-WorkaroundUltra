@@ -21,7 +21,7 @@ export class ToolsUpdater {
   async checkForUpdates(currentDb: ToolsDatabase): Promise<boolean> {
     const lastUpdate = new Date(currentDb.lastUpdated);
     const now = new Date();
-    
+
     // Check if update is needed
     if (now.getTime() - lastUpdate.getTime() < this.updateInterval) {
       console.log('Database is up to date');
@@ -31,7 +31,10 @@ export class ToolsUpdater {
     return true;
   }
 
-  async updateToolStats(toolName: string, packageManager: string): Promise<PackageStats | null> {
+  async updateToolStats(
+    toolName: string,
+    packageManager: string
+  ): Promise<PackageStats | null> {
     try {
       switch (packageManager) {
         case 'npm':
@@ -69,7 +72,7 @@ export class ToolsUpdater {
         try {
           const ghResponse = await axios.get(
             `${this.githubApi}/repos/${match[1]}/${match[2]}`,
-            { headers: { 'Accept': 'application/vnd.github.v3+json' } }
+            { headers: { Accept: 'application/vnd.github.v3+json' } }
           );
           stars = ghResponse.data.stargazers_count;
         } catch (error) {
@@ -83,22 +86,26 @@ export class ToolsUpdater {
       downloads: downloads.data.downloads || 0,
       stars,
       lastUpdate: packageData.time || new Date().toISOString(),
-      deprecated: packageData.deprecated || false
+      deprecated: packageData.deprecated || false,
     };
   }
 
   private async getPyPiStats(packageName: string): Promise<PackageStats> {
-    const response = await axios.get(`https://pypi.org/pypi/${packageName}/json`);
+    const response = await axios.get(
+      `https://pypi.org/pypi/${packageName}/json`
+    );
     const info = response.data.info;
-    
+
     // PyPI doesn't provide download stats in the API anymore
     // We'd need to use BigQuery for accurate stats
-    
+
     return {
       name: packageName,
       downloads: 0, // Would need BigQuery
       stars: 0, // Would need to parse home_page for GitHub
-      lastUpdate: response.data.releases[info.version]?.[0]?.upload_time || new Date().toISOString()
+      lastUpdate:
+        response.data.releases[info.version]?.[0]?.upload_time ||
+        new Date().toISOString(),
     };
   }
 
@@ -106,28 +113,31 @@ export class ToolsUpdater {
     const response = await axios.get(
       `https://api.nuget.org/v3-flatcontainer/${packageName.toLowerCase()}/index.json`
     );
-    
+
     return {
       name: packageName,
       downloads: 0, // Would need additional API call
       stars: 0,
-      lastUpdate: new Date().toISOString()
+      lastUpdate: new Date().toISOString(),
     };
   }
 
-  async findBetterAlternatives(toolName: string, category: string): Promise<string[]> {
+  async findBetterAlternatives(
+    toolName: string,
+    category: string
+  ): Promise<string[]> {
     // This would query various sources to find alternatives
     const alternatives: string[] = [];
-    
+
     // Known replacements
     const knownReplacements: Record<string, string[]> = {
-      'tslint': ['eslint', '@typescript-eslint/eslint-plugin'],
-      'request': ['axios', 'node-fetch', 'got'],
-      'moment': ['date-fns', 'dayjs'],
-      'gulp': ['vite', 'webpack', 'rollup'],
-      'bower': ['npm', 'yarn'],
-      'coffeescript': ['typescript'],
-      'node-sass': ['sass', 'dart-sass']
+      tslint: ['eslint', '@typescript-eslint/eslint-plugin'],
+      request: ['axios', 'node-fetch', 'got'],
+      moment: ['date-fns', 'dayjs'],
+      gulp: ['vite', 'webpack', 'rollup'],
+      bower: ['npm', 'yarn'],
+      coffeescript: ['typescript'],
+      'node-sass': ['sass', 'dart-sass'],
     };
 
     if (knownReplacements[toolName.toLowerCase()]) {
@@ -137,16 +147,22 @@ export class ToolsUpdater {
     return alternatives;
   }
 
-  async generateUpdatedDatabase(currentDb: ToolsDatabase): Promise<ToolsDatabase> {
+  async generateUpdatedDatabase(
+    currentDb: ToolsDatabase
+  ): Promise<ToolsDatabase> {
     const updatedDb = JSON.parse(JSON.stringify(currentDb));
     updatedDb.lastUpdated = new Date().toISOString().split('T')[0];
 
     // Update tool stats for each category
-    for (const [categoryName, categoryTools] of Object.entries(updatedDb.categories)) {
-      for (const [toolName, toolConfig] of Object.entries(categoryTools as Record<string, any>)) {
+    for (const [categoryName, categoryTools] of Object.entries(
+      updatedDb.categories
+    )) {
+      for (const [toolName, toolConfig] of Object.entries(
+        categoryTools as Record<string, any>
+      )) {
         // Get latest stats
         const stats = await this.updateToolStats(toolName, 'npm');
-        
+
         if (stats) {
           (toolConfig as any).metadata = {
             popularity: stats.downloads,
@@ -154,12 +170,16 @@ export class ToolsUpdater {
             npmDownloads: stats.downloads,
             githubStars: stats.stars,
             deprecated: stats.deprecated,
-            alternatives: await this.findBetterAlternatives(toolName, categoryName)
+            alternatives: await this.findBetterAlternatives(
+              toolName,
+              categoryName
+            ),
           };
 
           // Mark deprecated tools
           if (stats.deprecated) {
-            (toolConfig as any).description = `[DEPRECATED] ${(toolConfig as any).description}`;
+            (toolConfig as any).description =
+              `[DEPRECATED] ${(toolConfig as any).description}`;
           }
         }
       }
@@ -178,10 +198,11 @@ export class ToolsUpdater {
     // Add Biome (successor to Rome, alternative to ESLint+Prettier)
     if (!(db.categories.linting as any).biome) {
       (db.categories.linting as any).biome = {
-        description: 'Fast formatter and linter for JavaScript, TypeScript, JSON, and more',
+        description:
+          'Fast formatter and linter for JavaScript, TypeScript, JSON, and more',
         packages: ['@biomejs/biome'],
         configs: {
-          default: ['@biomejs/biome']
+          default: ['@biomejs/biome'],
         },
         configFiles: ['biome.json'],
         metadata: {
@@ -189,8 +210,8 @@ export class ToolsUpdater {
           lastChecked: new Date().toISOString(),
           npmDownloads: 50000,
           githubStars: 5000,
-          alternatives: []
-        }
+          alternatives: [],
+        },
       };
     }
 
@@ -209,8 +230,8 @@ export class ToolsUpdater {
           lastChecked: new Date().toISOString(),
           npmDownloads: 0,
           githubStars: 60000,
-          alternatives: ['node', 'deno']
-        }
+          alternatives: ['node', 'deno'],
+        },
       };
     }
   }
@@ -258,7 +279,12 @@ jobs:
           delete-branch: true
 `;
 
-    const workflowPath = path.join(process.cwd(), '.github', 'workflows', 'update-tools.yml');
+    const workflowPath = path.join(
+      process.cwd(),
+      '.github',
+      'workflows',
+      'update-tools.yml'
+    );
     await fs.ensureDir(path.dirname(workflowPath));
     await fs.writeFile(workflowPath, workflow);
   }

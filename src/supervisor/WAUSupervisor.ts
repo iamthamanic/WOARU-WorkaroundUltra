@@ -8,11 +8,11 @@ import { NotificationManager } from './NotificationManager';
 import { ToolRecommendationEngine } from './ToolRecommendationEngine';
 import { ProjectAnalyzer } from '../analyzer/ProjectAnalyzer';
 import { LanguageDetector } from '../analyzer/LanguageDetector';
-import { 
-  SupervisorConfig, 
-  ProjectState, 
-  FileChange, 
-  ToolRecommendation 
+import {
+  SupervisorConfig,
+  ProjectState,
+  FileChange,
+  ToolRecommendation,
 } from './types';
 
 export class WAUSupervisor extends EventEmitter {
@@ -22,7 +22,7 @@ export class WAUSupervisor extends EventEmitter {
   private toolEngine: ToolRecommendationEngine;
   private projectAnalyzer: ProjectAnalyzer;
   private languageDetector: LanguageDetector;
-  
+
   private config: SupervisorConfig;
   private isRunning = false;
   private projectPath: string;
@@ -30,18 +30,20 @@ export class WAUSupervisor extends EventEmitter {
 
   constructor(projectPath: string, config: Partial<SupervisorConfig> = {}) {
     super();
-    
+
     this.projectPath = path.resolve(projectPath);
     this.config = this.mergeConfig(config);
-    
+
     // Initialize components
     this.stateManager = new StateManager(this.projectPath);
     this.fileWatcher = new FileWatcher(this.projectPath);
-    this.notificationManager = new NotificationManager(this.config.notifications);
+    this.notificationManager = new NotificationManager(
+      this.config.notifications
+    );
     this.toolEngine = new ToolRecommendationEngine();
     this.projectAnalyzer = new ProjectAnalyzer();
     this.languageDetector = new LanguageDetector();
-    
+
     this.setupEventListeners();
   }
 
@@ -53,12 +55,12 @@ export class WAUSupervisor extends EventEmitter {
         terminal: true,
         desktop: false,
         webhook: undefined,
-        ...config.notifications
+        ...config.notifications,
       },
       ignoreTools: [],
       watchPatterns: ['**/*'],
       dashboard: false,
-      ...config
+      ...config,
     };
   }
 
@@ -72,8 +74,10 @@ export class WAUSupervisor extends EventEmitter {
       this.handleCriticalFileChange(change);
     });
 
-    this.fileWatcher.on('error', (error) => {
-      this.notificationManager.showError(`File watcher error: ${error.message}`);
+    this.fileWatcher.on('error', error => {
+      this.notificationManager.showError(
+        `File watcher error: ${error.message}`
+      );
     });
 
     // State manager events
@@ -86,7 +90,7 @@ export class WAUSupervisor extends EventEmitter {
       this.notificationManager.showSuccess(`Tool detected: ${tool}`);
     });
 
-    this.stateManager.on('critical_issues', (issues) => {
+    this.stateManager.on('critical_issues', issues => {
       this.notificationManager.notifyIssues(issues);
     });
 
@@ -108,18 +112,18 @@ export class WAUSupervisor extends EventEmitter {
       // Initialize components
       await this.toolEngine.initialize();
       await this.stateManager.load();
-      
+
       // Perform initial analysis
       await this.performInitialAnalysis();
-      
+
       // Start file watching
       this.fileWatcher.start();
-      
+
       // Start auto-save
       this.stateManager.startAutoSave();
-      
+
       this.isRunning = true;
-      
+
       this.notificationManager.showSuccess(
         `WAU Supervisor started for ${path.basename(this.projectPath)}`
       );
@@ -128,9 +132,10 @@ export class WAUSupervisor extends EventEmitter {
       await this.checkRecommendations();
 
       this.emit('started');
-      
     } catch (error) {
-      this.notificationManager.showError(`Failed to start supervisor: ${error}`);
+      this.notificationManager.showError(
+        `Failed to start supervisor: ${error}`
+      );
       throw error;
     }
   }
@@ -142,10 +147,10 @@ export class WAUSupervisor extends EventEmitter {
 
     this.fileWatcher.stop();
     await this.stateManager.save();
-    
+
     this.isRunning = false;
     this.notificationManager.showSuccess('WAU Supervisor stopped');
-    
+
     this.emit('stopped');
   }
 
@@ -154,23 +159,29 @@ export class WAUSupervisor extends EventEmitter {
 
     try {
       // Detect language and frameworks
-      const language = await this.languageDetector.detectPrimaryLanguage(this.projectPath);
-      const frameworks = await this.languageDetector.detectFrameworks(this.projectPath, language);
-      
+      const language = await this.languageDetector.detectPrimaryLanguage(
+        this.projectPath
+      );
+      const frameworks = await this.languageDetector.detectFrameworks(
+        this.projectPath,
+        language
+      );
+
       // Analyze project structure
-      const analysis = await this.projectAnalyzer.analyzeProject(this.projectPath);
-      
+      const analysis = await this.projectAnalyzer.analyzeProject(
+        this.projectPath
+      );
+
       // Update state
       this.stateManager.updateLanguage(language);
       this.stateManager.updateFrameworks(frameworks);
-      
+
       // Detect existing tools
       this.detectExistingTools(analysis);
-      
+
       this.notificationManager.showSuccess(
         `Project analyzed: ${language} ${frameworks.length > 0 ? `(${frameworks.join(', ')})` : ''}`
       );
-      
     } catch (error) {
       this.notificationManager.showError(`Analysis failed: ${error}`);
     }
@@ -188,12 +199,12 @@ export class WAUSupervisor extends EventEmitter {
       ruff: /ruff/,
       pytest: /pytest/,
       clippy: /clippy/,
-      'cargo-audit': /cargo-audit/
+      'cargo-audit': /cargo-audit/,
     };
 
     const allDeps = [
       ...analysis.dependencies,
-      ...analysis.devDependencies
+      ...analysis.devDependencies,
     ].join(' ');
 
     Object.entries(toolPatterns).forEach(([tool, pattern]) => {
@@ -211,7 +222,7 @@ export class WAUSupervisor extends EventEmitter {
       '.husky': 'husky',
       'pyproject.toml': 'black',
       'mypy.ini': 'mypy',
-      'rustfmt.toml': 'rustfmt'
+      'rustfmt.toml': 'rustfmt',
     };
 
     analysis.configFiles.forEach((file: string) => {
@@ -231,7 +242,7 @@ export class WAUSupervisor extends EventEmitter {
 
     // Check for new recommendations based on changes
     const fileSpecificRecommendations: ToolRecommendation[] = [];
-    
+
     for (const change of changes) {
       if (change.type === 'change') {
         const recommendations = await this.toolEngine.checkSingleFile(
@@ -243,19 +254,24 @@ export class WAUSupervisor extends EventEmitter {
     }
 
     if (fileSpecificRecommendations.length > 0) {
-      await this.notificationManager.notifyRecommendations(fileSpecificRecommendations);
+      await this.notificationManager.notifyRecommendations(
+        fileSpecificRecommendations
+      );
     }
 
     // Periodic full check (every 5 minutes)
-    const timeSinceLastCheck = Date.now() - this.lastRecommendationCheck.getTime();
+    const timeSinceLastCheck =
+      Date.now() - this.lastRecommendationCheck.getTime();
     if (timeSinceLastCheck > 5 * 60 * 1000) {
       await this.checkRecommendations();
     }
   }
 
   private async handleCriticalFileChange(change: FileChange): Promise<void> {
-    this.notificationManager.showProgress(`Critical file changed: ${change.path}`);
-    
+    this.notificationManager.showProgress(
+      `Critical file changed: ${change.path}`
+    );
+
     // Immediate re-analysis for critical files
     if (change.path === 'package.json' || change.path.includes('config')) {
       await this.performInitialAnalysis();
@@ -266,15 +282,17 @@ export class WAUSupervisor extends EventEmitter {
     try {
       const state = this.stateManager.getState();
       const recommendations = await this.toolEngine.getRecommendations(state);
-      
+
       // Filter out ignored tools
       const filteredRecommendations = recommendations.filter(
         rec => !this.config.ignoreTools.includes(rec.tool)
       );
 
       if (filteredRecommendations.length > 0) {
-        await this.notificationManager.notifyRecommendations(filteredRecommendations);
-        
+        await this.notificationManager.notifyRecommendations(
+          filteredRecommendations
+        );
+
         // Auto-setup if enabled
         if (this.config.autoSetup) {
           await this.autoSetupTools(filteredRecommendations);
@@ -282,18 +300,25 @@ export class WAUSupervisor extends EventEmitter {
       }
 
       this.lastRecommendationCheck = new Date();
-      
     } catch (error) {
-      this.notificationManager.showError(`Recommendation check failed: ${error}`);
+      this.notificationManager.showError(
+        `Recommendation check failed: ${error}`
+      );
     }
   }
 
-  private async autoSetupTools(recommendations: ToolRecommendation[]): Promise<void> {
-    const autoFixable = recommendations.filter(r => r.autoFixable && r.setupCommand);
-    
+  private async autoSetupTools(
+    recommendations: ToolRecommendation[]
+  ): Promise<void> {
+    const autoFixable = recommendations.filter(
+      r => r.autoFixable && r.setupCommand
+    );
+
     if (autoFixable.length === 0) return;
 
-    this.notificationManager.showProgress(`Auto-setting up ${autoFixable.length} tools...`);
+    this.notificationManager.showProgress(
+      `Auto-setting up ${autoFixable.length} tools...`
+    );
 
     for (const rec of autoFixable) {
       try {
@@ -305,15 +330,17 @@ export class WAUSupervisor extends EventEmitter {
           this.notificationManager.showSuccess(`${rec.tool} setup completed`);
         }
       } catch (error) {
-        this.notificationManager.showError(`Failed to setup ${rec.tool}: ${error}`);
+        this.notificationManager.showError(
+          `Failed to setup ${rec.tool}: ${error}`
+        );
       }
     }
   }
 
   // Public methods
-  getStatus(): { 
-    isRunning: boolean; 
-    state: ProjectState; 
+  getStatus(): {
+    isRunning: boolean;
+    state: ProjectState;
     watchedFiles: number;
     config: SupervisorConfig;
   } {
@@ -321,14 +348,14 @@ export class WAUSupervisor extends EventEmitter {
       isRunning: this.isRunning,
       state: this.stateManager.getState(),
       watchedFiles: this.fileWatcher.getWatchedFileCount(),
-      config: this.config
+      config: this.config,
     };
   }
 
   async getCurrentRecommendations(): Promise<ToolRecommendation[]> {
     const state = this.stateManager.getState();
     const recommendations = await this.toolEngine.getRecommendations(state);
-    
+
     return recommendations.filter(
       rec => !this.config.ignoreTools.includes(rec.tool)
     );
@@ -345,7 +372,9 @@ export class WAUSupervisor extends EventEmitter {
     const index = this.config.ignoreTools.indexOf(tool);
     if (index !== -1) {
       this.config.ignoreTools.splice(index, 1);
-      this.notificationManager.showSuccess(`Tool ${tool} removed from ignore list`);
+      this.notificationManager.showSuccess(
+        `Tool ${tool} removed from ignore list`
+      );
     }
   }
 }

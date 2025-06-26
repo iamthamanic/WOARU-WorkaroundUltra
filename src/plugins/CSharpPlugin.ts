@@ -1,16 +1,21 @@
 import { BasePlugin } from './BasePlugin';
-import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
+import {
+  ProjectAnalysis,
+  SetupRecommendation,
+  RefactorSuggestion,
+} from '../types';
 
 export class CSharpPlugin extends BasePlugin {
   name = 'C#';
   frameworks = ['csharp', 'dotnet'];
 
   canHandle(analysis: ProjectAnalysis): boolean {
-    return analysis.language === 'C#' || 
-           analysis.configFiles.some(file => 
-             file.endsWith('.csproj') || 
-             file.endsWith('.sln')
-           );
+    return (
+      analysis.language === 'C#' ||
+      analysis.configFiles.some(
+        file => file.endsWith('.csproj') || file.endsWith('.sln')
+      )
+    );
   }
 
   getRecommendations(analysis: ProjectAnalysis): SetupRecommendation[] {
@@ -24,7 +29,7 @@ export class CSharpPlugin extends BasePlugin {
         reason: 'Maintain consistent coding styles across different editors',
         packages: [],
         configFiles: ['.editorconfig'],
-        priority: 'high'
+        priority: 'high',
       });
     }
 
@@ -35,7 +40,7 @@ export class CSharpPlugin extends BasePlugin {
       reason: 'Code formatter for .NET projects',
       packages: [],
       configFiles: [],
-      priority: 'high'
+      priority: 'high',
     });
 
     // xUnit for testing
@@ -46,7 +51,7 @@ export class CSharpPlugin extends BasePlugin {
         reason: 'Modern testing framework for .NET',
         packages: ['xunit', 'xunit.runner.visualstudio'],
         configFiles: [],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -57,7 +62,7 @@ export class CSharpPlugin extends BasePlugin {
       reason: 'Code quality and security analysis for C#',
       packages: ['SonarAnalyzer.CSharp'],
       configFiles: [],
-      priority: 'medium'
+      priority: 'medium',
     });
 
     // Husky.Net for git hooks
@@ -67,7 +72,7 @@ export class CSharpPlugin extends BasePlugin {
       reason: '.NET version of Husky for git hooks',
       packages: ['Husky'],
       configFiles: ['.husky/task-runner.json'],
-      priority: 'low'
+      priority: 'low',
     });
 
     return recommendations;
@@ -84,13 +89,15 @@ export class CSharpPlugin extends BasePlugin {
         if (file.includes('Controller.cs')) {
           suggestions.push({
             filename: file,
-            suggestion: 'Consider using async/await for all database operations',
-            type: 'performance'
+            suggestion:
+              'Consider using async/await for all database operations',
+            type: 'performance',
           });
           suggestions.push({
             filename: file,
-            suggestion: 'Use dependency injection for services instead of static calls',
-            type: 'best-practice'
+            suggestion:
+              'Use dependency injection for services instead of static calls',
+            type: 'best-practice',
           });
         }
       }
@@ -99,8 +106,9 @@ export class CSharpPlugin extends BasePlugin {
       if (file.includes('DbContext') || file.includes('Context.cs')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use IQueryable for better query performance with Entity Framework',
-          type: 'performance'
+          suggestion:
+            'Use IQueryable for better query performance with Entity Framework',
+          type: 'performance',
         });
       }
 
@@ -108,8 +116,9 @@ export class CSharpPlugin extends BasePlugin {
       if (file.includes('Service.cs') || file.includes('Repository.cs')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Implement interfaces for better testability and loose coupling',
-          type: 'maintainability'
+          suggestion:
+            'Implement interfaces for better testability and loose coupling',
+          type: 'maintainability',
         });
       }
 
@@ -117,8 +126,9 @@ export class CSharpPlugin extends BasePlugin {
       if (file.includes('Test.cs') || file.includes('Tests.cs')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use AAA pattern (Arrange, Act, Assert) for test organization',
-          type: 'best-practice'
+          suggestion:
+            'Use AAA pattern (Arrange, Act, Assert) for test organization',
+          type: 'best-practice',
         });
       }
     });
@@ -135,7 +145,7 @@ export class CSharpPlugin extends BasePlugin {
       'FluentAssertions',
       'Serilog',
       'AutoMapper',
-      'FluentValidation'
+      'FluentValidation',
     ];
   }
 }

@@ -10,7 +10,8 @@ export class DatabaseManager {
 
   constructor() {
     this.localDbPath = path.join(__dirname, 'tools-db.json');
-    this.remoteDbUrl = 'https://raw.githubusercontent.com/iamthamanic/WAU-WorkaroundUltra/main/src/database/tools-db.json';
+    this.remoteDbUrl =
+      'https://raw.githubusercontent.com/iamthamanic/WAU-WorkaroundUltra/main/src/database/tools-db.json';
   }
 
   async getDatabase(): Promise<ToolsDatabase> {
@@ -31,11 +32,11 @@ export class DatabaseManager {
   async updateDatabase(): Promise<boolean> {
     try {
       const response = await axios.get(this.remoteDbUrl, {
-        timeout: 10000
+        timeout: 10000,
       });
-      
+
       const remoteDb: ToolsDatabase = response.data;
-      
+
       // Validate database structure
       if (!this.validateDatabase(remoteDb)) {
         throw new Error('Invalid database structure received from remote');
@@ -50,7 +51,7 @@ export class DatabaseManager {
       // Save new database
       await fs.writeFile(this.localDbPath, JSON.stringify(remoteDb, null, 2));
       this.cachedDb = remoteDb;
-      
+
       return true;
     } catch (error) {
       console.error('Failed to update database:', error);
@@ -71,39 +72,44 @@ export class DatabaseManager {
   async getToolsForFramework(framework: string): Promise<string[]> {
     const db = await this.getDatabase();
     const frameworkConfig = db.frameworks[framework];
-    
+
     if (!frameworkConfig) {
       return [];
     }
 
     const tools: string[] = [];
-    Object.entries(frameworkConfig.recommendedTools).forEach(([category, categoryTools]) => {
-      tools.push(...categoryTools);
-    });
+    Object.entries(frameworkConfig.recommendedTools).forEach(
+      ([category, categoryTools]) => {
+        tools.push(...categoryTools);
+      }
+    );
 
     return [...new Set(tools)]; // Remove duplicates
   }
 
   async getToolConfig(toolName: string, framework?: string): Promise<any> {
     const db = await this.getDatabase();
-    
+
     // Search through all categories for the tool
     for (const [categoryName, categoryTools] of Object.entries(db.categories)) {
       if (categoryTools[toolName]) {
         const toolConfig = categoryTools[toolName];
-        
+
         // Return framework-specific config if available
         if (framework && toolConfig.configs && toolConfig.configs[framework]) {
           return {
             ...toolConfig,
-            packages: [...toolConfig.packages, ...toolConfig.configs[framework]]
+            packages: [
+              ...toolConfig.packages,
+              ...toolConfig.configs[framework],
+            ],
           };
         }
-        
+
         return toolConfig;
       }
     }
-    
+
     return null;
   }
 }

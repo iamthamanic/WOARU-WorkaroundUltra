@@ -5,7 +5,11 @@ import { CSharpPlugin } from './CSharpPlugin';
 import { JavaPlugin } from './JavaPlugin';
 import { GoPlugin } from './GoPlugin';
 import { RustPlugin } from './RustPlugin';
-import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
+import {
+  ProjectAnalysis,
+  SetupRecommendation,
+  RefactorSuggestion,
+} from '../types';
 
 export class PluginManager {
   private plugins: BasePlugin[] = [];
@@ -38,13 +42,13 @@ export class PluginManager {
     });
 
     // Remove duplicates based on tool name
-    const uniqueRecommendations = allRecommendations.filter((rec, index, self) => 
-      index === self.findIndex(r => r.tool === rec.tool)
+    const uniqueRecommendations = allRecommendations.filter(
+      (rec, index, self) => index === self.findIndex(r => r.tool === rec.tool)
     );
 
     // Sort by priority
     return uniqueRecommendations.sort((a, b) => {
-      const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
   }

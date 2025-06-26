@@ -9,11 +9,13 @@ export class PrettierAction extends BaseAction {
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
     const packageJson = await this.readJsonFile(packageJsonPath);
-    
+
     if (!packageJson) return false;
-    
+
     // Check if prettier is already installed
-    const hasPrettier = packageJson.devDependencies?.prettier || packageJson.dependencies?.prettier;
+    const hasPrettier =
+      packageJson.devDependencies?.prettier ||
+      packageJson.dependencies?.prettier;
     return !hasPrettier;
   }
 
@@ -37,7 +39,9 @@ export class PrettierAction extends BaseAction {
 
       // Detect if Tailwind is present
       const packageJson = await this.readJsonFile(packageJsonPath);
-      const hasTailwind = packageJson?.dependencies?.tailwindcss || packageJson?.devDependencies?.tailwindcss;
+      const hasTailwind =
+        packageJson?.dependencies?.tailwindcss ||
+        packageJson?.devDependencies?.tailwindcss;
 
       // Install prettier packages
       const packages = ['prettier'];
@@ -47,7 +51,7 @@ export class PrettierAction extends BaseAction {
 
       const installCommand = `npm install --save-dev ${packages.join(' ')}`;
       const installResult = await this.runCommand(installCommand, projectPath);
-      
+
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);
       }
@@ -60,7 +64,7 @@ export class PrettierAction extends BaseAction {
         printWidth: 80,
         tabWidth: 2,
         useTabs: false,
-        ...(hasTailwind && { plugins: ['prettier-plugin-tailwindcss'] })
+        ...(hasTailwind && { plugins: ['prettier-plugin-tailwindcss'] }),
       };
 
       await this.writeJsonFile(prettierrcPath, prettierConfig);
@@ -97,7 +101,6 @@ Thumbs.db
 
       console.log('✅ Prettier installed and configured successfully');
       return true;
-
     } catch (error) {
       console.error('❌ Failed to setup Prettier:', error);
       return false;
@@ -108,10 +111,12 @@ Thumbs.db
     try {
       const fs = await import('fs-extra');
       const glob = await import('glob');
-      
+
       // Find backup files
-      const backupFiles = await glob.glob(path.join(projectPath, '*.wau-backup-*'));
-      
+      const backupFiles = await glob.glob(
+        path.join(projectPath, '*.wau-backup-*')
+      );
+
       for (const backupFile of backupFiles) {
         const originalFile = backupFile.replace(/\.wau-backup-\d+$/, '');
         await fs.move(backupFile, originalFile, { overwrite: true });

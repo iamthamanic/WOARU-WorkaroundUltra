@@ -12,24 +12,40 @@ export class ProjectAnalyzer {
   }
   async analyzeProject(projectPath: string): Promise<ProjectAnalysis> {
     // Detect primary language first
-    const primaryLanguage = await this.languageDetector.detectPrimaryLanguage(projectPath);
-    const allLanguages = await this.languageDetector.detectLanguages(projectPath);
-    
+    const primaryLanguage =
+      await this.languageDetector.detectPrimaryLanguage(projectPath);
+    const allLanguages =
+      await this.languageDetector.detectLanguages(projectPath);
+
     if (primaryLanguage === 'unknown') {
-      throw new Error('Could not detect project language. Make sure you are in a valid project directory.');
+      throw new Error(
+        'Could not detect project language. Make sure you are in a valid project directory.'
+      );
     }
-    
+
     // Get language-specific dependencies
-    const dependencies = await this.getDependencies(projectPath, primaryLanguage);
-    const devDependencies = await this.getDevDependencies(projectPath, primaryLanguage);
+    const dependencies = await this.getDependencies(
+      projectPath,
+      primaryLanguage
+    );
+    const devDependencies = await this.getDevDependencies(
+      projectPath,
+      primaryLanguage
+    );
     const scripts = await this.getScripts(projectPath, primaryLanguage);
-    
+
     // Detect frameworks based on language
-    const frameworks = await this.languageDetector.detectFrameworks(projectPath, primaryLanguage);
-    
+    const frameworks = await this.languageDetector.detectFrameworks(
+      projectPath,
+      primaryLanguage
+    );
+
     const analysis: ProjectAnalysis = {
-      language: primaryLanguage === 'javascript' ? await this.detectLanguage(projectPath) : 
-                this.languageDetector.getLanguageInfo(primaryLanguage)?.name || primaryLanguage,
+      language:
+        primaryLanguage === 'javascript'
+          ? await this.detectLanguage(projectPath)
+          : this.languageDetector.getLanguageInfo(primaryLanguage)?.name ||
+            primaryLanguage,
       framework: frameworks,
       packageManager: await this.detectPackageManager(projectPath),
       dependencies,
@@ -37,7 +53,7 @@ export class ProjectAnalyzer {
       scripts,
       configFiles: await this.findConfigFiles(projectPath),
       structure: await this.analyzeStructure(projectPath),
-      detectedLanguages: allLanguages
+      detectedLanguages: allLanguages,
     };
 
     return analysis;
@@ -54,27 +70,36 @@ export class ProjectAnalyzer {
   private async detectLanguage(projectPath: string): Promise<string> {
     const tsconfigPath = path.join(projectPath, 'tsconfig.json');
     const hasTypeScript = await fs.pathExists(tsconfigPath);
-    
+
     if (hasTypeScript) {
       return 'TypeScript';
     }
 
     // Check for TypeScript files in the project
-    const tsFiles = await glob('**/*.{ts,tsx}', { 
+    const tsFiles = await glob('**/*.{ts,tsx}', {
       cwd: projectPath,
-      ignore: ['node_modules/**', 'dist/**', 'build/**']
+      ignore: ['node_modules/**', 'dist/**', 'build/**'],
     });
 
     return tsFiles.length > 0 ? 'TypeScript' : 'JavaScript';
   }
 
-  private async detectFrameworks(projectPath: string, packageJson: any): Promise<string[]> {
+  private async detectFrameworks(
+    projectPath: string,
+    packageJson: any
+  ): Promise<string[]> {
     const frameworks: string[] = [];
-    const allDeps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+    const allDeps = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+    };
 
     // Next.js
-    if (allDeps.next || await fs.pathExists(path.join(projectPath, 'next.config.js')) || 
-        await fs.pathExists(path.join(projectPath, 'next.config.ts'))) {
+    if (
+      allDeps.next ||
+      (await fs.pathExists(path.join(projectPath, 'next.config.js'))) ||
+      (await fs.pathExists(path.join(projectPath, 'next.config.ts')))
+    ) {
       frameworks.push('nextjs');
     }
 
@@ -99,15 +124,20 @@ export class ProjectAnalyzer {
     }
 
     // Vite
-    if (allDeps.vite || await fs.pathExists(path.join(projectPath, 'vite.config.js')) ||
-        await fs.pathExists(path.join(projectPath, 'vite.config.ts'))) {
+    if (
+      allDeps.vite ||
+      (await fs.pathExists(path.join(projectPath, 'vite.config.js'))) ||
+      (await fs.pathExists(path.join(projectPath, 'vite.config.ts')))
+    ) {
       frameworks.push('vite');
     }
 
     return frameworks;
   }
 
-  private async detectPackageManager(projectPath: string): Promise<ProjectAnalysis['packageManager']> {
+  private async detectPackageManager(
+    projectPath: string
+  ): Promise<ProjectAnalysis['packageManager']> {
     // Node.js package managers
     if (await fs.pathExists(path.join(projectPath, 'pnpm-lock.yaml'))) {
       return 'pnpm';
@@ -118,7 +148,7 @@ export class ProjectAnalyzer {
     if (await fs.pathExists(path.join(projectPath, 'package-lock.json'))) {
       return 'npm';
     }
-    
+
     // Python package managers
     if (await fs.pathExists(path.join(projectPath, 'poetry.lock'))) {
       return 'poetry';
@@ -129,13 +159,15 @@ export class ProjectAnalyzer {
     if (await fs.pathExists(path.join(projectPath, 'requirements.txt'))) {
       return 'pip';
     }
-    
+
     // Rust
-    if (await fs.pathExists(path.join(projectPath, 'Cargo.lock')) ||
-        await fs.pathExists(path.join(projectPath, 'Cargo.toml'))) {
+    if (
+      (await fs.pathExists(path.join(projectPath, 'Cargo.lock'))) ||
+      (await fs.pathExists(path.join(projectPath, 'Cargo.toml')))
+    ) {
       return 'cargo';
     }
-    
+
     // Java
     if (await fs.pathExists(path.join(projectPath, 'pom.xml'))) {
       return 'maven';
@@ -143,28 +175,28 @@ export class ProjectAnalyzer {
     if (await fs.pathExists(path.join(projectPath, 'build.gradle'))) {
       return 'gradle';
     }
-    
+
     // C#/.NET
     const csprojFiles = await glob('*.csproj', { cwd: projectPath });
     if (csprojFiles.length > 0) {
       return 'dotnet';
     }
-    
+
     // Go
     if (await fs.pathExists(path.join(projectPath, 'go.mod'))) {
       return 'go';
     }
-    
+
     // PHP
     if (await fs.pathExists(path.join(projectPath, 'composer.lock'))) {
       return 'composer';
     }
-    
+
     // Ruby
     if (await fs.pathExists(path.join(projectPath, 'Gemfile.lock'))) {
       return 'gem';
     }
-    
+
     return 'npm'; // default
   }
 
@@ -181,16 +213,16 @@ export class ProjectAnalyzer {
       'jest.config.{js,ts,json}',
       'tailwind.config.{js,ts}',
       'postcss.config.{js,ts}',
-      '.env*'
+      '.env*',
     ];
 
     const configFiles: string[] = [];
 
     for (const pattern of configPatterns) {
       try {
-        const files = await glob(pattern, { 
+        const files = await glob(pattern, {
           cwd: projectPath,
-          ignore: ['node_modules/**', 'dist/**', 'build/**']
+          ignore: ['node_modules/**', 'dist/**', 'build/**'],
         });
         configFiles.push(...files);
       } catch (error) {
@@ -201,48 +233,65 @@ export class ProjectAnalyzer {
     return [...new Set(configFiles)].sort();
   }
 
-  private async getDependencies(projectPath: string, language: string): Promise<string[]> {
+  private async getDependencies(
+    projectPath: string,
+    language: string
+  ): Promise<string[]> {
     switch (language) {
       case 'javascript':
-        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
+        const packageJson = await this.readPackageJson(
+          path.join(projectPath, 'package.json')
+        );
         return packageJson ? Object.keys(packageJson.dependencies || {}) : [];
-      
+
       case 'python':
         return await this.getPythonDependencies(projectPath);
-      
+
       case 'csharp':
         return await this.getCSharpDependencies(projectPath);
-      
+
       default:
         return [];
     }
   }
 
-  private async getDevDependencies(projectPath: string, language: string): Promise<string[]> {
+  private async getDevDependencies(
+    projectPath: string,
+    language: string
+  ): Promise<string[]> {
     switch (language) {
       case 'javascript':
-        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
-        return packageJson ? Object.keys(packageJson.devDependencies || {}) : [];
-      
+        const packageJson = await this.readPackageJson(
+          path.join(projectPath, 'package.json')
+        );
+        return packageJson
+          ? Object.keys(packageJson.devDependencies || {})
+          : [];
+
       case 'python':
         // Python doesn't really have dev dependencies in the same way
         // But we can check for test/dev packages
         return await this.getPythonDevDependencies(projectPath);
-      
+
       default:
         return [];
     }
   }
 
-  private async getScripts(projectPath: string, language: string): Promise<Record<string, string>> {
+  private async getScripts(
+    projectPath: string,
+    language: string
+  ): Promise<Record<string, string>> {
     switch (language) {
       case 'javascript':
-        const packageJson = await this.readPackageJson(path.join(projectPath, 'package.json'));
+        const packageJson = await this.readPackageJson(
+          path.join(projectPath, 'package.json')
+        );
         return packageJson ? packageJson.scripts || {} : {};
-      
+
       case 'python':
         return await this.getPythonScripts(projectPath);
-      
+
       default:
         return {};
     }
@@ -250,13 +299,19 @@ export class ProjectAnalyzer {
 
   private async getPythonDependencies(projectPath: string): Promise<string[]> {
     const dependencies: string[] = [];
-    
+
     // Check requirements.txt
     const requirementsPath = path.join(projectPath, 'requirements.txt');
     if (await fs.pathExists(requirementsPath)) {
       const content = await fs.readFile(requirementsPath, 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-      dependencies.push(...lines.map(line => line.split('==')[0].split('>=')[0].split('~=')[0].trim()));
+      const lines = content
+        .split('\n')
+        .filter(line => line.trim() && !line.startsWith('#'));
+      dependencies.push(
+        ...lines.map(line =>
+          line.split('==')[0].split('>=')[0].split('~=')[0].trim()
+        )
+      );
     }
 
     // Check pyproject.toml
@@ -267,32 +322,50 @@ export class ProjectAnalyzer {
       const depMatches = content.match(/dependencies\s*=\s*\[([\s\S]*?)\]/);
       if (depMatches) {
         const depLines = depMatches[1].split(',');
-        dependencies.push(...depLines.map(line => 
-          line.replace(/['"]/g, '').split('==')[0].split('>=')[0].trim()
-        ).filter(dep => dep));
+        dependencies.push(
+          ...depLines
+            .map(line =>
+              line.replace(/['"]/g, '').split('==')[0].split('>=')[0].trim()
+            )
+            .filter(dep => dep)
+        );
       }
     }
 
     return [...new Set(dependencies)];
   }
 
-  private async getPythonDevDependencies(projectPath: string): Promise<string[]> {
+  private async getPythonDevDependencies(
+    projectPath: string
+  ): Promise<string[]> {
     const devDeps: string[] = [];
-    
+
     // Check for common dev/test packages
     const allDeps = await this.getPythonDependencies(projectPath);
-    const devPackages = ['pytest', 'black', 'flake8', 'mypy', 'ruff', 'pre-commit', 'isort'];
-    
-    devDeps.push(...allDeps.filter(dep => 
-      devPackages.some(devPkg => dep.toLowerCase().includes(devPkg))
-    ));
+    const devPackages = [
+      'pytest',
+      'black',
+      'flake8',
+      'mypy',
+      'ruff',
+      'pre-commit',
+      'isort',
+    ];
+
+    devDeps.push(
+      ...allDeps.filter(dep =>
+        devPackages.some(devPkg => dep.toLowerCase().includes(devPkg))
+      )
+    );
 
     return devDeps;
   }
 
-  private async getPythonScripts(projectPath: string): Promise<Record<string, string>> {
+  private async getPythonScripts(
+    projectPath: string
+  ): Promise<Record<string, string>> {
     const scripts: Record<string, string> = {};
-    
+
     // Check pyproject.toml for scripts
     const pyprojectPath = path.join(projectPath, 'pyproject.toml');
     if (await fs.pathExists(pyprojectPath)) {
@@ -314,19 +387,26 @@ export class ProjectAnalyzer {
 
   private async getCSharpDependencies(projectPath: string): Promise<string[]> {
     const dependencies: string[] = [];
-    
+
     // Check .csproj files
     const csprojFiles = await glob('**/*.csproj', { cwd: projectPath });
-    
+
     for (const file of csprojFiles) {
       try {
-        const content = await fs.readFile(path.join(projectPath, file), 'utf-8');
+        const content = await fs.readFile(
+          path.join(projectPath, file),
+          'utf-8'
+        );
         // Simple regex to extract PackageReference - would need proper XML parser
-        const packageMatches = content.match(/<PackageReference\s+Include="([^"]+)"/g);
+        const packageMatches = content.match(
+          /<PackageReference\s+Include="([^"]+)"/g
+        );
         if (packageMatches) {
-          dependencies.push(...packageMatches.map(match => 
-            match.match(/Include="([^"]+)"/)?.[1] || ''
-          ).filter(pkg => pkg));
+          dependencies.push(
+            ...packageMatches
+              .map(match => match.match(/Include="([^"]+)"/)?.[1] || '')
+              .filter(pkg => pkg)
+          );
         }
       } catch (error) {
         // Skip files that can't be read
@@ -340,7 +420,13 @@ export class ProjectAnalyzer {
     try {
       const files = await glob('**/*.{js,jsx,ts,tsx,vue}', {
         cwd: projectPath,
-        ignore: ['node_modules/**', 'dist/**', 'build/**', '.next/**', 'coverage/**']
+        ignore: [
+          'node_modules/**',
+          'dist/**',
+          'build/**',
+          '.next/**',
+          'coverage/**',
+        ],
       });
 
       // Limit to reasonable number of files for analysis
@@ -358,11 +444,11 @@ export class ProjectAnalyzer {
   }> {
     const packageJsonPath = path.join(projectPath, 'package.json');
     const packageJson = await this.readPackageJson(packageJsonPath);
-    
+
     if (!packageJson) {
       return {
         name: path.basename(projectPath),
-        version: '0.0.0'
+        version: '0.0.0',
       };
     }
 
@@ -370,7 +456,7 @@ export class ProjectAnalyzer {
       name: packageJson.name || path.basename(projectPath),
       version: packageJson.version || '0.0.0',
       description: packageJson.description,
-      author: packageJson.author
+      author: packageJson.author,
     };
   }
 }

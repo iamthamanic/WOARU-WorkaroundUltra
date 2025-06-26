@@ -9,11 +9,12 @@ export class EslintAction extends BaseAction {
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
     const packageJson = await this.readJsonFile(packageJsonPath);
-    
+
     if (!packageJson) return false;
-    
+
     // Check if eslint is already installed
-    const hasEslint = packageJson.devDependencies?.eslint || packageJson.dependencies?.eslint;
+    const hasEslint =
+      packageJson.devDependencies?.eslint || packageJson.dependencies?.eslint;
     return !hasEslint;
   }
 
@@ -36,13 +37,17 @@ export class EslintAction extends BaseAction {
 
       // Detect project characteristics
       const packageJson = await this.readJsonFile(packageJsonPath);
-      const hasNext = packageJson?.dependencies?.next || packageJson?.devDependencies?.next;
-      const hasReact = packageJson?.dependencies?.react || packageJson?.devDependencies?.react;
-      const hasTypeScript = await this.fileExists(path.join(projectPath, 'tsconfig.json'));
+      const hasNext =
+        packageJson?.dependencies?.next || packageJson?.devDependencies?.next;
+      const hasReact =
+        packageJson?.dependencies?.react || packageJson?.devDependencies?.react;
+      const hasTypeScript = await this.fileExists(
+        path.join(projectPath, 'tsconfig.json')
+      );
 
       // Determine packages to install
       const packages = ['eslint'];
-      
+
       if (hasNext) {
         packages.push('eslint-config-next');
       } else if (hasReact) {
@@ -63,7 +68,7 @@ export class EslintAction extends BaseAction {
       // Install packages
       const installCommand = `npm install --save-dev ${packages.join(' ')}`;
       const installResult = await this.runCommand(installCommand, projectPath);
-      
+
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);
       }
@@ -73,16 +78,16 @@ export class EslintAction extends BaseAction {
         env: {
           browser: true,
           es2021: true,
-          node: true
+          node: true,
         },
-        extends: []
+        extends: [],
       };
 
       if (hasNext) {
         eslintConfig.extends.push('next/core-web-vitals');
       } else {
         eslintConfig.extends.push('eslint:recommended');
-        
+
         if (hasReact) {
           eslintConfig.extends.push(
             'plugin:react/recommended',
@@ -91,8 +96,8 @@ export class EslintAction extends BaseAction {
           eslintConfig.plugins = ['react', 'react-hooks'];
           eslintConfig.settings = {
             react: {
-              version: 'detect'
-            }
+              version: 'detect',
+            },
           };
         }
       }
@@ -100,18 +105,21 @@ export class EslintAction extends BaseAction {
       if (hasTypeScript) {
         eslintConfig.extends.push('@typescript-eslint/recommended');
         eslintConfig.parser = '@typescript-eslint/parser';
-        eslintConfig.plugins = [...(eslintConfig.plugins || []), '@typescript-eslint'];
+        eslintConfig.plugins = [
+          ...(eslintConfig.plugins || []),
+          '@typescript-eslint',
+        ];
         eslintConfig.parserOptions = {
           ecmaVersion: 'latest',
           sourceType: 'module',
-          ...(hasReact && { ecmaFeatures: { jsx: true } })
+          ...(hasReact && { ecmaFeatures: { jsx: true } }),
         };
       }
 
       eslintConfig.rules = {
         'no-unused-vars': 'warn',
         'no-console': 'warn',
-        ...(hasReact && { 'react/react-in-jsx-scope': 'off' })
+        ...(hasReact && { 'react/react-in-jsx-scope': 'off' }),
       };
 
       await this.writeJsonFile(eslintrcPath, eslintConfig);
@@ -119,13 +127,13 @@ export class EslintAction extends BaseAction {
       // Add scripts to package.json
       packageJson.scripts = packageJson.scripts || {};
       packageJson.scripts['lint'] = 'eslint . --ext .js,.jsx,.ts,.tsx';
-      packageJson.scripts['lint:fix'] = 'eslint . --ext .js,.jsx,.ts,.tsx --fix';
+      packageJson.scripts['lint:fix'] =
+        'eslint . --ext .js,.jsx,.ts,.tsx --fix';
 
       await this.writeJsonFile(packageJsonPath, packageJson);
 
       console.log('✅ ESLint installed and configured successfully');
       return true;
-
     } catch (error) {
       console.error('❌ Failed to setup ESLint:', error);
       return false;
@@ -136,10 +144,12 @@ export class EslintAction extends BaseAction {
     try {
       const fs = await import('fs-extra');
       const glob = await import('glob');
-      
+
       // Find backup files
-      const backupFiles = await glob.glob(path.join(projectPath, '*.wau-backup-*'));
-      
+      const backupFiles = await glob.glob(
+        path.join(projectPath, '*.wau-backup-*')
+      );
+
       for (const backupFile of backupFiles) {
         const originalFile = backupFile.replace(/\.wau-backup-\d+$/, '');
         await fs.move(backupFile, originalFile, { overwrite: true });

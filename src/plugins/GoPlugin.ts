@@ -1,16 +1,21 @@
 import { BasePlugin } from './BasePlugin';
-import { ProjectAnalysis, SetupRecommendation, RefactorSuggestion } from '../types';
+import {
+  ProjectAnalysis,
+  SetupRecommendation,
+  RefactorSuggestion,
+} from '../types';
 
 export class GoPlugin extends BasePlugin {
   name = 'Go';
   frameworks = ['go', 'gin', 'echo', 'fiber'];
 
   canHandle(analysis: ProjectAnalysis): boolean {
-    return analysis.language === 'Go' || 
-           analysis.configFiles.some(file => 
-             file.includes('go.mod') || 
-             file.includes('go.sum')
-           );
+    return (
+      analysis.language === 'Go' ||
+      analysis.configFiles.some(
+        file => file.includes('go.mod') || file.includes('go.sum')
+      )
+    );
   }
 
   getRecommendations(analysis: ProjectAnalysis): SetupRecommendation[] {
@@ -23,7 +28,7 @@ export class GoPlugin extends BasePlugin {
       reason: 'Comprehensive Go linting with 40+ linters in one tool',
       packages: [],
       configFiles: ['.golangci.yml'],
-      priority: 'high'
+      priority: 'high',
     });
 
     // gofmt is built-in, but recommend goimports
@@ -33,7 +38,7 @@ export class GoPlugin extends BasePlugin {
       reason: 'Automatically format Go code and manage imports',
       packages: [],
       configFiles: [],
-      priority: 'high'
+      priority: 'high',
     });
 
     // Pre-commit hooks for Go
@@ -44,7 +49,7 @@ export class GoPlugin extends BasePlugin {
         reason: 'Ensure code quality with Go-specific pre-commit hooks',
         packages: [],
         configFiles: ['.pre-commit-config.yaml'],
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -55,7 +60,7 @@ export class GoPlugin extends BasePlugin {
       reason: 'Comprehensive testing toolkit with assertions and mocks',
       packages: ['github.com/stretchr/testify'],
       configFiles: [],
-      priority: 'medium'
+      priority: 'medium',
     });
 
     // Security scanning
@@ -65,7 +70,7 @@ export class GoPlugin extends BasePlugin {
       reason: 'Scan Go code for security vulnerabilities',
       packages: [],
       configFiles: [],
-      priority: 'medium'
+      priority: 'medium',
     });
 
     // Dependency vulnerability scanning
@@ -75,7 +80,7 @@ export class GoPlugin extends BasePlugin {
       reason: 'Check for known vulnerabilities in Go dependencies',
       packages: [],
       configFiles: [],
-      priority: 'low'
+      priority: 'low',
     });
 
     return recommendations;
@@ -92,8 +97,9 @@ export class GoPlugin extends BasePlugin {
         if (file.includes('handler') || file.includes('controller')) {
           suggestions.push({
             filename: file,
-            suggestion: 'Use gin.Context.ShouldBindJSON() instead of manual JSON parsing',
-            type: 'best-practice'
+            suggestion:
+              'Use gin.Context.ShouldBindJSON() instead of manual JSON parsing',
+            type: 'best-practice',
           });
         }
       }
@@ -103,7 +109,7 @@ export class GoPlugin extends BasePlugin {
           suggestions.push({
             filename: file,
             suggestion: 'Use echo.Context.Bind() for automatic request binding',
-            type: 'best-practice'
+            type: 'best-practice',
           });
         }
       }
@@ -113,12 +119,13 @@ export class GoPlugin extends BasePlugin {
         suggestions.push({
           filename: file,
           suggestion: 'Use table-driven tests for testing multiple scenarios',
-          type: 'maintainability'
+          type: 'maintainability',
         });
         suggestions.push({
           filename: file,
-          suggestion: 'Consider using testify/assert for better test assertions',
-          type: 'maintainability'
+          suggestion:
+            'Consider using testify/assert for better test assertions',
+          type: 'maintainability',
         });
       }
 
@@ -126,8 +133,9 @@ export class GoPlugin extends BasePlugin {
       if (file === 'main.go') {
         suggestions.push({
           filename: file,
-          suggestion: 'Keep main.go minimal - move business logic to separate packages',
-          type: 'maintainability'
+          suggestion:
+            'Keep main.go minimal - move business logic to separate packages',
+          type: 'maintainability',
         });
       }
 
@@ -135,8 +143,9 @@ export class GoPlugin extends BasePlugin {
       if (file.includes('error') || file.includes('err')) {
         suggestions.push({
           filename: file,
-          suggestion: 'Use errors.Is() and errors.As() for error comparison in Go 1.13+',
-          type: 'best-practice'
+          suggestion:
+            'Use errors.Is() and errors.As() for error comparison in Go 1.13+',
+          type: 'best-practice',
         });
       }
     });
@@ -153,7 +162,7 @@ export class GoPlugin extends BasePlugin {
       'github.com/gorilla/mux',
       'github.com/sirupsen/logrus',
       'github.com/spf13/cobra',
-      'github.com/spf13/viper'
+      'github.com/spf13/viper',
     ];
   }
 }
