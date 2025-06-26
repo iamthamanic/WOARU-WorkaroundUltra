@@ -55,6 +55,7 @@ export interface ProjectAnalysis {
   configFiles: string[];
   structure: string[];
   detectedLanguages?: string[];
+  projectPath?: string;
 }
 
 export interface SetupRecommendation {

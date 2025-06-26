@@ -49,8 +49,11 @@ export class PrettierAction extends BaseAction {
         packages.push('prettier-plugin-tailwindcss');
       }
 
-      const installCommand = `npm install --save-dev ${packages.join(' ')}`;
-      const installResult = await this.runCommand(installCommand, projectPath);
+      const installResult = await this.runCommand(
+        'npm',
+        ['install', '--save-dev', ...packages],
+        projectPath
+      );
 
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);

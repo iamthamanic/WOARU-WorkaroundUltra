@@ -37,8 +37,11 @@ export class HuskyAction extends BaseAction {
 
       // Install packages
       const packages = ['husky', 'lint-staged'];
-      const installCommand = `npm install --save-dev ${packages.join(' ')}`;
-      const installResult = await this.runCommand(installCommand, projectPath);
+      const installResult = await this.runCommand(
+        'npm',
+        ['install', '--save-dev', ...packages],
+        projectPath
+      );
 
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);
@@ -46,7 +49,8 @@ export class HuskyAction extends BaseAction {
 
       // Initialize husky
       const huskyInitResult = await this.runCommand(
-        'npx husky init',
+        'npx',
+        ['husky', 'init'],
         projectPath
       );
       if (!huskyInitResult.success) {
@@ -69,7 +73,7 @@ export class HuskyAction extends BaseAction {
 
       const fs = await import('fs-extra');
       await fs.writeFile(preCommitPath, preCommitContent);
-      await this.runCommand(`chmod +x "${preCommitPath}"`, projectPath);
+      await this.runCommand('chmod', ['+x', preCommitPath], projectPath);
 
       // Configure lint-staged
       const lintStagedConfig: any = {};

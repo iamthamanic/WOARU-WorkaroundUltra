@@ -151,13 +151,36 @@ export class WAUEngine {
   private async detectInstalledTools(
     analysis: ProjectAnalysis
   ): Promise<string[]> {
-    const installedTools: string[] = [];
-    const allDeps = [...analysis.dependencies, ...analysis.devDependencies];
-    const fs = require('fs-extra');
-    const path = require('path');
+    try {
+      const installedTools: string[] = [];
+      const allDeps = [...analysis.dependencies, ...analysis.devDependencies];
 
-    // Check for both dependencies AND configuration files
-    const toolChecks = {
+      const toolChecks = this.getToolChecks();
+      const projectPath = this.getValidatedProjectPath(analysis.projectPath);
+
+      for (const [tool, check] of Object.entries(toolChecks)) {
+        const hasPackage = this.checkPackageDependency(check.packages, allDeps);
+        const hasConfig = await this.checkConfigFiles(
+          check.configs || [],
+          projectPath
+        );
+
+        if (hasPackage || hasConfig) {
+          installedTools.push(tool);
+        }
+      }
+
+      return installedTools;
+    } catch (error) {
+      console.warn(
+        `Warning: Tool detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+      return [];
+    }
+  }
+
+  private getToolChecks() {
+    return {
       eslint: {
         packages: ['eslint'],
         configs: [
@@ -230,37 +253,45 @@ export class WAUEngine {
         ],
       },
     };
+  }
 
-    for (const [tool, check] of Object.entries(toolChecks)) {
-      // Check if tool is installed via package dependencies
-      const hasPackage = check.packages.some(pkg => allDeps.includes(pkg));
+  private getValidatedProjectPath(projectPath?: string): string {
+    const path = require('path');
+    const validPath = projectPath || process.cwd();
 
-      // Check if tool has configuration files
-      let hasConfig = false;
-      if (check.configs) {
-        for (const configFile of check.configs) {
-          const configPath = path.join(
-            analysis.projectPath || process.cwd(),
-            configFile
-          );
-          try {
-            if (await fs.pathExists(configPath)) {
-              hasConfig = true;
-              break;
-            }
-          } catch (error) {
-            // Ignore file system errors
-          }
+    try {
+      return path.resolve(validPath);
+    } catch (error) {
+      throw new Error(`Invalid project path: ${validPath}`);
+    }
+  }
+
+  private checkPackageDependency(
+    packages: string[],
+    allDeps: string[]
+  ): boolean {
+    return packages.some(pkg => allDeps.includes(pkg));
+  }
+
+  private async checkConfigFiles(
+    configFiles: string[],
+    projectPath: string
+  ): Promise<boolean> {
+    const fs = require('fs-extra');
+    const path = require('path');
+
+    for (const configFile of configFiles) {
+      try {
+        const configPath = path.join(projectPath, configFile);
+        if (await fs.pathExists(configPath)) {
+          return true;
         }
-      }
-
-      // Tool is considered installed if it has either package dependency OR config file
-      if (hasPackage || hasConfig) {
-        installedTools.push(tool);
+      } catch (error) {
+        // Continue checking other config files
+        continue;
       }
     }
-
-    return installedTools;
+    return false;
   }
 
   private generateClaudeAutomations(analysis: ProjectAnalysis): string[] {

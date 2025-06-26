@@ -27,6 +27,8 @@ export class WAUSupervisor extends EventEmitter {
   private isRunning = false;
   private projectPath: string;
   private lastRecommendationCheck = new Date();
+  private recommendationInterval?: NodeJS.Timeout;
+  private cleanupHandlers: Array<() => void> = [];
 
   constructor(projectPath: string, config: Partial<SupervisorConfig> = {}) {
     super();
@@ -66,39 +68,67 @@ export class WAUSupervisor extends EventEmitter {
 
   private setupEventListeners(): void {
     // File watcher events
-    this.fileWatcher.on('batch_changes', (changes: FileChange[]) => {
+    const handleBatchChanges = (changes: FileChange[]) => {
       this.handleFileChanges(changes);
-    });
+    };
+    this.fileWatcher.on('batch_changes', handleBatchChanges);
+    this.cleanupHandlers.push(() =>
+      this.fileWatcher.off('batch_changes', handleBatchChanges)
+    );
 
-    this.fileWatcher.on('critical_file_change', (change: FileChange) => {
+    const handleCriticalFileChange = (change: FileChange) => {
       this.handleCriticalFileChange(change);
-    });
+    };
+    this.fileWatcher.on('critical_file_change', handleCriticalFileChange);
+    this.cleanupHandlers.push(() =>
+      this.fileWatcher.off('critical_file_change', handleCriticalFileChange)
+    );
 
-    this.fileWatcher.on('error', error => {
+    const handleFileWatcherError = (error: Error) => {
       this.notificationManager.showError(
         `File watcher error: ${error.message}`
       );
-    });
+    };
+    this.fileWatcher.on('error', handleFileWatcherError);
+    this.cleanupHandlers.push(() =>
+      this.fileWatcher.off('error', handleFileWatcherError)
+    );
 
     // State manager events
-    this.stateManager.on('language_changed', (language: string) => {
+    const handleLanguageChanged = (language: string) => {
       this.notificationManager.showProgress(`Language detected: ${language}`);
       this.checkRecommendations();
-    });
+    };
+    this.stateManager.on('language_changed', handleLanguageChanged);
+    this.cleanupHandlers.push(() =>
+      this.stateManager.off('language_changed', handleLanguageChanged)
+    );
 
-    this.stateManager.on('tool_detected', (tool: string) => {
+    const handleToolDetected = (tool: string) => {
       this.notificationManager.showSuccess(`Tool detected: ${tool}`);
-    });
+    };
+    this.stateManager.on('tool_detected', handleToolDetected);
+    this.cleanupHandlers.push(() =>
+      this.stateManager.off('tool_detected', handleToolDetected)
+    );
 
-    this.stateManager.on('critical_issues', issues => {
+    const handleCriticalIssues = (issues: any) => {
       this.notificationManager.notifyIssues(issues);
-    });
+    };
+    this.stateManager.on('critical_issues', handleCriticalIssues);
+    this.cleanupHandlers.push(() =>
+      this.stateManager.off('critical_issues', handleCriticalIssues)
+    );
 
-    this.stateManager.on('health_score_updated', (score: number) => {
+    const handleHealthScoreUpdated = (score: number) => {
       if (this.config.dashboard) {
         this.notificationManager.showHealthScore(score);
       }
-    });
+    };
+    this.stateManager.on('health_score_updated', handleHealthScoreUpdated);
+    this.cleanupHandlers.push(() =>
+      this.stateManager.off('health_score_updated', handleHealthScoreUpdated)
+    );
   }
 
   async start(): Promise<void> {
@@ -121,6 +151,9 @@ export class WAUSupervisor extends EventEmitter {
 
       // Start auto-save
       this.stateManager.startAutoSave();
+
+      // Start periodic recommendation checks
+      this.startRecommendationChecks();
 
       this.isRunning = true;
 
@@ -145,13 +178,33 @@ export class WAUSupervisor extends EventEmitter {
       return;
     }
 
-    this.fileWatcher.stop();
-    await this.stateManager.save();
+    try {
+      // Stop all intervals
+      this.stopRecommendationChecks();
 
-    this.isRunning = false;
-    this.notificationManager.showSuccess('WAU Supervisor stopped');
+      // Stop components
+      this.fileWatcher.stop();
+      this.stateManager.stopAutoSave();
 
-    this.emit('stopped');
+      // Clean up event listeners
+      this.cleanupEventListeners();
+
+      // Save final state
+      await this.stateManager.save();
+
+      // Destroy state manager
+      await this.stateManager.destroy();
+
+      this.isRunning = false;
+      this.notificationManager.showSuccess('WAU Supervisor stopped');
+
+      this.emit('stopped');
+    } catch (error) {
+      this.notificationManager.showError(
+        `Error during supervisor shutdown: ${error}`
+      );
+      throw error;
+    }
   }
 
   private async performInitialAnalysis(): Promise<void> {
@@ -259,12 +312,7 @@ export class WAUSupervisor extends EventEmitter {
       );
     }
 
-    // Periodic full check (every 5 minutes)
-    const timeSinceLastCheck =
-      Date.now() - this.lastRecommendationCheck.getTime();
-    if (timeSinceLastCheck > 5 * 60 * 1000) {
-      await this.checkRecommendations();
-    }
+    // Note: Periodic checks are now handled by dedicated interval
   }
 
   private async handleCriticalFileChange(change: FileChange): Promise<void> {
@@ -376,5 +424,47 @@ export class WAUSupervisor extends EventEmitter {
         `Tool ${tool} removed from ignore list`
       );
     }
+  }
+
+  private startRecommendationChecks(): void {
+    // Start periodic recommendation checks every 5 minutes
+    this.recommendationInterval = setInterval(
+      async () => {
+        try {
+          await this.checkRecommendations();
+        } catch (error) {
+          this.notificationManager.showError(
+            `Periodic recommendation check failed: ${error}`
+          );
+        }
+      },
+      5 * 60 * 1000
+    );
+  }
+
+  private stopRecommendationChecks(): void {
+    if (this.recommendationInterval) {
+      clearInterval(this.recommendationInterval);
+      this.recommendationInterval = undefined;
+    }
+  }
+
+  private cleanupEventListeners(): void {
+    // Execute all cleanup handlers
+    this.cleanupHandlers.forEach(cleanup => {
+      try {
+        cleanup();
+      } catch (error) {
+        console.warn('Error during event listener cleanup:', error);
+      }
+    });
+    this.cleanupHandlers = [];
+
+    // Remove all listeners from this instance
+    this.removeAllListeners();
+  }
+
+  async destroy(): Promise<void> {
+    await this.stop();
   }
 }

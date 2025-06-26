@@ -2,7 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "WAU Tools Database Schema",
   "type": "object",
-  "required": ["version", "lastUpdated", "categories", "frameworks", "metadata"],
+  "required": [
+    "version",
+    "lastUpdated",
+    "categories",
+    "frameworks",
+    "metadata"
+  ],
   "properties": {
     "version": {
       "type": "string",
@@ -26,7 +32,10 @@
             "properties": {
               "name": { "type": "string" },
               "url": { "type": "string" },
-              "type": { "type": "string", "enum": ["npm", "github", "pypi", "nuget", "maven"] }
+              "type": {
+                "type": "string",
+                "enum": ["npm", "github", "pypi", "nuget", "maven"]
+              }
             }
           }
         }
@@ -51,7 +60,10 @@
                 "lastChecked": { "type": "string", "format": "date-time" },
                 "npmDownloads": { "type": "number" },
                 "githubStars": { "type": "number" },
-                "alternatives": { "type": "array", "items": { "type": "string" } },
+                "alternatives": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
                 "deprecated": { "type": "boolean" },
                 "successor": { "type": "string" }
               }

@@ -66,8 +66,11 @@ export class EslintAction extends BaseAction {
       }
 
       // Install packages
-      const installCommand = `npm install --save-dev ${packages.join(' ')}`;
-      const installResult = await this.runCommand(installCommand, projectPath);
+      const installResult = await this.runCommand(
+        'npm',
+        ['install', '--save-dev', ...packages],
+        projectPath
+      );
 
       if (!installResult.success) {
         throw new Error(`Failed to install packages: ${installResult.output}`);
