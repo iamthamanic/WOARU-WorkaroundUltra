@@ -1,0 +1,111 @@
+tools:
+  eslint:
+    category: linter
+    languages: ['javascript', 'typescript']
+    priority: high
+    detectPatterns:
+      - type: missing_config
+        pattern: .eslintrc*
+        severity: high
+        message: "ESLint configuration not found"
+      - type: code_smell
+        pattern: console.log
+        severity: medium
+        message: "Found console.log statements that should be removed"
+      - type: code_smell
+        pattern: debugger
+        severity: high
+        message: "Found debugger statements in code"
+    setupInstructions:
+      - packageManager: npm
+        command: npm install -D eslint && npx eslint --init
+      - packageManager: yarn
+        command: yarn add -D eslint && yarn eslint --init
+      - packageManager: pnpm
+        command: pnpm add -D eslint && pnpm eslint --init
+
+  prettier:
+    category: formatter
+    languages: ['javascript', 'typescript']
+    priority: high
+    detectPatterns:
+      - type: missing_config
+        pattern: .prettierrc*
+        severity: medium
+        message: "Prettier configuration not found"
+      - type: code_smell
+        pattern: inconsistent_formatting
+        severity: medium
+        message: "Inconsistent code formatting detected"
+    setupInstructions:
+      - packageManager: npm
+        command: npm install -D prettier && echo '{}' > .prettierrc
+      - packageManager: yarn
+        command: yarn add -D prettier && echo '{}' > .prettierrc
+      - packageManager: pnpm
+        command: pnpm add -D prettier && echo '{}' > .prettierrc
+
+  husky:
+    category: git-hook
+    languages: ['javascript', 'typescript']
+    priority: medium
+    frameworks: ['*']
+    detectPatterns:
+      - type: missing_config
+        pattern: .husky
+        severity: medium
+        message: "Git hooks not configured"
+      - type: missing_dependency
+        pattern: husky
+        severity: medium
+    setupInstructions:
+      - packageManager: npm
+        command: npm install -D husky lint-staged && npx husky install
+      - packageManager: yarn
+        command: yarn add -D husky lint-staged && yarn husky install
+      - packageManager: pnpm
+        command: pnpm add -D husky lint-staged && pnpm husky install
+
+  jest:
+    category: test
+    languages: ['javascript', 'typescript']
+    priority: high
+    detectPatterns:
+      - type: missing_config
+        pattern: jest.config.*
+        severity: medium
+        message: "Jest configuration not found"
+      - type: file_pattern
+        pattern: "**/*.test.{js,ts}"
+        severity: low
+        message: "Test files found but Jest not configured"
+      - type: missing_dependency
+        pattern: jest
+        severity: medium
+    setupInstructions:
+      - packageManager: npm
+        command: npm install -D jest @types/jest ts-jest
+      - packageManager: yarn
+        command: yarn add -D jest @types/jest ts-jest
+      - packageManager: pnpm
+        command: pnpm add -D jest @types/jest ts-jest
+
+  typescript:
+    category: build
+    languages: ['javascript']
+    priority: medium
+    detectPatterns:
+      - type: file_pattern
+        pattern: "**/*.ts"
+        severity: high
+        message: "TypeScript files found but TypeScript not configured"
+      - type: missing_config
+        pattern: tsconfig.json
+        severity: high
+    setupInstructions:
+      - packageManager: npm
+        command: npm install -D typescript @types/node && npx tsc --init
+      - packageManager: yarn
+        command: yarn add -D typescript @types/node && yarn tsc --init
+      - packageManager: pnpm
+        command: pnpm add -D typescript @types/node && pnpm tsc --init

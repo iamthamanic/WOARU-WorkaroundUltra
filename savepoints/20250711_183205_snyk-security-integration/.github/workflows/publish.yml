@@ -1,0 +1,64 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Run tests
+        run: |
+          # Quick smoke tests before publishing
+          node dist/cli.js --help
+          
+          # Test with sample projects
+          mkdir test-js && echo '{"name":"test","dependencies":{"react":"^18.0.0"}}' > test-js/package.json
+          node dist/cli.js analyze --path test-js --json
+          
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create GitHub release comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const release = context.payload.release;
+            
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: release.id,
+              body: `🎉 **WAU v${release.tag_name} published to NPM!**
+              
+              Install with:
+              \`\`\`bash
+              npm install -g @iamthamanic/wau
+              \`\`\`
+              
+              Or use directly:
+              \`\`\`bash
+              npx @iamthamanic/wau analyze
+              \`\`\``
+            });

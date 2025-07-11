@@ -1,0 +1,38 @@
+🔍 Analyzing project...
+📦 Project: woaru (3.1.0)
+🔧 Language: TypeScript
+⚡ Frameworks: None detected
+🔬 Analyzing codebase for insights...
+🔒 Running comprehensive security and production audit...
+📥 WOARU: Downloading tools database...
+✅ WOARU: Tools database cached successfully
+🚨 1 critical security issues found!
+📋 Analysis Results:
+
+✅ Already Installed:
+  • eslint
+  • prettier
+  • husky
+  • jest
+  • typescript
+
+🔬 Code Analysis Insights:
+  • PRETTIER: Inkonsistente Code-Formatierung gefunden. Unterschiedliche Einrückungen und Stile in mehreren Dateien.
+    - test-production-auditor.js:16: Trailing whitespace
+    - test-production-auditor.js:25: Trailing whitespace
+    - test-production-auditor.js:31: Trailing whitespace
+  • ESLINT: Debug-Statements (console.log) im Code gefunden. ESLint kann diese automatisch erkennen.
+    - test-quality-runner.js:15: console.log('Testing QualityRunner...');
+    - test-quality-runner.js:17: console.log('Test completed.');
+    - test-quality-runner.js:20: test().catch(console.error);
+  • HUSKY: Git-Repository ohne Pre-Commit Hooks. Code-Qualität wird nicht vor Commits geprüft.
+    - Kein .husky Verzeichnis gefunden
+    - Git-Repository aktiv
+
+🤖 Claude Automation Ideas:
+  • Generate TypeScript interfaces from API responses
+  • Add strict typing to existing JavaScript functions
+  • Create utility types for better type safety
+  • Generate README.md with project setup instructions
+  • Create CONTRIBUTING.md with development guidelines
+  • Generate API documentation from code comments
