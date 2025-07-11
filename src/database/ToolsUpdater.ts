@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ToolsDatabase } from '../types';
-import * as semver from 'semver';
+// import * as semver from 'semver'; // Currently unused
 
 interface PackageStats {
   name: string;
@@ -11,6 +11,17 @@ interface PackageStats {
   lastUpdate: string;
   deprecated?: boolean;
   successor?: string;
+}
+
+interface ToolConfig {
+  description?: string;
+  metadata?: {
+    popularity: number;
+    lastChecked: string;
+    deprecated?: boolean;
+    successor?: string;
+  };
+  [key: string]: unknown;
 }
 
 export class ToolsUpdater {
@@ -67,7 +78,7 @@ export class ToolsUpdater {
     let stars = 0;
     if (packageData.repository?.url) {
       const repoUrl = packageData.repository.url;
-      const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+      const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
       if (match) {
         try {
           const ghResponse = await axios.get(
@@ -75,7 +86,7 @@ export class ToolsUpdater {
             { headers: { Accept: 'application/vnd.github.v3+json' } }
           );
           stars = ghResponse.data.stargazers_count;
-        } catch (error) {
+        } catch {
           // GitHub API might be rate limited
         }
       }
@@ -110,7 +121,7 @@ export class ToolsUpdater {
   }
 
   private async getNuGetStats(packageName: string): Promise<PackageStats> {
-    const response = await axios.get(
+    await axios.get(
       `https://api.nuget.org/v3-flatcontainer/${packageName.toLowerCase()}/index.json`
     );
 
@@ -124,7 +135,7 @@ export class ToolsUpdater {
 
   async findBetterAlternatives(
     toolName: string,
-    category: string
+    _category: string
   ): Promise<string[]> {
     // This would query various sources to find alternatives
     const alternatives: string[] = [];
@@ -158,7 +169,7 @@ export class ToolsUpdater {
       updatedDb.categories
     )) {
       for (const [toolName, toolConfig] of Object.entries(
-        categoryTools as Record<string, any>
+        categoryTools as Record<string, ToolConfig>
       )) {
         // Get latest stats
         const stats = await this.updateToolStats(toolName, 'npm');
@@ -167,7 +178,6 @@ export class ToolsUpdater {
           (toolConfig as any).metadata = {
             popularity: stats.downloads,
             lastChecked: new Date().toISOString(),
-            npmDownloads: stats.downloads,
             githubStars: stats.stars,
             deprecated: stats.deprecated,
             alternatives: await this.findBetterAlternatives(
@@ -178,8 +188,7 @@ export class ToolsUpdater {
 
           // Mark deprecated tools
           if (stats.deprecated) {
-            (toolConfig as any).description =
-              `[DEPRECATED] ${(toolConfig as any).description}`;
+            toolConfig.description = `[DEPRECATED] ${toolConfig.description || ''}`;
           }
         }
       }
@@ -196,8 +205,8 @@ export class ToolsUpdater {
     // For now, let's add some known modern tools
 
     // Add Biome (successor to Rome, alternative to ESLint+Prettier)
-    if (!(db.categories.linting as any).biome) {
-      (db.categories.linting as any).biome = {
+    if (!('biome' in db.categories.linting)) {
+      (db.categories.linting as Record<string, ToolConfig>).biome = {
         description:
           'Fast formatter and linter for JavaScript, TypeScript, JSON, and more',
         packages: ['@biomejs/biome'],
@@ -208,19 +217,19 @@ export class ToolsUpdater {
         metadata: {
           popularity: 50000,
           lastChecked: new Date().toISOString(),
-          npmDownloads: 50000,
           githubStars: 5000,
           alternatives: [],
-        },
+        } as any,
       };
     }
 
     // Add Bun as alternative to Node.js
-    if (!(db.categories as any).runtime) {
-      (db.categories as any).runtime = {};
+    if (!('runtime' in db.categories)) {
+      (db.categories as Record<string, Record<string, ToolConfig>>).runtime =
+        {};
     }
-    if (!(db.categories as any).runtime.bun) {
-      (db.categories as any).runtime.bun = {
+    if (!('bun' in db.categories.runtime)) {
+      (db.categories.runtime as Record<string, ToolConfig>).bun = {
         description: 'Fast all-in-one JavaScript runtime',
         packages: [],
         configs: {},
@@ -228,10 +237,9 @@ export class ToolsUpdater {
         metadata: {
           popularity: 100000,
           lastChecked: new Date().toISOString(),
-          npmDownloads: 0,
           githubStars: 60000,
           alternatives: ['node', 'deno'],
-        },
+        } as any,
       };
     }
   }

@@ -7,7 +7,7 @@ export { PluginManager } from './plugins/PluginManager';
 export { ActionManager } from './actions/ActionManager';
 
 // Supervisor exports
-export { WAUSupervisor } from './supervisor/WAUSupervisor';
+export { WOARUSupervisor } from './supervisor/WAUSupervisor';
 export { StateManager } from './supervisor/StateManager';
 export { FileWatcher } from './supervisor/FileWatcher';
 export { NotificationManager } from './supervisor/NotificationManager';

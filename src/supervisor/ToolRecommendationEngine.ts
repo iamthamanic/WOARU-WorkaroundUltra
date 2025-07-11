@@ -171,7 +171,7 @@ export class ToolRecommendationEngine extends EventEmitter {
     const evidence: CodeEvidence[] = [];
 
     switch (pattern.type) {
-      case 'missing_config':
+      case 'missing_config': {
         const configPath = path.join(state.projectPath, pattern.pattern);
         const exists = await fs.pathExists(configPath);
         if (!exists) {
@@ -181,8 +181,9 @@ export class ToolRecommendationEngine extends EventEmitter {
           });
         }
         break;
+      }
 
-      case 'code_smell':
+      case 'code_smell': {
         // Use code analyzer to find patterns
         const insights = await this.codeAnalyzer.analyzeCodebase(
           state.projectPath,
@@ -206,8 +207,9 @@ export class ToolRecommendationEngine extends EventEmitter {
           }
         });
         break;
+      }
 
-      case 'missing_dependency':
+      case 'missing_dependency': {
         // Check if dependency is installed
         if (!state.detectedTools.has(pattern.pattern)) {
           evidence.push({
@@ -216,8 +218,9 @@ export class ToolRecommendationEngine extends EventEmitter {
           });
         }
         break;
+      }
 
-      case 'file_pattern':
+      case 'file_pattern': {
         // Check for files matching pattern
         const files = await this.findFiles(state.projectPath, pattern.pattern);
         if (files.length > 0) {
@@ -229,6 +232,7 @@ export class ToolRecommendationEngine extends EventEmitter {
           });
         }
         break;
+      }
     }
 
     return { found: evidence.length > 0, evidence };
@@ -242,9 +246,10 @@ export class ToolRecommendationEngine extends EventEmitter {
       case 'missing_config':
         return `Configuration file ${pattern.pattern} not found`;
 
-      case 'code_smell':
+      case 'code_smell': {
         const count = evidence.length;
         return `Found ${count} ${pattern.pattern} patterns in your code`;
+      }
 
       case 'missing_dependency':
         return `Dependency ${pattern.pattern} is recommended but not installed`;
@@ -284,8 +289,8 @@ export class ToolRecommendationEngine extends EventEmitter {
   }
 
   private async findFiles(
-    projectPath: string,
-    pattern: string
+    _projectPath: string,
+    _pattern: string
   ): Promise<string[]> {
     // Simplified file finding - would use glob in production
     const files: string[] = [];

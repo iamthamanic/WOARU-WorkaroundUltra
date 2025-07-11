@@ -263,7 +263,7 @@ export class LanguageDetector {
 
     // Language-specific framework detection
     switch (language) {
-      case 'javascript':
+      case 'javascript': {
         const packageJsonPath = path.join(projectPath, 'package.json');
         if (await fs.pathExists(packageJsonPath)) {
           const packageJson = await fs.readJson(packageJsonPath);
@@ -280,8 +280,9 @@ export class LanguageDetector {
           if (deps['@nestjs/core']) detectedFrameworks.push('nestjs');
         }
         break;
+      }
 
-      case 'python':
+      case 'python': {
         // Check requirements.txt
         const requirementsPath = path.join(projectPath, 'requirements.txt');
         if (await fs.pathExists(requirementsPath)) {
@@ -304,8 +305,9 @@ export class LanguageDetector {
           if (content.includes('fastapi')) detectedFrameworks.push('fastapi');
         }
         break;
+      }
 
-      case 'csharp':
+      case 'csharp': {
         const csprojFiles = await glob('**/*.csproj', { cwd: projectPath });
         for (const file of csprojFiles) {
           const content = await fs.readFile(
@@ -319,8 +321,9 @@ export class LanguageDetector {
           if (content.includes('Unity')) detectedFrameworks.push('unity');
         }
         break;
+      }
 
-      case 'java':
+      case 'java': {
         const pomPath = path.join(projectPath, 'pom.xml');
         if (await fs.pathExists(pomPath)) {
           const content = await fs.readFile(pomPath, 'utf-8');
@@ -331,6 +334,7 @@ export class LanguageDetector {
           if (content.includes('junit')) detectedFrameworks.push('junit');
         }
         break;
+      }
     }
 
     return detectedFrameworks;

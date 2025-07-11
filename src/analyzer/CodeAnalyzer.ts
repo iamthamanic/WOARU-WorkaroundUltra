@@ -262,7 +262,7 @@ export class CodeAnalyzer {
             issues.push(`${file}:${index + 1}: Trailing whitespace`);
           }
         });
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -309,7 +309,7 @@ export class CodeAnalyzer {
         if (nestingLevel > 4) {
           complexFiles.push(file);
         }
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -356,7 +356,7 @@ export class CodeAnalyzer {
             statements.push(`${file}:${index + 1}: ${line.trim()}`);
           }
         });
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -391,7 +391,7 @@ export class CodeAnalyzer {
             issues.push(`${file}:${index + 1}: Tabs statt Spaces`);
           }
         });
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -420,7 +420,7 @@ export class CodeAnalyzer {
             issues.push(`${file}: Funktion ohne Return Type Hint`);
           }
         }
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -447,7 +447,7 @@ export class CodeAnalyzer {
             statements.push(`${file}:${index + 1}: ${line.trim()}`);
           }
         });
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -479,7 +479,7 @@ export class CodeAnalyzer {
         if (content.match(/\.\s*(Result|Wait)\s*\(/)) {
           issues.push(`${file}: .Result oder .Wait() kann zu Deadlocks führen`);
         }
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }

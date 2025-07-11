@@ -5,6 +5,7 @@ import { PluginManager } from '../plugins/PluginManager';
 import { ActionManager } from '../actions/ActionManager';
 import { AnalysisResult, SetupOptions, ProjectAnalysis } from '../types';
 import chalk from 'chalk';
+import * as path from 'path';
 
 export class WAUEngine {
   private projectAnalyzer: ProjectAnalyzer;
@@ -256,12 +257,11 @@ export class WAUEngine {
   }
 
   private getValidatedProjectPath(projectPath?: string): string {
-    const path = require('path');
     const validPath = projectPath || process.cwd();
 
     try {
       return path.resolve(validPath);
-    } catch (error) {
+    } catch {
       throw new Error(`Invalid project path: ${validPath}`);
     }
   }
@@ -277,8 +277,7 @@ export class WAUEngine {
     configFiles: string[],
     projectPath: string
   ): Promise<boolean> {
-    const fs = require('fs-extra');
-    const path = require('path');
+    const fs = await import('fs-extra');
 
     for (const configFile of configFiles) {
       try {
@@ -286,7 +285,7 @@ export class WAUEngine {
         if (await fs.pathExists(configPath)) {
           return true;
         }
-      } catch (error) {
+      } catch {
         // Continue checking other config files
         continue;
       }
@@ -344,7 +343,7 @@ export class WAUEngine {
     recommendations: any[],
     codeInsights: Map<string, any>
   ): void {
-    recommendations.forEach(rec => {
+    recommendations.forEach((rec: any) => {
       const insight = codeInsights.get(rec.tool);
       if (insight) {
         rec.reason = insight.reason;

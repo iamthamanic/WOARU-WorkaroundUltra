@@ -59,7 +59,9 @@ export class ProjectAnalyzer {
     return analysis;
   }
 
-  private async readPackageJson(packageJsonPath: string): Promise<any> {
+  private async readPackageJson(
+    packageJsonPath: string
+  ): Promise<Record<string, unknown> | null> {
     try {
       return await fs.readJson(packageJsonPath);
     } catch {
@@ -86,12 +88,12 @@ export class ProjectAnalyzer {
 
   private async detectFrameworks(
     projectPath: string,
-    packageJson: any
+    packageJson: Record<string, unknown>
   ): Promise<string[]> {
     const frameworks: string[] = [];
     const allDeps = {
-      ...packageJson.dependencies,
-      ...packageJson.devDependencies,
+      ...(packageJson.dependencies as Record<string, unknown> || {}),
+      ...(packageJson.devDependencies as Record<string, unknown> || {}),
     };
 
     // Next.js
@@ -225,7 +227,7 @@ export class ProjectAnalyzer {
           ignore: ['node_modules/**', 'dist/**', 'build/**'],
         });
         configFiles.push(...files);
-      } catch (error) {
+      } catch {
         // Continue if pattern fails
       }
     }
@@ -238,17 +240,20 @@ export class ProjectAnalyzer {
     language: string
   ): Promise<string[]> {
     switch (language) {
-      case 'javascript':
+      case 'javascript': {
         const packageJson = await this.readPackageJson(
           path.join(projectPath, 'package.json')
         );
         return packageJson ? Object.keys(packageJson.dependencies || {}) : [];
+      }
 
-      case 'python':
+      case 'python': {
         return await this.getPythonDependencies(projectPath);
+      }
 
-      case 'csharp':
+      case 'csharp': {
         return await this.getCSharpDependencies(projectPath);
+      }
 
       default:
         return [];
@@ -260,18 +265,20 @@ export class ProjectAnalyzer {
     language: string
   ): Promise<string[]> {
     switch (language) {
-      case 'javascript':
+      case 'javascript': {
         const packageJson = await this.readPackageJson(
           path.join(projectPath, 'package.json')
         );
         return packageJson
           ? Object.keys(packageJson.devDependencies || {})
           : [];
+      }
 
-      case 'python':
+      case 'python': {
         // Python doesn't really have dev dependencies in the same way
         // But we can check for test/dev packages
         return await this.getPythonDevDependencies(projectPath);
+      }
 
       default:
         return [];
@@ -283,14 +290,16 @@ export class ProjectAnalyzer {
     language: string
   ): Promise<Record<string, string>> {
     switch (language) {
-      case 'javascript':
+      case 'javascript': {
         const packageJson = await this.readPackageJson(
           path.join(projectPath, 'package.json')
         );
-        return packageJson ? packageJson.scripts || {} : {};
+        return packageJson ? (packageJson.scripts as Record<string, string>) || {} : {};
+      }
 
-      case 'python':
+      case 'python': {
         return await this.getPythonScripts(projectPath);
+      }
 
       default:
         return {};
@@ -408,7 +417,7 @@ export class ProjectAnalyzer {
               .filter(pkg => pkg)
           );
         }
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }
@@ -431,7 +440,7 @@ export class ProjectAnalyzer {
 
       // Limit to reasonable number of files for analysis
       return files.slice(0, 100).sort();
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -453,10 +462,10 @@ export class ProjectAnalyzer {
     }
 
     return {
-      name: packageJson.name || path.basename(projectPath),
-      version: packageJson.version || '0.0.0',
-      description: packageJson.description,
-      author: packageJson.author,
+      name: (packageJson.name as string) || path.basename(projectPath),
+      version: (packageJson.version as string) || '0.0.0',
+      description: packageJson.description as string | undefined,
+      author: packageJson.author as string | undefined,
     };
   }
 }

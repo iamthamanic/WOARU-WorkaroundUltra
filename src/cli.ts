@@ -4,13 +4,13 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { WAUEngine } from './core/WAUEngine';
-import { WAUSupervisor } from './supervisor/WAUSupervisor';
+import { WOARUSupervisor } from './supervisor/WAUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
 // Global supervisor instance
-let supervisor: WAUSupervisor | null = null;
+let supervisor: WOARUSupervisor | null = null;
 
 const program = new Command();
 const wauEngine = new WAUEngine();
@@ -220,7 +220,7 @@ program
         watchPatterns: ['**/*'],
       };
 
-      supervisor = new WAUSupervisor(projectPath, config);
+      supervisor = new WOARUSupervisor(projectPath, config);
 
       // Handle graceful shutdown
       process.on('SIGINT', async () => {
@@ -733,8 +733,6 @@ program
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async (tool, options) => {
     try {
-      const projectPath = path.resolve(options.path);
-
       const { confirm } = await inquirer.prompt([
         {
           type: 'confirm',

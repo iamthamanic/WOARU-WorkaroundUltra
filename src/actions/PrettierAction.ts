@@ -1,5 +1,5 @@
 import { BaseAction } from './BaseAction';
-import { SetupOptions } from '../types';
+import { SetupOptions, PackageJson } from '../types';
 import * as path from 'path';
 
 export class PrettierAction extends BaseAction {
@@ -8,7 +8,7 @@ export class PrettierAction extends BaseAction {
 
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
-    const packageJson = await this.readJsonFile(packageJsonPath);
+    const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
 
     if (!packageJson) return false;
 
@@ -38,7 +38,7 @@ export class PrettierAction extends BaseAction {
       }
 
       // Detect if Tailwind is present
-      const packageJson = await this.readJsonFile(packageJsonPath);
+      const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
       const hasTailwind =
         packageJson?.dependencies?.tailwindcss ||
         packageJson?.devDependencies?.tailwindcss;
@@ -96,11 +96,15 @@ Thumbs.db
       await fs.writeFile(prettierIgnorePath, prettierIgnoreContent);
 
       // Add scripts to package.json
-      packageJson.scripts = packageJson.scripts || {};
-      packageJson.scripts['format'] = 'prettier --write .';
-      packageJson.scripts['format:check'] = 'prettier --check .';
+      if (packageJson) {
+        if (!packageJson.scripts) {
+          packageJson.scripts = {};
+        }
+        packageJson.scripts['format'] = 'prettier --write .';
+        packageJson.scripts['format:check'] = 'prettier --check .';
 
-      await this.writeJsonFile(packageJsonPath, packageJson);
+        await this.writeJsonFile(packageJsonPath, packageJson);
+      }
 
       console.log('✅ Prettier installed and configured successfully');
       return true;

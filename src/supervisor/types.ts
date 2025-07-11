@@ -48,6 +48,7 @@ export interface SupervisorConfig {
   };
   ignoreTools: string[];
   watchPatterns: string[];
+  ignorePatterns: string[];
   dashboard: boolean;
 }
 
@@ -59,6 +60,6 @@ export interface FileChange {
 
 export interface WatcherEvent {
   type: 'file_changed' | 'tool_detected' | 'issue_found' | 'recommendation';
-  data: any;
+  data: unknown;
   timestamp: Date;
 }

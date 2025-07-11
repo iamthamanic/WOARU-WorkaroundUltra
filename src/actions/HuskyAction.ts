@@ -1,5 +1,5 @@
 import { BaseAction } from './BaseAction';
-import { SetupOptions } from '../types';
+import { SetupOptions, PackageJson } from '../types';
 import * as path from 'path';
 
 export class HuskyAction extends BaseAction {
@@ -8,7 +8,7 @@ export class HuskyAction extends BaseAction {
 
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
-    const packageJson = await this.readJsonFile(packageJsonPath);
+    const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
 
     if (!packageJson) return false;
 
@@ -60,11 +60,11 @@ export class HuskyAction extends BaseAction {
       }
 
       // Read package.json to detect available scripts
-      const packageJson = await this.readJsonFile(packageJsonPath);
-      const hasLint = packageJson.scripts?.lint;
-      const hasFormat = packageJson.scripts?.format;
+      const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
+      const hasLint = packageJson?.scripts?.lint;
+      const hasFormat = packageJson?.scripts?.format;
       const hasTypeCheck =
-        packageJson.scripts?.['type-check'] || packageJson.scripts?.tsc;
+        packageJson?.scripts?.['type-check'] || packageJson?.scripts?.tsc;
 
       // Create pre-commit hook
       const preCommitPath = path.join(huskyDir, 'pre-commit');
@@ -76,7 +76,7 @@ export class HuskyAction extends BaseAction {
       await this.runCommand('chmod', ['+x', preCommitPath], projectPath);
 
       // Configure lint-staged
-      const lintStagedConfig: any = {};
+      const lintStagedConfig: Record<string, string[]> = {};
 
       // Configure for TypeScript/JavaScript files
       const jsPattern = '*.{js,jsx,ts,tsx}';
@@ -97,7 +97,7 @@ export class HuskyAction extends BaseAction {
       if (hasTypeCheck) {
         lintStagedConfig['*.{ts,tsx}'] = [
           ...(lintStagedConfig['*.{ts,tsx}'] || commands),
-          () => 'tsc --noEmit',
+          'tsc --noEmit',
         ];
       }
 
@@ -107,13 +107,17 @@ export class HuskyAction extends BaseAction {
       }
 
       // Add lint-staged configuration to package.json
-      packageJson['lint-staged'] = lintStagedConfig;
+      if (packageJson) {
+        packageJson['lint-staged'] = lintStagedConfig;
 
-      // Add prepare script for husky
-      packageJson.scripts = packageJson.scripts || {};
-      packageJson.scripts.prepare = 'husky';
+        // Add prepare script for husky
+        if (!packageJson.scripts) {
+          packageJson.scripts = {};
+        }
+        packageJson.scripts.prepare = 'husky';
 
-      await this.writeJsonFile(packageJsonPath, packageJson);
+        await this.writeJsonFile(packageJsonPath, packageJson);
+      }
 
       console.log(
         '✅ Husky and lint-staged installed and configured successfully'

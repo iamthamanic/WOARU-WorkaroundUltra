@@ -1,27 +1,30 @@
 import { EventEmitter } from 'events';
-import * as fs from 'fs-extra';
 import * as path from 'path';
-import chalk from 'chalk';
 import { StateManager } from './StateManager';
 import { FileWatcher } from './FileWatcher';
 import { NotificationManager } from './NotificationManager';
 import { ToolRecommendationEngine } from './ToolRecommendationEngine';
 import { ProjectAnalyzer } from '../analyzer/ProjectAnalyzer';
 import { LanguageDetector } from '../analyzer/LanguageDetector';
+import { QualityRunner } from '../quality/QualityRunner';
+import { ProductionReadinessAuditor, AuditConfig } from '../auditor/ProductionReadinessAuditor';
 import {
   SupervisorConfig,
   ProjectState,
   FileChange,
   ToolRecommendation,
+  CodeIssue,
 } from './types';
 
-export class WAUSupervisor extends EventEmitter {
+export class WOARUSupervisor extends EventEmitter {
   private stateManager: StateManager;
   private fileWatcher: FileWatcher;
   private notificationManager: NotificationManager;
   private toolEngine: ToolRecommendationEngine;
   private projectAnalyzer: ProjectAnalyzer;
   private languageDetector: LanguageDetector;
+  private qualityRunner: QualityRunner;
+  private productionAuditor: ProductionReadinessAuditor;
 
   private config: SupervisorConfig;
   private isRunning = false;
@@ -45,6 +48,8 @@ export class WAUSupervisor extends EventEmitter {
     this.toolEngine = new ToolRecommendationEngine();
     this.projectAnalyzer = new ProjectAnalyzer();
     this.languageDetector = new LanguageDetector();
+    this.qualityRunner = new QualityRunner(this.notificationManager);
+    this.productionAuditor = new ProductionReadinessAuditor(this.projectPath);
 
     this.setupEventListeners();
   }
@@ -61,6 +66,13 @@ export class WAUSupervisor extends EventEmitter {
       },
       ignoreTools: [],
       watchPatterns: ['**/*'],
+      ignorePatterns: [
+        '**/node_modules/**',
+        '**/.git/**', 
+        '**/dist/**',
+        '**/build/**',
+        '**/.next/**'
+      ],
       dashboard: false,
       ...config,
     };
@@ -112,7 +124,7 @@ export class WAUSupervisor extends EventEmitter {
       this.stateManager.off('tool_detected', handleToolDetected)
     );
 
-    const handleCriticalIssues = (issues: any) => {
+    const handleCriticalIssues = (issues: CodeIssue[]) => {
       this.notificationManager.notifyIssues(issues);
     };
     this.stateManager.on('critical_issues', handleCriticalIssues);
@@ -137,7 +149,7 @@ export class WAUSupervisor extends EventEmitter {
     }
 
     try {
-      this.notificationManager.showProgress('Starting WAU Supervisor...');
+      this.notificationManager.showProgress('Starting WOARU Supervisor...');
 
       // Initialize components
       await this.toolEngine.initialize();
@@ -158,11 +170,14 @@ export class WAUSupervisor extends EventEmitter {
       this.isRunning = true;
 
       this.notificationManager.showSuccess(
-        `WAU Supervisor started for ${path.basename(this.projectPath)}`
+        `WOARU Supervisor started for ${path.basename(this.projectPath)}`
       );
 
       // Initial recommendations check
       await this.checkRecommendations();
+      
+      // Initial production audit
+      await this.runProductionAudit();
 
       this.emit('started');
     } catch (error) {
@@ -196,7 +211,7 @@ export class WAUSupervisor extends EventEmitter {
       await this.stateManager.destroy();
 
       this.isRunning = false;
-      this.notificationManager.showSuccess('WAU Supervisor stopped');
+      this.notificationManager.showSuccess('WOARU Supervisor stopped');
 
       this.emit('stopped');
     } catch (error) {
@@ -230,7 +245,7 @@ export class WAUSupervisor extends EventEmitter {
       this.stateManager.updateFrameworks(frameworks);
 
       // Detect existing tools
-      this.detectExistingTools(analysis);
+      this.detectExistingTools(analysis as any);
 
       this.notificationManager.showSuccess(
         `Project analyzed: ${language} ${frameworks.length > 0 ? `(${frameworks.join(', ')})` : ''}`
@@ -256,8 +271,8 @@ export class WAUSupervisor extends EventEmitter {
     };
 
     const allDeps = [
-      ...analysis.dependencies,
-      ...analysis.devDependencies,
+      ...(analysis.dependencies || []),
+      ...(analysis.devDependencies || []),
     ].join(' ');
 
     Object.entries(toolPatterns).forEach(([tool, pattern]) => {
@@ -278,7 +293,7 @@ export class WAUSupervisor extends EventEmitter {
       'rustfmt.toml': 'rustfmt',
     };
 
-    analysis.configFiles.forEach((file: string) => {
+    (analysis.configFiles || []).forEach((file: string) => {
       Object.entries(configTools).forEach(([pattern, tool]) => {
         if (file.includes(pattern)) {
           this.stateManager.addDetectedTool(tool);
@@ -298,6 +313,12 @@ export class WAUSupervisor extends EventEmitter {
 
     for (const change of changes) {
       if (change.type === 'change') {
+        // Run immediate quality checks
+        await this.qualityRunner.runChecksOnFileChange(
+          path.join(this.projectPath, change.path)
+        );
+        
+        // Get recommendations for the file
         const recommendations = await this.toolEngine.checkSingleFile(
           path.join(this.projectPath, change.path),
           this.stateManager.getState()
@@ -323,6 +344,9 @@ export class WAUSupervisor extends EventEmitter {
     // Immediate re-analysis for critical files
     if (change.path === 'package.json' || change.path.includes('config')) {
       await this.performInitialAnalysis();
+      
+      // Run production-readiness audit on package.json changes
+      await this.runProductionAudit();
     }
   }
 
@@ -462,6 +486,53 @@ export class WAUSupervisor extends EventEmitter {
 
     // Remove all listeners from this instance
     this.removeAllListeners();
+  }
+
+  private async runProductionAudit(): Promise<void> {
+    try {
+      const state = this.stateManager.getState();
+      
+      // Determine project type based on dependencies
+      const auditConfig: AuditConfig = {
+        language: state.language,
+        frameworks: state.frameworks,
+        projectType: this.determineProjectType(state)
+      };
+
+      const audits = await this.productionAuditor.auditProject(auditConfig);
+      
+      if (audits.length > 0) {
+        await this.notificationManager.notifyProductionAudits(audits);
+      }
+    } catch (error) {
+      this.notificationManager.showError(
+        `Production audit failed: ${error}`
+      );
+    }
+  }
+
+  private determineProjectType(state: ProjectState): 'frontend' | 'backend' | 'fullstack' | 'library' | 'cli' {
+    const frameworks = state.frameworks;
+    
+    // Check for frontend frameworks
+    const frontendFrameworks = ['react', 'vue', 'angular', 'next', 'nuxt'];
+    const hasFrontend = frameworks.some(f => frontendFrameworks.includes(f));
+    
+    // Check for backend frameworks
+    const backendFrameworks = ['express', 'fastify', 'koa', 'django', 'flask', 'spring'];
+    const hasBackend = frameworks.some(f => backendFrameworks.includes(f));
+    
+    if (hasFrontend && hasBackend) return 'fullstack';
+    if (hasFrontend) return 'frontend';
+    if (hasBackend) return 'backend';
+    
+    // Check if it's a CLI tool
+    if (state.detectedTools.has('commander') || state.detectedTools.has('yargs')) {
+      return 'cli';
+    }
+    
+    // Default to library if no specific type detected
+    return 'library';
   }
 
   async destroy(): Promise<void> {

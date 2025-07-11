@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { ToolsDatabase } from '../types';
+import { ToolsDatabase, ToolConfig } from '../types';
 
 export class DatabaseManager {
   private readonly localDbPath: string;
@@ -59,13 +59,14 @@ export class DatabaseManager {
     }
   }
 
-  private validateDatabase(db: any): db is ToolsDatabase {
+  private validateDatabase(db: unknown): db is ToolsDatabase {
     return (
       typeof db === 'object' &&
-      typeof db.version === 'string' &&
-      typeof db.lastUpdated === 'string' &&
-      typeof db.categories === 'object' &&
-      typeof db.frameworks === 'object'
+      db !== null &&
+      typeof (db as any).version === 'string' &&
+      typeof (db as any).lastUpdated === 'string' &&
+      typeof (db as any).categories === 'object' &&
+      typeof (db as any).frameworks === 'object'
     );
   }
 
@@ -79,7 +80,7 @@ export class DatabaseManager {
 
     const tools: string[] = [];
     Object.entries(frameworkConfig.recommendedTools).forEach(
-      ([category, categoryTools]) => {
+      ([_category, categoryTools]) => {
         tools.push(...categoryTools);
       }
     );
@@ -87,11 +88,14 @@ export class DatabaseManager {
     return [...new Set(tools)]; // Remove duplicates
   }
 
-  async getToolConfig(toolName: string, framework?: string): Promise<any> {
+  async getToolConfig(
+    toolName: string,
+    framework?: string
+  ): Promise<ToolConfig | null> {
     const db = await this.getDatabase();
 
     // Search through all categories for the tool
-    for (const [categoryName, categoryTools] of Object.entries(db.categories)) {
+    for (const [, categoryTools] of Object.entries(db.categories)) {
       if (categoryTools[toolName]) {
         const toolConfig = categoryTools[toolName];
 
@@ -103,10 +107,10 @@ export class DatabaseManager {
               ...toolConfig.packages,
               ...toolConfig.configs[framework],
             ],
-          };
+          } as ToolConfig;
         }
 
-        return toolConfig;
+        return toolConfig as ToolConfig;
       }
     }
 

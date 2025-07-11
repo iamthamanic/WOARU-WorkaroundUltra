@@ -4,14 +4,15 @@ export interface ToolConfig {
   configs?: Record<string, string[]>;
   configFiles?: string[];
   metadata?: {
-    popularity?: number;
-    lastChecked?: string;
+    popularity: number;
+    lastChecked: string;
     npmDownloads?: number;
     githubStars?: number;
     alternatives?: string[];
     deprecated?: boolean;
     successor?: string;
   };
+  [key: string]: any;
 }
 
 export interface CategoryTools {
@@ -93,4 +94,13 @@ export interface SetupOptions {
   force?: boolean;
   skipBackup?: boolean;
   interactive?: boolean;
+}
+
+export interface PackageJson {
+  name?: string;
+  version?: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  scripts?: Record<string, string>;
+  [key: string]: unknown;
 }

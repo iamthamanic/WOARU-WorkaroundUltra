@@ -1,4 +1,5 @@
 import { SetupOptions } from '../types';
+import * as path from 'path';
 
 export abstract class BaseAction {
   abstract name: string;
@@ -129,12 +130,11 @@ export abstract class BaseAction {
     return arg.replace(/[;&|`$(){}[\]<>]/g, '');
   }
 
-  private sanitizePath(path: string): string {
-    const pathModule = require('path');
+  private sanitizePath(filePath: string): string {
     try {
-      return pathModule.resolve(path);
-    } catch (error) {
-      throw new Error(`Invalid path: ${path}`);
+      return path.resolve(filePath);
+    } catch {
+      throw new Error(`Invalid path: ${filePath}`);
     }
   }
 
@@ -176,24 +176,28 @@ export abstract class BaseAction {
     return fs.pathExists(filePath);
   }
 
-  protected async readJsonFile(filePath: string): Promise<any> {
+  protected async readJsonFile<T = any>(filePath: string): Promise<T | null> {
     const fs = await import('fs-extra');
     try {
       // Validate file path to prevent directory traversal
       const sanitizedPath = this.sanitizePath(filePath);
-      return await fs.readJson(sanitizedPath);
+      return await fs.readJson(sanitizedPath) as T;
     } catch (error) {
       console.warn(`Failed to read JSON file ${filePath}:`, error);
       return null;
     }
   }
 
-  protected async writeJsonFile(filePath: string, data: any): Promise<void> {
+  protected async writeJsonFile(
+    filePath: string,
+    data: unknown
+  ): Promise<void> {
     const fs = await import('fs-extra');
     try {
       // Validate file path and ensure directory exists
       const sanitizedPath = this.sanitizePath(filePath);
-      await fs.ensureDir(require('path').dirname(sanitizedPath));
+      const path = await import('path');
+      await fs.ensureDir(path.dirname(sanitizedPath));
 
       // Atomic write using temporary file
       const tempFile = `${sanitizedPath}.tmp`;
@@ -206,7 +210,6 @@ export abstract class BaseAction {
 
   protected async createBackup(filePath: string): Promise<string> {
     const fs = await import('fs-extra');
-    const path = require('path');
 
     try {
       const sanitizedPath = this.sanitizePath(filePath);
@@ -228,7 +231,7 @@ export abstract class BaseAction {
 
   private async cleanupOldBackups(originalPath: string): Promise<void> {
     const fs = await import('fs-extra');
-    const path = require('path');
+    const path = await import('path');
 
     try {
       const dir = path.dirname(originalPath);

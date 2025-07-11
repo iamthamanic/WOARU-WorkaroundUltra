@@ -1,5 +1,5 @@
 import { BaseAction } from './BaseAction';
-import { SetupOptions } from '../types';
+import { SetupOptions, PackageJson } from '../types';
 import * as path from 'path';
 
 export class EslintAction extends BaseAction {
@@ -8,7 +8,7 @@ export class EslintAction extends BaseAction {
 
   async canExecute(projectPath: string): Promise<boolean> {
     const packageJsonPath = path.join(projectPath, 'package.json');
-    const packageJson = await this.readJsonFile(packageJsonPath);
+    const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
 
     if (!packageJson) return false;
 
@@ -36,7 +36,7 @@ export class EslintAction extends BaseAction {
       }
 
       // Detect project characteristics
-      const packageJson = await this.readJsonFile(packageJsonPath);
+      const packageJson = await this.readJsonFile<PackageJson>(packageJsonPath);
       const hasNext =
         packageJson?.dependencies?.next || packageJson?.devDependencies?.next;
       const hasReact =
@@ -77,22 +77,22 @@ export class EslintAction extends BaseAction {
       }
 
       // Create ESLint configuration
-      let eslintConfig: any = {
+      const eslintConfig: Record<string, any> = {
         env: {
           browser: true,
           es2021: true,
           node: true,
         },
-        extends: [],
+        extends: [] as string[],
       };
 
       if (hasNext) {
-        eslintConfig.extends.push('next/core-web-vitals');
+        (eslintConfig.extends as string[]).push('next/core-web-vitals');
       } else {
-        eslintConfig.extends.push('eslint:recommended');
+        (eslintConfig.extends as string[]).push('eslint:recommended');
 
         if (hasReact) {
-          eslintConfig.extends.push(
+          (eslintConfig.extends as string[]).push(
             'plugin:react/recommended',
             'plugin:react-hooks/recommended'
           );
@@ -106,10 +106,10 @@ export class EslintAction extends BaseAction {
       }
 
       if (hasTypeScript) {
-        eslintConfig.extends.push('@typescript-eslint/recommended');
+        (eslintConfig.extends as string[]).push('@typescript-eslint/recommended');
         eslintConfig.parser = '@typescript-eslint/parser';
         eslintConfig.plugins = [
-          ...(eslintConfig.plugins || []),
+          ...((eslintConfig.plugins as string[]) || []),
           '@typescript-eslint',
         ];
         eslintConfig.parserOptions = {
@@ -128,12 +128,16 @@ export class EslintAction extends BaseAction {
       await this.writeJsonFile(eslintrcPath, eslintConfig);
 
       // Add scripts to package.json
-      packageJson.scripts = packageJson.scripts || {};
-      packageJson.scripts['lint'] = 'eslint . --ext .js,.jsx,.ts,.tsx';
-      packageJson.scripts['lint:fix'] =
-        'eslint . --ext .js,.jsx,.ts,.tsx --fix';
+      if (packageJson) {
+        if (!packageJson.scripts) {
+          packageJson.scripts = {};
+        }
+        packageJson.scripts['lint'] = 'eslint . --ext .js,.jsx,.ts,.tsx';
+        packageJson.scripts['lint:fix'] =
+          'eslint . --ext .js,.jsx,.ts,.tsx --fix';
 
-      await this.writeJsonFile(packageJsonPath, packageJson);
+        await this.writeJsonFile(packageJsonPath, packageJson);
+      }
 
       console.log('✅ ESLint installed and configured successfully');
       return true;
