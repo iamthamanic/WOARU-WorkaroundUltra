@@ -39,6 +39,39 @@ export class ProductionReadinessAuditor {
     return audits.filter(audit => audit.status === 'missing' || audit.status === 'partial');
   }
 
+  // New method for focused audit on changed files only
+  async auditChangedFiles(changedFiles: string[], config: AuditConfig): Promise<ProductionAudit[]> {
+    const audits: ProductionAudit[] = [];
+    
+    // Categorize changed files
+    const relevantFiles = this.categorizeRelevantFiles(changedFiles);
+    
+    // Only audit categories that are relevant to the changed files
+    if (relevantFiles.packageJson.length > 0) {
+      // If package.json changed, run dependency-related audits
+      audits.push(...await this.auditErrorMonitoring(config));
+      audits.push(...await this.auditTestingFramework(config));
+      audits.push(...await this.auditSecurity(config));
+    }
+    
+    if (relevantFiles.docker.length > 0) {
+      // If Docker files changed, audit containerization
+      audits.push(...await this.auditContainerization(config));
+    }
+    
+    if (relevantFiles.config.length > 0) {
+      // If config files changed, audit environment configuration
+      audits.push(...await this.auditEnvironmentConfig(config));
+    }
+    
+    if (relevantFiles.source.length > 0) {
+      // If source files changed, provide targeted recommendations
+      audits.push(...this.auditSourceFileChanges(relevantFiles.source, config));
+    }
+
+    return audits.filter(audit => audit.status === 'missing' || audit.status === 'partial');
+  }
+
   private async auditErrorMonitoring(config: AuditConfig): Promise<ProductionAudit[]> {
     const audits: ProductionAudit[] = [];
 
@@ -328,5 +361,92 @@ export class ProductionReadinessAuditor {
     } catch {
       return null;
     }
+  }
+
+  // Helper methods for changed file analysis
+  private categorizeRelevantFiles(changedFiles: string[]): {
+    packageJson: string[];
+    docker: string[];
+    config: string[];
+    source: string[];
+  } {
+    const result = {
+      packageJson: [] as string[],
+      docker: [] as string[],
+      config: [] as string[],
+      source: [] as string[]
+    };
+
+    changedFiles.forEach(file => {
+      const filename = path.basename(file);
+      const ext = path.extname(file).toLowerCase();
+
+      if (filename === 'package.json') {
+        result.packageJson.push(file);
+      } else if (filename.startsWith('Dockerfile') || filename === '.dockerignore') {
+        result.docker.push(file);
+      } else if (this.isConfigFile(filename)) {
+        result.config.push(file);
+      } else if (this.isSourceFile(ext)) {
+        result.source.push(file);
+      }
+    });
+
+    return result;
+  }
+
+  private isConfigFile(filename: string): boolean {
+    const configFiles = [
+      '.env', '.env.example', '.env.local', '.env.production',
+      'tsconfig.json', 'jest.config.js', 'webpack.config.js',
+      '.eslintrc', '.prettierrc', 'babel.config.js'
+    ];
+    return configFiles.some(config => filename.includes(config));
+  }
+
+  private isSourceFile(ext: string): boolean {
+    const sourceExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.rs', '.go', '.java', '.cs', '.php', '.rb'];
+    return sourceExtensions.includes(ext);
+  }
+
+  private auditSourceFileChanges(sourceFiles: string[], config: AuditConfig): ProductionAudit[] {
+    const audits: ProductionAudit[] = [];
+
+    // Check if new components were added without tests
+    const newComponents = sourceFiles.filter(file => 
+      file.includes('component') || file.includes('Component')
+    );
+
+    if (newComponents.length > 0) {
+      audits.push({
+        category: 'testing',
+        check: 'new-components-testing',
+        status: 'missing',
+        priority: 'high',
+        message: `${newComponents.length} neue Komponenten ohne Tests`,
+        recommendation: `Erstelle Tests für die neuen Komponenten: ${newComponents.map(f => path.basename(f)).join(', ')}`,
+        files: newComponents
+      });
+    }
+
+    // Check for new API endpoints without error handling
+    const apiFiles = sourceFiles.filter(file => 
+      file.includes('api') || file.includes('route') || file.includes('endpoint')
+    );
+
+    if (apiFiles.length > 0) {
+      audits.push({
+        category: 'error-monitoring',
+        check: 'api-error-handling',
+        status: 'missing',
+        priority: 'high',
+        message: 'Neue API-Endpunkte ohne Error-Monitoring',
+        recommendation: 'Integriere Sentry oder ähnliche Tools für API-Error-Tracking',
+        packages: ['@sentry/node', '@sentry/react'],
+        files: apiFiles
+      });
+    }
+
+    return audits;
   }
 }

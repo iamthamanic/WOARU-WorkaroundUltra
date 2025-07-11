@@ -5,6 +5,13 @@ import { NotificationManager } from '../supervisor/NotificationManager';
 
 const execAsync = promisify(exec);
 
+export interface QualityCheckResult {
+  filePath: string;
+  tool: string;
+  severity: 'error' | 'warning' | 'info';
+  issues: string[];
+}
+
 export class QualityRunner {
   private notificationManager: NotificationManager;
 
@@ -55,6 +62,75 @@ export class QualityRunner {
     if (ext === '.rb') {
       await this.runRubyCheck(relativePath);
     }
+  }
+
+  // New method for running checks on multiple files (for review command)
+  async runChecksOnFileList(filePaths: string[]): Promise<QualityCheckResult[]> {
+    const results: QualityCheckResult[] = [];
+    
+    for (const filePath of filePaths) {
+      const ext = path.extname(filePath).toLowerCase();
+      const relativePath = path.relative(process.cwd(), filePath);
+      
+      try {
+        // TypeScript/JavaScript files
+        if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
+          const result = await this.runESLintCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // Python files
+        if (ext === '.py') {
+          const result = await this.runRuffCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // Go files
+        if (ext === '.go') {
+          const result = await this.runGoCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // Rust files
+        if (ext === '.rs') {
+          const result = await this.runRustCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // C# files
+        if (ext === '.cs') {
+          const result = await this.runCSharpCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // Java files
+        if (ext === '.java') {
+          const result = await this.runJavaCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // PHP files
+        if (ext === '.php') {
+          const result = await this.runPHPCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+        
+        // Ruby files
+        if (ext === '.rb') {
+          const result = await this.runRubyCheckForReview(relativePath);
+          if (result) results.push(result);
+        }
+      } catch (error) {
+        results.push({
+          filePath: relativePath,
+          tool: 'Unknown',
+          severity: 'error',
+          issues: [`Failed to check file: ${error}`]
+        });
+      }
+    }
+    
+    return results;
   }
 
   private async runESLintCheck(filePath: string): Promise<void> {
@@ -260,5 +336,145 @@ export class QualityRunner {
         );
       }
     }
+  }
+
+  // Review-specific methods that return results instead of showing notifications
+  private async runESLintCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`npx eslint "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      const issues = this.parseESLintOutput(output);
+      return {
+        filePath,
+        tool: 'ESLint',
+        severity: 'error',
+        issues
+      };
+    }
+  }
+
+  private async runRuffCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`ruff check "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      const issues = this.parseRuffOutput(output);
+      return {
+        filePath,
+        tool: 'Ruff',
+        severity: 'error',
+        issues
+      };
+    }
+  }
+
+  private async runGoCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`gofmt -l "${filePath}"`);
+      await execAsync(`go vet "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'Go (gofmt + go vet)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  private async runRustCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`rustfmt --check "${filePath}"`);
+      await execAsync(`cargo clippy --manifest-path "${path.dirname(filePath)}/Cargo.toml" -- -D warnings`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'Rust (rustfmt + clippy)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  private async runCSharpCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`dotnet format --verify-no-changes "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'C# (dotnet format)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  private async runJavaCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`checkstyle -c /google_checks.xml "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'Java (Checkstyle)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  private async runPHPCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`phpcs --standard=PSR12 "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'PHP (PHPCS)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  private async runRubyCheckForReview(filePath: string): Promise<QualityCheckResult | null> {
+    try {
+      await execAsync(`rubocop "${filePath}"`);
+      return null; // No issues found
+    } catch (error: any) {
+      const output = error.stdout || error.stderr || error.message;
+      return {
+        filePath,
+        tool: 'Ruby (RuboCop)',
+        severity: 'error',
+        issues: [output.trim()]
+      };
+    }
+  }
+
+  // Helper methods to parse tool outputs
+  private parseESLintOutput(output: string): string[] {
+    const lines = output.split('\n').filter(line => line.trim());
+    return lines.filter(line => 
+      line.includes('error') || line.includes('warning')
+    ).slice(0, 10); // Limit to first 10 issues
+  }
+
+  private parseRuffOutput(output: string): string[] {
+    const lines = output.split('\n').filter(line => line.trim());
+    return lines.filter(line => 
+      line.includes('.py:') && (line.includes('error') || line.includes('warning'))
+    ).slice(0, 10); // Limit to first 10 issues
   }
 }

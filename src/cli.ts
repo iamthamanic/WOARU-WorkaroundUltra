@@ -213,7 +213,7 @@ program
         dashboard: options.dashboard,
         notifications: {
           terminal: true,
-          desktop: !options.noDesktop,
+          desktop: false, // Disabled due to node-notifier EBADF crashes on large projects
           webhook: options.webhook,
         },
         ignoreTools: [],
@@ -720,6 +720,147 @@ program
       console.error(
         chalk.red(
           `❌ Failed to ignore tool: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command('review')
+  .description('Analyze only changed files since a specific branch (like a code review)')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-b, --branch <branch>', 'Base branch to compare against', 'main')
+  .option('-o, --output <file>', 'Output file for review report', 'woaru-review.md')
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .action(async options => {
+    try {
+      const projectPath = path.resolve(options.path);
+
+      // Check if we're in a git repository
+      if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
+        console.error(
+          chalk.red('❌ Not a git repository. Review command requires git.')
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.blue(`🔍 Analyzing changes since branch: ${options.branch}`));
+
+      // Get list of changed files using git diff
+      const { spawn } = require('child_process');
+      const gitProcess = spawn('git', [
+        'diff',
+        '--name-only',
+        `${options.branch}...HEAD`
+      ], {
+        cwd: projectPath,
+        stdio: 'pipe'
+      });
+
+      let changedFiles = '';
+      let gitError = '';
+
+      gitProcess.stdout.on('data', (data: Buffer) => {
+        changedFiles += data.toString();
+      });
+
+      gitProcess.stderr.on('data', (data: Buffer) => {
+        gitError += data.toString();
+      });
+
+      gitProcess.on('close', async (code: number) => {
+        if (code !== 0) {
+          console.error(chalk.red(`❌ Git command failed: ${gitError}`));
+          process.exit(1);
+        }
+
+        const fileList = changedFiles
+          .trim()
+          .split('\n')
+          .filter(file => file.length > 0)
+          .map(file => path.join(projectPath, file));
+
+        if (fileList.length === 0) {
+          console.log(chalk.green('✅ No changes detected since the base branch.'));
+          return;
+        }
+
+        console.log(chalk.cyan(`📋 Found ${fileList.length} changed files:`));
+        fileList.forEach(file => {
+          console.log(chalk.gray(`   • ${path.relative(projectPath, file)}`));
+        });
+
+        // Run focused analysis
+        const { GitDiffAnalyzer } = await import('./utils/GitDiffAnalyzer');
+        const { QualityRunner } = await import('./quality/QualityRunner');
+        const { ProductionReadinessAuditor } = await import('./auditor/ProductionReadinessAuditor');
+        const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
+        const { LanguageDetector } = await import('./analyzer/LanguageDetector');
+        const { NotificationManager } = await import('./supervisor/NotificationManager');
+
+        console.log(chalk.blue('🔍 Running quality checks on changed files...'));
+
+        // Initialize components
+        const gitAnalyzer = new GitDiffAnalyzer(projectPath);
+        const notificationManager = new NotificationManager({ terminal: true, desktop: false });
+        const qualityRunner = new QualityRunner(notificationManager);
+        const productionAuditor = new ProductionReadinessAuditor(projectPath);
+        const languageDetector = new LanguageDetector();
+        const reportGenerator = new ReviewReportGenerator();
+
+        // Get additional git info
+        const currentBranch = await gitAnalyzer.getCurrentBranch();
+        const commits = await gitAnalyzer.getCommitsSince(options.branch);
+
+        // Detect language and frameworks
+        const language = await languageDetector.detectPrimaryLanguage(projectPath);
+        const frameworks = await languageDetector.detectFrameworks(projectPath, language);
+
+        // Run quality checks
+        const qualityResults = await qualityRunner.runChecksOnFileList(fileList);
+
+        // Run production audit on changed files
+        const auditConfig = {
+          language,
+          frameworks,
+          projectType: 'fullstack' as const // TODO: Improve detection
+        };
+        const productionAudits = await productionAuditor.auditChangedFiles(fileList, auditConfig);
+
+        // Generate report
+        const reportData = {
+          gitDiff: {
+            changedFiles: fileList,
+            baseBranch: options.branch,
+            totalChanges: fileList.length
+          },
+          qualityResults,
+          productionAudits,
+          currentBranch,
+          commits
+        };
+
+        if (options.json) {
+          const jsonReport = reportGenerator.generateJsonReport(reportData);
+          console.log(jsonReport);
+        } else {
+          const outputPath = path.resolve(projectPath, options.output);
+          await reportGenerator.generateMarkdownReport(reportData, outputPath);
+          
+          console.log(chalk.green(`\n✅ Review report generated: ${options.output}`));
+          console.log(chalk.cyan(`📊 ${reportGenerator.getReportSummary(reportData)}`));
+          
+          if (qualityResults.length > 0 || productionAudits.length > 0) {
+            console.log(chalk.yellow(`\n💡 Open ${options.output} to see detailed findings`));
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);

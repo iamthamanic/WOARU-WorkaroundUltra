@@ -158,7 +158,7 @@ export class WOARUSupervisor extends EventEmitter {
       // Perform initial analysis
       await this.performInitialAnalysis();
 
-      // Start file watching
+      // Start file watching (non-blocking)
       this.fileWatcher.start();
 
       // Start auto-save
@@ -169,17 +169,21 @@ export class WOARUSupervisor extends EventEmitter {
 
       this.isRunning = true;
 
+      // Show success immediately - file watcher will notify when ready
       this.notificationManager.showSuccess(
         `WOARU Supervisor started for ${path.basename(this.projectPath)}`
       );
 
-      // Initial recommendations check
-      await this.checkRecommendations();
-      
-      // Initial production audit
-      await this.runProductionAudit();
-
       this.emit('started');
+
+      // Run initial checks asynchronously (don't block startup)
+      this.checkRecommendations().catch(error => 
+        this.notificationManager.showError(`Initial recommendations failed: ${error}`)
+      );
+      
+      this.runProductionAudit().catch(error =>
+        this.notificationManager.showError(`Initial production audit failed: ${error}`)
+      );
     } catch (error) {
       this.notificationManager.showError(
         `Failed to start supervisor: ${error}`

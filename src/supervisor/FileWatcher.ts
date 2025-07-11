@@ -7,7 +7,7 @@ import { FileChange } from './types';
 export class FileWatcher extends EventEmitter {
   private watcher?: chokidar.FSWatcher;
   private projectPath: string;
-  private ignorePatterns: string[];
+  private ignorePatterns: RegExp[];
   private fileChangeQueue = new Map<string, FileChange>();
 
   // Debounced processing to handle rapid file changes
@@ -24,18 +24,34 @@ export class FileWatcher extends EventEmitter {
     super();
     this.projectPath = projectPath;
     this.ignorePatterns = [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/dist/**',
-      '**/build/**',
-      '**/.next/**',
-      '**/coverage/**',
-      '**/*.log',
-      '**/.wau/**',
-      '**/.DS_Store',
-      '**/package-lock.json',
-      '**/yarn.lock',
-      '**/pnpm-lock.yaml',
+      /(^|[\/\\])\../, // Dotfiles
+      /node_modules/,
+      /\.git/,
+      /dist/,
+      /build/,
+      /\.next/,
+      /coverage/,
+      /\.log$/,
+      /\.wau/,
+      /\.DS_Store/,
+      /package-lock\.json$/,
+      /yarn\.lock$/,
+      /pnpm-lock\.yaml$/,
+      // Python virtual environments
+      /venv/,
+      /\.venv/,
+      /env/,
+      /\.env/,
+      /__pycache__/,
+      /\.pytest_cache/,
+      // Additional common directories
+      /target/, // Rust
+      /vendor/, // Go, PHP
+      /bin/,
+      /obj/,
+      /out/,
+      /tmp/,
+      /temp/,
     ];
   }
 
@@ -48,11 +64,13 @@ export class FileWatcher extends EventEmitter {
     this.watcher = chokidar.watch(this.projectPath, {
       ignored: this.ignorePatterns,
       persistent: true,
-      ignoreInitial: false,
+      ignoreInitial: true, // Don't process all files on startup
       awaitWriteFinish: {
         stabilityThreshold: 300,
         pollInterval: 100,
       },
+      depth: 10, // Limit directory traversal depth
+      followSymlinks: false, // Don't follow symlinks
     });
 
     this.watcher
@@ -61,7 +79,7 @@ export class FileWatcher extends EventEmitter {
       .on('unlink', filePath => this.handleFileEvent('unlink', filePath))
       .on('error', error => this.emit('error', error))
       .on('ready', () => {
-        console.log('File watcher ready');
+        console.log('✅ Initial file scan complete. WOARU is now actively watching for changes.');
         this.emit('ready');
       });
   }
@@ -157,7 +175,9 @@ export class FileWatcher extends EventEmitter {
   }
 
   addIgnorePattern(pattern: string): void {
-    this.ignorePatterns.push(pattern);
+    // Convert string pattern to RegExp
+    const regexPattern = new RegExp(pattern.replace(/\*/g, '.*'));
+    this.ignorePatterns.push(regexPattern);
 
     // Restart watcher with new patterns
     if (this.watcher) {
