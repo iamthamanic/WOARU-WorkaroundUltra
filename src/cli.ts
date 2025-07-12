@@ -182,7 +182,7 @@ program
 // Supervisor Commands
 program
   .command('watch')
-  .description('Start WAU supervisor to continuously monitor the project')
+  .description('Start WOARU supervisor to continuously monitor the project')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--dashboard', 'Show live dashboard')
   .option('--auto-setup', 'Automatically setup recommended tools')
@@ -256,16 +256,14 @@ program
 
       await supervisor.start();
 
-      // Check if running in detached mode or Claude Code environment
-      const isClaudeEnvironment = process.env.CURSOR_AI || process.env.CLAUDE_CODE || !process.stdout.isTTY;
-      
-      if (options.detached || isClaudeEnvironment) {
+      // Check if running in detached mode (but NOT for Claude Code environment)
+      if (options.detached) {
         // Write PID file for detached mode
         const pidFile = path.join(projectPath, '.wau', 'supervisor.pid');
         await fs.ensureDir(path.dirname(pidFile));
         await fs.writeFile(pidFile, process.pid.toString());
         
-        console.log(chalk.green('✅ WAU Supervisor started successfully!'));
+        console.log(chalk.green('✅ WOARU Supervisor started successfully!'));
         console.log(chalk.cyan(`📍 Project: ${projectPath}`));
         console.log(chalk.cyan(`🏃 Running in background mode`));
         console.log(chalk.gray(`   PID: ${process.pid}`));
@@ -279,7 +277,7 @@ program
         console.log();
         console.log(chalk.blue('🔍 The supervisor is now analyzing your project...'));
         
-        // In Claude/detached mode, run for a limited time to show initial analysis
+        // In detached mode, run for a limited time to show initial analysis
         setTimeout(async () => {
           if (!supervisor) return;
           const status = supervisor.getStatus();
@@ -304,16 +302,47 @@ program
         
         return;
       }
+      
+      // Normal watch mode with aggressive heartbeat for Claude Code environment
+      console.log(chalk.green('✅ WAU Supervisor started successfully!'));
+      console.log(chalk.cyan(`📍 Project: ${projectPath}`));
+      console.log(chalk.cyan(`👁️ Starting continuous monitoring...`));
 
-      // Original interactive mode for non-Claude environments
       if (options.dashboard) {
         console.log(chalk.cyan('🎮 Dashboard mode - Press Ctrl+C to stop'));
         // Dashboard would be implemented here
       } else {
         console.log(
-          chalk.cyan('👁️  WAU is watching your project - Press Ctrl+C to stop')
+          chalk.cyan('👁️  WOARU is watching your project - Press Ctrl+C to stop')
         );
       }
+      
+      // AGGRESSIVE Keep-Alive Heartbeat - Every 1 second
+      let heartbeatCount = 0;
+      heartbeatInterval = setInterval(() => {
+        heartbeatCount++;
+        
+        // Critical: Force immediate output flush with newline every second
+        process.stdout.write(' \n'); // Minimal visible character + newline
+        
+        // Every 5 seconds, show heartbeat with timestamp
+        if (heartbeatCount % 5 === 0) {
+          const timestamp = new Date().toISOString().substr(11, 8); // HH:MM:SS
+          process.stdout.write(chalk.gray(`⏱️  Watching... (${heartbeatCount}s elapsed, ${timestamp})\n`));
+        }
+        
+        // Every 30 seconds, show detailed status
+        if (heartbeatCount % 30 === 0 && supervisor) {
+          const status = supervisor.getStatus();
+          console.log(chalk.blue(`📊 Status: ${status.watchedFiles} files monitored, Health: ${status.state.healthScore}/100`));
+          console.log(chalk.cyan('👁️  WOARU is watching your project - Press Ctrl+C to stop'));
+        }
+        
+        // Force stdout flush to ensure output is immediately visible
+        if ((process.stdout as any).flush) {
+          (process.stdout as any).flush();
+        }
+      }, 1000); // Every 1 second - MUCH more aggressive!
       
       // Only use interactive features in real TTY environments
       if (process.stdin.isTTY) {
@@ -360,7 +389,7 @@ program
 
 program
   .command('status')
-  .description('Show WAU supervisor status and project health')
+  .description('Show WOARU supervisor status and project health')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async options => {
     try {
@@ -372,7 +401,7 @@ program
         if (await fs.pathExists(stateFile)) {
           const state = await fs.readJson(stateFile);
           console.log(
-            chalk.yellow('📊 WAU Status: Not running (previous session found)')
+            chalk.yellow('📊 WOARU Status: Not running (previous session found)')
           );
           console.log(
             chalk.gray(
@@ -386,7 +415,7 @@ program
           );
           console.log(chalk.cyan('\n💡 Run "woaru watch" to start monitoring'));
         } else {
-          console.log(chalk.red('📊 WAU Status: Not running'));
+          console.log(chalk.red('📊 WOARU Status: Not running'));
           console.log(chalk.cyan('💡 Run "woaru watch" to start monitoring'));
         }
         return;
@@ -394,7 +423,7 @@ program
 
       const status = supervisor.getStatus();
 
-      console.log(chalk.green('📊 WAU Status: Running'));
+      console.log(chalk.green('📊 WOARU Status: Running'));
       console.log(
         chalk.gray(`   Project: ${path.basename(status.state.projectPath)}`)
       );
@@ -433,7 +462,7 @@ program
 
 program
   .command('stop')
-  .description('Stop the WAU supervisor')
+  .description('Stop the WOARU supervisor')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async (options) => {
     try {
@@ -1418,7 +1447,7 @@ function displayCommandReference() {
     },
     {
       name: '👁️ woaru watch',
-      description: 'Start WAU supervisor to continuously monitor the project',
+      description: 'Start WOARU supervisor to continuously monitor the project',
       usage: 'woaru watch [options]',
       purpose: 'Continuously monitors your project for changes and provides real-time recommendations. Automatically detects new issues as you code and suggests improvements.'
     },
@@ -1430,7 +1459,7 @@ function displayCommandReference() {
     },
     {
       name: '📊 woaru status',
-      description: 'Show WAU supervisor status and project health',
+      description: 'Show WOARU supervisor status and project health',
       usage: 'woaru status [options]',
       purpose: 'Displays the current status of the supervisor and provides a quick overview of your project health, detected tools, and any issues that need attention.'
     },
@@ -1474,7 +1503,7 @@ function displayCommandReference() {
     },
     {
       name: '🛑 woaru stop',
-      description: 'Stop the WAU supervisor',
+      description: 'Stop the WOARU supervisor',
       usage: 'woaru stop [options]',
       purpose: 'Stops any running supervisor process. Use this when you want to stop continuous monitoring or before starting a new supervisor session.'
     },
