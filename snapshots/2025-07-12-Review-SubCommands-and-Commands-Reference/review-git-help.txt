@@ -1,0 +1,12 @@
+Usage: woaru review git [options]
+
+Analyze changes since a specific branch (git diff)
+
+Options:
+  -p, --path <path>      Project path (default:
+                         "/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)")
+  -b, --branch <branch>  Base branch to compare against (default: "main")
+  -o, --output <file>    Output file for review report (default:
+                         "woaru-review.md")
+  -j, --json             Output as JSON instead of markdown
+  -h, --help             display help for command

@@ -2,6 +2,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import { NotificationManager } from '../supervisor/NotificationManager';
+import { ToolsDatabaseManager, CoreTool, ExperimentalTool } from '../database/ToolsDatabaseManager';
+import { EslintPlugin } from '../plugins/EslintPlugin';
 
 const execAsync = promisify(exec);
 
@@ -58,54 +60,252 @@ export interface SnykResult {
 
 export class QualityRunner {
   private notificationManager: NotificationManager;
+  private databaseManager: ToolsDatabaseManager;
+  private corePlugins: Map<string, any>;
 
   constructor(notificationManager: NotificationManager) {
     this.notificationManager = notificationManager;
+    this.databaseManager = new ToolsDatabaseManager();
+    this.corePlugins = new Map();
+    
+    // Initialize core plugins
+    this.initializeCorePlugins();
   }
 
+  /**
+   * Initialize secure core plugins
+   */
+  private initializeCorePlugins(): void {
+    // Only add verified, secure core plugins
+    this.corePlugins.set('EslintPlugin', new EslintPlugin());
+    // More core plugins would be added here as they're implemented
+  }
+
+  /**
+   * HYBRID ARCHITECTURE: Run quality checks using both core plugins and experimental tools
+   */
   async runChecksOnFileChange(filePath: string): Promise<void> {
     const ext = path.extname(filePath).toLowerCase();
     const relativePath = path.relative(process.cwd(), filePath);
 
+    try {
+      // Phase 1: Try core plugins first (secure, established tools)
+      const coreHandled = await this.runCorePluginCheck(relativePath, ext);
+      
+      if (coreHandled) {
+        return; // Core plugin handled the file successfully
+      }
+
+      // Phase 2: Try experimental tools (dynamic command templates)
+      const experimentalHandled = await this.runExperimentalToolCheck(relativePath, ext);
+      
+      if (experimentalHandled) {
+        return; // Experimental tool handled the file successfully
+      }
+
+      // Phase 3: Fallback to legacy hardcoded checks
+      await this.runLegacyChecks(relativePath, ext);
+      
+    } catch (error) {
+      console.warn(`Quality check failed for ${relativePath}:`, error);
+    }
+  }
+
+  /**
+   * Phase 1: Run checks using secure core plugins
+   */
+  private async runCorePluginCheck(filePath: string, fileExtension: string): Promise<boolean> {
+    try {
+      // Get core tools that support this file extension
+      const coreTools = await this.databaseManager.getCoreToolsForFileExtension(fileExtension);
+      
+      for (const coreTool of coreTools) {
+        const plugin = this.corePlugins.get(coreTool.plugin_class);
+        
+        if (plugin && await plugin.canHandleFile(filePath)) {
+          console.log(`🔧 Running core plugin: ${coreTool.name} on ${filePath}`);
+          
+          const result = await plugin.runLinter(filePath, { fix: false });
+          
+          if (result.hasErrors) {
+            this.notificationManager.showCriticalQualityError(
+              filePath,
+              coreTool.name,
+              result.output
+            );
+          } else if (result.hasWarnings) {
+            console.log(`⚠️ ${coreTool.name} warnings in ${filePath}`);
+          } else {
+            this.notificationManager.showQualitySuccess(filePath, coreTool.name);
+          }
+          
+          return true; // Successfully handled by core plugin
+        }
+      }
+      
+      return false; // No core plugin could handle this file
+    } catch (error) {
+      console.warn('Core plugin check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Phase 2: Run checks using experimental tools (dynamic command templates)
+   */
+  private async runExperimentalToolCheck(filePath: string, fileExtension: string): Promise<boolean> {
+    try {
+      // Get experimental tools that support this file extension
+      const experimentalTools = await this.databaseManager.getExperimentalToolsForFileExtension(fileExtension);
+      
+      for (const experimentalTool of experimentalTools) {
+        if (await this.canRunExperimentalTool(experimentalTool)) {
+          console.log(`🧪 Running experimental tool: ${experimentalTool.name} on ${filePath}`);
+          
+          const result = await this.executeExperimentalTool(experimentalTool, filePath);
+          
+          if (result.success) {
+            if (result.output.includes('error')) {
+              this.notificationManager.showCriticalQualityError(
+                filePath,
+                experimentalTool.name,
+                result.output
+              );
+            } else {
+              this.notificationManager.showQualitySuccess(filePath, experimentalTool.name);
+            }
+            return true; // Successfully handled by experimental tool
+          }
+        }
+      }
+      
+      return false; // No experimental tool could handle this file
+    } catch (error) {
+      console.warn('Experimental tool check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Phase 3: Fallback to legacy hardcoded checks
+   */
+  private async runLegacyChecks(filePath: string, fileExtension: string): Promise<void> {
+    // Keep existing legacy logic for backward compatibility
+    console.log(`📦 Running legacy check for ${filePath}`);
+    
     // TypeScript/JavaScript files
-    if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
-      await this.runESLintCheck(relativePath);
+    if (['.ts', '.tsx', '.js', '.jsx'].includes(fileExtension)) {
+      await this.runESLintCheck(filePath);
     }
     
     // Python files
-    if (ext === '.py') {
-      await this.runRuffCheck(relativePath);
+    if (fileExtension === '.py') {
+      await this.runRuffCheck(filePath);
     }
     
     // Go files
-    if (ext === '.go') {
-      await this.runGoCheck(relativePath);
+    if (fileExtension === '.go') {
+      await this.runGoCheck(filePath);
     }
     
     // Rust files
-    if (ext === '.rs') {
-      await this.runRustCheck(relativePath);
+    if (fileExtension === '.rs') {
+      await this.runRustCheck(filePath);
     }
     
     // C# files
-    if (ext === '.cs') {
-      await this.runCSharpCheck(relativePath);
+    if (fileExtension === '.cs') {
+      await this.runCSharpCheck(filePath);
     }
     
     // Java files
-    if (ext === '.java') {
-      await this.runJavaCheck(relativePath);
+    if (fileExtension === '.java') {
+      await this.runJavaCheck(filePath);
     }
     
     // PHP files
-    if (ext === '.php') {
-      await this.runPHPCheck(relativePath);
+    if (fileExtension === '.php') {
+      await this.runPHPCheck(filePath);
     }
     
     // Ruby files
-    if (ext === '.rb') {
-      await this.runRubyCheck(relativePath);
+    if (fileExtension === '.rb') {
+      await this.runRubyCheck(filePath);
     }
+  }
+
+  // ========== EXPERIMENTAL TOOL EXECUTION ==========
+
+  /**
+   * Check if an experimental tool can be run (is installed)
+   */
+  private async canRunExperimentalTool(tool: ExperimentalTool): Promise<boolean> {
+    try {
+      // Check if the tool is installed by trying to run it with --version
+      const { stdout } = await execAsync(`${tool.commandTemplate.split(' ')[0]} --version`);
+      return stdout.length > 0;
+    } catch {
+      return false; // Tool not installed or not in PATH
+    }
+  }
+
+  /**
+   * Execute an experimental tool using its command template
+   */
+  private async executeExperimentalTool(
+    tool: ExperimentalTool, 
+    filePath: string
+  ): Promise<{ success: boolean; output: string }> {
+    try {
+      // Replace {filePath} in command template
+      const command = tool.commandTemplate.replace('{filePath}', filePath);
+      
+      // Security: Validate command before execution
+      if (!this.isValidExperimentalCommand(command, filePath)) {
+        throw new Error(`Invalid experimental command: ${command}`);
+      }
+      
+      const { stdout, stderr } = await execAsync(command, {
+        timeout: 30000, // 30 second timeout
+        cwd: path.dirname(filePath)
+      });
+      
+      return {
+        success: true,
+        output: stdout + stderr
+      };
+    } catch (error) {
+      return {
+        success: false,
+        output: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Validate experimental command for security
+   */
+  private isValidExperimentalCommand(command: string, filePath: string): boolean {
+    // Security checks for experimental commands
+    
+    // Must contain the file path
+    if (!command.includes(filePath)) {
+      return false;
+    }
+    
+    // No dangerous shell operators
+    const dangerousPatterns = ['&&', '||', ';', '|', '>', '<', '`', '$', '(', ')'];
+    for (const pattern of dangerousPatterns) {
+      if (command.includes(pattern) && !command.includes(`'${pattern}'`) && !command.includes(`"${pattern}"`)) {
+        return false;
+      }
+    }
+    
+    // Command must start with allowed prefixes
+    const allowedPrefixes = ['npx', 'node', 'deno', 'bun'];
+    const firstWord = command.split(' ')[0];
+    
+    return allowedPrefixes.some(prefix => firstWord.startsWith(prefix));
   }
 
   // New method for running checks on multiple files (for review command)

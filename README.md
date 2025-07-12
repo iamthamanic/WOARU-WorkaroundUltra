@@ -132,7 +132,8 @@ woaru analyze        # Deep project analysis with security audit (★ NEW!)
 woaru setup          # Auto-setup recommended tools
 woaru helpers        # Show active vs missing tools (★ most useful)
 woaru watch          # Start live quality monitoring with security (★ supervisor mode)
-woaru review         # Code review: analyze only changed files with security
+woaru review         # Code review: analyze only changed files with security (★ NEW SUB-COMMANDS!)
+woaru commands       # Show detailed command reference (★ NEW!)
 ```
 
 ### Status and Management
@@ -141,6 +142,7 @@ woaru status         # Show supervisor status
 woaru recommendations # Show current recommendations
 woaru stop           # Stop supervisor
 woaru update-db      # Update tools database
+woaru logs           # Show supervisor logs
 ```
 
 ### Utility Commands
@@ -149,24 +151,53 @@ woaru ignore <tool>  # Ignore specific tools
 woaru rollback <tool> # Rollback tool configurations
 ```
 
-## 🔍 **NEW: Focused Code Review with `woaru review`**
+## 🔍 **NEW: Revolutionary Review Sub-Commands (v3.2.0)**
 
-The `woaru review` command revolutionizes code reviews by analyzing **only the files you've changed** since a base branch - perfect for Pull Request reviews and focused development.
+The `woaru review` command now features **three specialized sub-commands** for maximum flexibility and precision in code analysis:
 
-### Quick Start
+### 🎯 **Three Powerful Review Modes**
+
+#### 1. **Git Diff Reviews** - Perfect for Pull Requests
 ```bash
 # Analyze changes since main branch
-woaru review
+woaru review git
 
 # Compare against different branch  
-woaru review --branch develop
+woaru review git --branch develop
 
 # Generate JSON report for CI/CD
-woaru review --json
+woaru review git --json
 
 # Custom output file
-woaru review --output my-review.md
+woaru review git --output pr-review.md
 ```
+
+#### 2. **Local Changes** - Pre-commit Quality Gates
+```bash
+# Analyze all uncommitted changes (staged + unstaged)
+woaru review local
+
+# Perfect before git commit
+woaru review local --json
+```
+
+#### 3. **Path-Specific Analysis** - Deep-dive into Components
+```bash
+# Analyze specific directory
+woaru review path src/components
+
+# Analyze single file
+woaru review path src/api/users.ts
+
+# Multi-file analysis
+woaru review path "src/**/*.tsx"
+```
+
+### 🚀 **Why Sub-Commands are Game-Changing**
+- **🎯 Ultra-Precise**: Each mode targets exactly what you need to review
+- **⚡ Lightning Fast**: No wasted analysis on irrelevant files  
+- **🔄 CI-Ready**: Different modes for different automation scenarios
+- **👥 Team-Friendly**: Clear intent makes collaboration seamless
 
 ### Real Example Output
 ```bash
@@ -208,6 +239,47 @@ woaru review --output my-review.md
 - 🔄 **CI-Ready**: Perfect for automated Pull Request checks
 - 📊 **Actionable**: Specific recommendations with package names
 - 🤝 **Team-Friendly**: Consistent review standards across the team
+
+## 📚 **NEW: Self-Documenting Commands Reference**
+
+Never forget what WOARU can do! The new `woaru commands` provides **comprehensive documentation** for every command:
+
+```bash
+# Show complete command reference
+woaru commands
+```
+
+### ✨ **Rich Command Documentation**
+```bash
+📚 WOARU Command Reference
+══════════════════════════════════════════════════
+
+🔍 woaru analyze
+  Description: Comprehensive project analysis including security audit
+  Usage: woaru analyze [options]
+  Purpose: Performs a full analysis of your project including code quality, 
+          security vulnerabilities, production readiness, and tool recommendations. 
+          Perfect for understanding the overall health of your codebase.
+
+🔄 woaru review <subcommand>
+  Description: Code review and analysis tools
+  Usage: woaru review <git|local|path> [options]
+  Purpose: Focused analysis tools for code reviews. Choose from git diff 
+          analysis, uncommitted changes review, or specific file/directory analysis.
+  Subcommands:
+    • woaru review git
+      Purpose: Analyzes changes between your current branch and a base branch...
+    • woaru review local  
+      Purpose: Reviews your uncommitted changes before you commit them...
+    • woaru review path
+      Purpose: Focused analysis of specific files or directories...
+```
+
+### 🎯 **Perfect for Teams & Onboarding**
+- **📖 Complete Reference**: Every command, option, and use case documented
+- **🎓 Learning Tool**: New team members can explore WOARU's capabilities
+- **🔍 Quick Lookup**: Find the right command for any situation
+- **💡 Usage Examples**: Real-world scenarios for each command
 
 ## 🛠️ **Evidence-Based Recommendations**
 
@@ -307,9 +379,17 @@ MIT License - Use freely in commercial and open-source projects.
 
 ---
 
-**WOARU v3.1.0** - Your Universal Development Companion 🚀
+**WOARU v3.2.0** - Your Universal Development Companion 🚀
 
-## 🆕 **What's New in v3.1.0**
+## 🆕 **What's New in v3.2.0**
+- 🔄 **MAJOR: Review Sub-Commands** - `woaru review git|local|path` for ultra-precise analysis
+- 📚 **NEW: Self-Documenting Commands** - `woaru commands` shows complete reference
+- 🎯 **Ultra-Focused Reviews** - Analyze exactly what you need: git diffs, local changes, or specific paths
+- ⚡ **Modular Architecture** - Shared analysis engine for consistent results across all review modes
+- 🚀 **Enhanced UX** - Intuitive command structure with clear intent and rich help text
+- 🛠️ **Team-Friendly** - Perfect command separation for different workflows and CI/CD scenarios
+
+### 🏆 **Previous Updates (v3.1.0)**
 - 🔍 **NEW: `woaru review` Command** - Focused code review analysis for changed files only
 - ⚡ **10x Faster Reviews** - Only analyze what you've actually changed
 - 🎯 **CI/CD Integration** - JSON output perfect for automated Pull Request checks

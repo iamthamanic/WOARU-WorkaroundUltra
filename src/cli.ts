@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Test hybrid architecture
 
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -188,6 +189,7 @@ program
   .option('--auto-fix', 'Automatically fix issues when possible')
   .option('--webhook <url>', 'Send notifications to webhook URL')
   .option('--no-desktop', 'Disable desktop notifications')
+  .option('--detached', 'Run supervisor in background (detached mode)')
   .action(async options => {
     try {
       if (supervisor) {
@@ -221,19 +223,89 @@ program
       };
 
       supervisor = new WOARUSupervisor(projectPath, config);
+      
+      // Listen to supervisor events for activity
+      supervisor.on('file-changed', (file: string) => {
+        console.log(chalk.blue(`\n📝 File changed: ${path.relative(projectPath, file)}`));
+      });
+      
+      supervisor.on('recommendation', (rec: any) => {
+        console.log(chalk.yellow(`\n💡 New recommendation: ${rec.tool} - ${rec.reason}`));
+      });
 
       // Handle graceful shutdown
-      process.on('SIGINT', async () => {
+      let heartbeatInterval: NodeJS.Timeout | undefined;
+      
+      const cleanup = async () => {
         console.log(chalk.yellow('\n📡 Shutting down supervisor...'));
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+        }
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(false);
+        }
         if (supervisor) {
           await supervisor.stop();
           supervisor = null;
         }
         process.exit(0);
-      });
+      };
+      
+      process.on('SIGINT', cleanup);
+      process.on('SIGTERM', cleanup);
 
       await supervisor.start();
 
+      // Check if running in detached mode or Claude Code environment
+      const isClaudeEnvironment = process.env.CURSOR_AI || process.env.CLAUDE_CODE || !process.stdout.isTTY;
+      
+      if (options.detached || isClaudeEnvironment) {
+        // Write PID file for detached mode
+        const pidFile = path.join(projectPath, '.wau', 'supervisor.pid');
+        await fs.ensureDir(path.dirname(pidFile));
+        await fs.writeFile(pidFile, process.pid.toString());
+        
+        console.log(chalk.green('✅ WAU Supervisor started successfully!'));
+        console.log(chalk.cyan(`📍 Project: ${projectPath}`));
+        console.log(chalk.cyan(`🏃 Running in background mode`));
+        console.log(chalk.gray(`   PID: ${process.pid}`));
+        console.log(chalk.gray(`   PID file: ${pidFile}`));
+        console.log();
+        console.log(chalk.yellow('💡 Important commands:'));
+        console.log(chalk.gray('   • Check status:  woaru status'));
+        console.log(chalk.gray('   • View logs:     woaru logs'));
+        console.log(chalk.gray('   • Stop watching: woaru stop'));
+        console.log(chalk.gray('   • Get helpers:   woaru helpers'));
+        console.log();
+        console.log(chalk.blue('🔍 The supervisor is now analyzing your project...'));
+        
+        // In Claude/detached mode, run for a limited time to show initial analysis
+        setTimeout(async () => {
+          if (!supervisor) return;
+          const status = supervisor.getStatus();
+          console.log();
+          console.log(chalk.green('📊 Initial Analysis Complete:'));
+          console.log(chalk.gray(`   • Language: ${status.state.language}`));
+          console.log(chalk.gray(`   • Health Score: ${status.state.healthScore}/100`));
+          console.log(chalk.gray(`   • Watched Files: ${status.watchedFiles}`));
+          console.log(chalk.gray(`   • Detected Tools: ${Array.from(status.state.detectedTools).join(', ') || 'None'}`));
+          
+          if (status.state.missingTools.size > 0) {
+            console.log(chalk.yellow(`   • Missing Tools: ${Array.from(status.state.missingTools).join(', ')}`));
+          }
+          
+          console.log();
+          console.log(chalk.cyan('✨ Supervisor is running in the background.'));
+          console.log(chalk.cyan('   Use "woaru status" to check progress anytime.'));
+          
+          // Exit gracefully after showing initial status
+          process.exit(0);
+        }, 5000); // Wait 5 seconds for initial analysis
+        
+        return;
+      }
+
+      // Original interactive mode for non-Claude environments
       if (options.dashboard) {
         console.log(chalk.cyan('🎮 Dashboard mode - Press Ctrl+C to stop'));
         // Dashboard would be implemented here
@@ -242,9 +314,38 @@ program
           chalk.cyan('👁️  WAU is watching your project - Press Ctrl+C to stop')
         );
       }
+      
+      // Only use interactive features in real TTY environments
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.setEncoding('utf8');
+        
+        // Handle keyboard input
+        process.stdin.on('data', (data) => {
+          const key = data.toString();
+          
+          // Handle Ctrl+C manually in raw mode
+          if (key === '\u0003') {
+            cleanup();
+            return;
+          }
+          
+          // Handle 'q' for quit
+          if (key === 'q' || key === 'Q') {
+            cleanup();
+            return;
+          }
+        });
+      }
 
-      // Keep process alive
-      await new Promise(resolve => {
+      // Keep process alive (only for real interactive environments)
+      await new Promise((resolve) => {
+        process.on('SIGTERM', () => {
+          console.log(chalk.yellow('\n📡 Received SIGTERM, shutting down...'));
+          resolve(undefined);
+        });
+        
         supervisor?.on('stopped', resolve);
       });
     } catch (error) {
@@ -333,20 +434,70 @@ program
 program
   .command('stop')
   .description('Stop the WAU supervisor')
-  .action(async () => {
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .action(async (options) => {
     try {
-      if (!supervisor) {
-        console.log(chalk.yellow('📊 No supervisor is currently running'));
+      const projectPath = path.resolve(options.path);
+      const pidFile = path.join(projectPath, '.wau', 'supervisor.pid');
+      
+      // First check if supervisor is running in current process
+      if (supervisor) {
+        await supervisor.stop();
+        supervisor = null;
+        console.log(chalk.green('✅ Supervisor stopped'));
         return;
       }
-
-      await supervisor.stop();
-      supervisor = null;
-      console.log(chalk.green('✅ Supervisor stopped'));
+      
+      // Check for PID file (background/detached mode)
+      if (await fs.pathExists(pidFile)) {
+        const pid = await fs.readFile(pidFile, 'utf8');
+        console.log(chalk.yellow(`📊 No supervisor running in this process.`));
+        console.log(chalk.gray(`   Found PID file: ${pid}`));
+        console.log(chalk.gray(`   Note: Background supervisors auto-terminate.`));
+        
+        // Clean up PID file
+        await fs.remove(pidFile);
+        console.log(chalk.green('✅ Cleaned up supervisor state'));
+      } else {
+        console.log(chalk.yellow('📊 No supervisor is currently running'));
+      }
     } catch (error) {
       console.error(
         chalk.red(
           `❌ Failed to stop supervisor: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command('logs')
+  .description('Show supervisor logs')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-f, --follow', 'Follow logs in real-time')
+  .option('-n, --lines <number>', 'Number of lines to show', '50')
+  .action(async (options) => {
+    try {
+      const projectPath = path.resolve(options.path);
+      const logFile = path.join(projectPath, '.wau', 'supervisor.log');
+      
+      if (!(await fs.pathExists(logFile))) {
+        console.log(chalk.yellow('📊 No log file found. Start supervisor first with "woaru watch"'));
+        return;
+      }
+      
+      console.log(chalk.cyan(`📄 Supervisor logs (${logFile}):`));
+      console.log(chalk.gray('─'.repeat(50)));
+      
+      // For now, just indicate that logs would be shown
+      console.log(chalk.gray('Log viewing functionality would be implemented here.'));
+      console.log(chalk.blue('💡 Use "woaru status" to see current supervisor state.'));
+      
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Failed to show logs: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -726,9 +877,127 @@ program
     }
   });
 
-program
+// Helper function for review analysis
+async function runReviewAnalysis(
+  fileList: string[], 
+  projectPath: string, 
+  options: any, 
+  context: { type: 'git' | 'local' | 'path', description: string }
+) {
+  if (fileList.length === 0) {
+    console.log(chalk.green('✅ No files found for analysis.'));
+    return;
+  }
+
+  console.log(chalk.cyan(`📋 Found ${fileList.length} files for analysis:`));
+  fileList.forEach(file => {
+    console.log(chalk.gray(`   • ${path.relative(projectPath, file)}`));
+  });
+
+  // Dynamic imports for review components
+  const { GitDiffAnalyzer } = await import('./utils/GitDiffAnalyzer');
+  const { QualityRunner } = await import('./quality/QualityRunner');
+  const { ProductionReadinessAuditor } = await import('./auditor/ProductionReadinessAuditor');
+  const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
+  const { LanguageDetector } = await import('./analyzer/LanguageDetector');
+  const { NotificationManager } = await import('./supervisor/NotificationManager');
+
+  console.log(chalk.blue('🔍 Running quality checks on files...'));
+
+  // Initialize components
+  const gitAnalyzer = new GitDiffAnalyzer(projectPath);
+  const notificationManager = new NotificationManager({ terminal: true, desktop: false });
+  const qualityRunner = new QualityRunner(notificationManager);
+  const productionAuditor = new ProductionReadinessAuditor(projectPath);
+  const languageDetector = new LanguageDetector();
+  const reportGenerator = new ReviewReportGenerator();
+
+  // Get git info (if applicable)
+  let currentBranch = '';
+  let commits: any[] = [];
+  try {
+    currentBranch = await gitAnalyzer.getCurrentBranch();
+    if (context.type === 'git') {
+      commits = await gitAnalyzer.getCommitsSince(options.branch || 'main');
+    }
+  } catch (error) {
+    // Git operations might fail for non-git contexts
+  }
+
+  // Detect language and frameworks
+  const language = await languageDetector.detectPrimaryLanguage(projectPath);
+  const frameworks = await languageDetector.detectFrameworks(projectPath, language);
+
+  // Run quality checks
+  const qualityResults = await qualityRunner.runChecksOnFileList(fileList);
+
+  // Run security checks with Snyk
+  console.log(chalk.blue('🔒 Running security analysis with Snyk...'));
+  const snykResults = await qualityRunner.runSnykChecks(fileList);
+  
+  // Log critical security issues immediately
+  snykResults.forEach(result => {
+    if (result.summary && (result.summary.critical > 0 || result.summary.high > 0)) {
+      console.log(chalk.red(`\n🚨 SECURITY ALERT: Found ${result.summary.critical} critical and ${result.summary.high} high severity vulnerabilities!`));
+    }
+  });
+
+  // Run production audit on files
+  const auditConfig = {
+    language,
+    frameworks,
+    projectType: 'fullstack' as const
+  };
+  const productionAudits = await productionAuditor.auditChangedFiles(fileList, auditConfig);
+
+  // Generate report
+  const reportData = {
+    context,
+    gitDiff: {
+      changedFiles: fileList,
+      baseBranch: options.branch || (context.type === 'git' ? 'main' : ''),
+      totalChanges: fileList.length
+    },
+    qualityResults,
+    snykResults,
+    productionAudits,
+    currentBranch,
+    commits
+  };
+
+  if (options.json) {
+    const jsonReport = reportGenerator.generateJsonReport(reportData);
+    console.log(jsonReport);
+  } else {
+    const outputPath = path.resolve(projectPath, options.output || 'woaru-review.md');
+    await reportGenerator.generateMarkdownReport(reportData, outputPath);
+    
+    console.log(chalk.green(`\n✅ Review report generated: ${path.basename(outputPath)}`));
+    console.log(chalk.cyan(`📊 ${reportGenerator.getReportSummary(reportData)}`));
+    
+    if (qualityResults.length > 0 || productionAudits.length > 0) {
+      console.log(chalk.yellow(`\n💡 Open ${path.basename(outputPath)} to see detailed findings`));
+    }
+  }
+}
+
+// Review command with sub-commands
+const reviewCommand = program
   .command('review')
-  .description('Analyze only changed files since a specific branch (like a code review)')
+  .description('Code review and analysis tools')
+  .addHelpText('after', `
+Examples:
+  woaru review git                    # Analyze changes since main branch
+  woaru review git --branch develop  # Analyze changes since develop branch
+  woaru review local                  # Analyze uncommitted changes
+  woaru review path src/components    # Analyze specific directory
+  woaru review path src/file.ts       # Analyze specific file
+`);
+
+// Review git sub-command (original review functionality)
+reviewCommand
+  .command('git')
+  .description('Analyze changes since a specific branch (git diff)')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-b, --branch <branch>', 'Base branch to compare against', 'main')
   .option('-o, --output <file>', 'Output file for review report', 'woaru-review.md')
@@ -740,7 +1009,7 @@ program
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
         console.error(
-          chalk.red('❌ Not a git repository. Review command requires git.')
+          chalk.red('❌ Not a git repository. Git review requires git.')
         );
         process.exit(1);
       }
@@ -786,93 +1055,168 @@ program
           return;
         }
 
-        console.log(chalk.cyan(`📋 Found ${fileList.length} changed files:`));
-        fileList.forEach(file => {
-          console.log(chalk.gray(`   • ${path.relative(projectPath, file)}`));
+        await runReviewAnalysis(fileList, projectPath, options, {
+          type: 'git',
+          description: `Changes since branch: ${options.branch}`
         });
-
-        // Run focused analysis
-        const { GitDiffAnalyzer } = await import('./utils/GitDiffAnalyzer');
-        const { QualityRunner } = await import('./quality/QualityRunner');
-        const { ProductionReadinessAuditor } = await import('./auditor/ProductionReadinessAuditor');
-        const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
-        const { LanguageDetector } = await import('./analyzer/LanguageDetector');
-        const { NotificationManager } = await import('./supervisor/NotificationManager');
-
-        console.log(chalk.blue('🔍 Running quality checks on changed files...'));
-
-        // Initialize components
-        const gitAnalyzer = new GitDiffAnalyzer(projectPath);
-        const notificationManager = new NotificationManager({ terminal: true, desktop: false });
-        const qualityRunner = new QualityRunner(notificationManager);
-        const productionAuditor = new ProductionReadinessAuditor(projectPath);
-        const languageDetector = new LanguageDetector();
-        const reportGenerator = new ReviewReportGenerator();
-
-        // Get additional git info
-        const currentBranch = await gitAnalyzer.getCurrentBranch();
-        const commits = await gitAnalyzer.getCommitsSince(options.branch);
-
-        // Detect language and frameworks
-        const language = await languageDetector.detectPrimaryLanguage(projectPath);
-        const frameworks = await languageDetector.detectFrameworks(projectPath, language);
-
-        // Run quality checks
-        const qualityResults = await qualityRunner.runChecksOnFileList(fileList);
-
-        // Run security checks with Snyk
-        console.log(chalk.blue('🔒 Running security analysis with Snyk...'));
-        const snykResults = await qualityRunner.runSnykChecks(fileList);
-        
-        // Log critical security issues immediately
-        snykResults.forEach(result => {
-          if (result.summary && (result.summary.critical > 0 || result.summary.high > 0)) {
-            console.log(chalk.red(`\n🚨 SECURITY ALERT: Found ${result.summary.critical} critical and ${result.summary.high} high severity vulnerabilities!`));
-          }
-        });
-
-        // Run production audit on changed files
-        const auditConfig = {
-          language,
-          frameworks,
-          projectType: 'fullstack' as const // TODO: Improve detection
-        };
-        const productionAudits = await productionAuditor.auditChangedFiles(fileList, auditConfig);
-
-        // Generate report
-        const reportData = {
-          gitDiff: {
-            changedFiles: fileList,
-            baseBranch: options.branch,
-            totalChanges: fileList.length
-          },
-          qualityResults,
-          snykResults,
-          productionAudits,
-          currentBranch,
-          commits
-        };
-
-        if (options.json) {
-          const jsonReport = reportGenerator.generateJsonReport(reportData);
-          console.log(jsonReport);
-        } else {
-          const outputPath = path.resolve(projectPath, options.output);
-          await reportGenerator.generateMarkdownReport(reportData, outputPath);
-          
-          console.log(chalk.green(`\n✅ Review report generated: ${options.output}`));
-          console.log(chalk.cyan(`📊 ${reportGenerator.getReportSummary(reportData)}`));
-          
-          if (qualityResults.length > 0 || productionAudits.length > 0) {
-            console.log(chalk.yellow(`\n💡 Open ${options.output} to see detailed findings`));
-          }
-        }
       });
 
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Git review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Review local sub-command (uncommitted changes)
+reviewCommand
+  .command('local')
+  .description('Analyze uncommitted changes in working directory')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-o, --output <file>', 'Output file for review report', 'woaru-review.md')
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .action(async options => {
+    try {
+      const projectPath = path.resolve(options.path);
+
+      // Check if we're in a git repository
+      if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
+        console.error(
+          chalk.red('❌ Not a git repository. Local review requires git.')
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.blue('🔍 Analyzing uncommitted changes...'));
+
+      // Get list of uncommitted files using git status
+      const { spawn } = require('child_process');
+      const gitProcess = spawn('git', [
+        'status',
+        '--porcelain'
+      ], {
+        cwd: projectPath,
+        stdio: 'pipe'
+      });
+
+      let statusOutput = '';
+      let gitError = '';
+
+      gitProcess.stdout.on('data', (data: Buffer) => {
+        statusOutput += data.toString();
+      });
+
+      gitProcess.stderr.on('data', (data: Buffer) => {
+        gitError += data.toString();
+      });
+
+      gitProcess.on('close', async (code: number) => {
+        if (code !== 0) {
+          console.error(chalk.red(`❌ Git status failed: ${gitError}`));
+          process.exit(1);
+        }
+
+        // Parse git status --porcelain output
+        const fileList = statusOutput
+          .trim()
+          .split('\n')
+          .filter(line => line.length > 0)
+          .map(line => {
+            // Format: XY filename (where X and Y are status codes)
+            const filename = line.substring(3);
+            return path.join(projectPath, filename);
+          })
+          .filter(filePath => {
+            // Only include files that exist (not deleted)
+            try {
+              return fs.existsSync(filePath);
+            } catch {
+              return false;
+            }
+          });
+
+        if (fileList.length === 0) {
+          console.log(chalk.green('✅ No uncommitted changes found.'));
+          return;
+        }
+
+        await runReviewAnalysis(fileList, projectPath, options, {
+          type: 'local',
+          description: 'Uncommitted changes in working directory'
+        });
+      });
+
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Local review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Review path sub-command (specific files/directories)
+reviewCommand
+  .command('path <file_or_directory>')
+  .description('Analyze specific files or directories')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-o, --output <file>', 'Output file for review report', 'woaru-review.md')
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .action(async (targetPath, options) => {
+    try {
+      const projectPath = path.resolve(options.path);
+      const absoluteTargetPath = path.resolve(projectPath, targetPath);
+
+      console.log(chalk.blue(`🔍 Analyzing path: ${targetPath}`));
+
+      // Check if target path exists
+      if (!(await fs.pathExists(absoluteTargetPath))) {
+        console.error(
+          chalk.red(`❌ Path does not exist: ${targetPath}`)
+        );
+        process.exit(1);
+      }
+
+      let fileList: string[] = [];
+      const stat = await fs.stat(absoluteTargetPath);
+
+      if (stat.isFile()) {
+        fileList = [absoluteTargetPath];
+      } else if (stat.isDirectory()) {
+        // Get all files in directory recursively
+        const { glob } = await import('glob');
+        const globPattern = path.join(absoluteTargetPath, '**/*');
+        fileList = await glob(globPattern, { 
+          ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**']
+        });
+        // Filter to only include files (not directories)
+        fileList = fileList.filter(file => {
+          try {
+            return fs.statSync(file).isFile();
+          } catch {
+            return false;
+          }
+        });
+      }
+
+      if (fileList.length === 0) {
+        console.log(chalk.yellow('⚠️ No files found in the specified path.'));
+        return;
+      }
+
+      await runReviewAnalysis(fileList, projectPath, options, {
+        type: 'path',
+        description: `Analysis of path: ${targetPath}`
+      });
+
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Path review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -1057,6 +1401,147 @@ program
       );
       process.exit(1);
     }
+  });
+
+// Command reference documentation
+function displayCommandReference() {
+  console.log(chalk.cyan.bold('📚 WOARU Command Reference'));
+  console.log(chalk.gray('═'.repeat(50)));
+  console.log();
+  
+  const commands = [
+    {
+      name: '🔍 woaru analyze',
+      description: 'Comprehensive project analysis including security audit',
+      usage: 'woaru analyze [options]',
+      purpose: 'Performs a full analysis of your project including code quality, security vulnerabilities, production readiness, and tool recommendations. Perfect for understanding the overall health of your codebase.'
+    },
+    {
+      name: '👁️ woaru watch',
+      description: 'Start WAU supervisor to continuously monitor the project',
+      usage: 'woaru watch [options]',
+      purpose: 'Continuously monitors your project for changes and provides real-time recommendations. Automatically detects new issues as you code and suggests improvements.'
+    },
+    {
+      name: '⚙️ woaru setup',
+      description: 'Automatically setup recommended tools',
+      usage: 'woaru setup [options]',
+      purpose: 'Automatically installs and configures development tools based on your project analysis. Saves time by setting up linters, formatters, git hooks, and other productivity tools.'
+    },
+    {
+      name: '📊 woaru status',
+      description: 'Show WAU supervisor status and project health',
+      usage: 'woaru status [options]',
+      purpose: 'Displays the current status of the supervisor and provides a quick overview of your project health, detected tools, and any issues that need attention.'
+    },
+    {
+      name: '🔧 woaru helpers',
+      description: 'Show all detected/activated development tools and helpers',
+      usage: 'woaru helpers [options]',
+      purpose: 'Lists all development tools found in your project, both active and recommended. Helps you understand your current tooling setup and what might be missing.'
+    },
+    {
+      name: '🔄 woaru review <subcommand>',
+      description: 'Code review and analysis tools',
+      usage: 'woaru review <git|local|path> [options]',
+      purpose: 'Focused analysis tools for code reviews. Choose from git diff analysis, uncommitted changes review, or specific file/directory analysis.',
+      subcommands: [
+        {
+          name: 'woaru review git',
+          description: 'Analyze changes since a specific branch (git diff)',
+          usage: 'woaru review git [--branch <name>]',
+          purpose: 'Analyzes changes between your current branch and a base branch (default: main). Perfect for code review preparation and CI/CD quality gates.'
+        },
+        {
+          name: 'woaru review local',
+          description: 'Analyze uncommitted changes in working directory',
+          usage: 'woaru review local',
+          purpose: 'Reviews your uncommitted changes before you commit them. Helps catch issues early and ensures code quality before pushing to remote.'
+        },
+        {
+          name: 'woaru review path',
+          description: 'Analyze specific files or directories',
+          usage: 'woaru review path <file_or_directory>',
+          purpose: 'Focused analysis of specific files or directories. Useful for deep-diving into particular components or modules of your codebase.'
+        }
+      ]
+    },
+    {
+      name: '🗄️ woaru update-db',
+      description: 'Update the tools database from remote source',
+      usage: 'woaru update-db',
+      purpose: 'Updates the internal database of development tools and their configurations. Ensures you have the latest tool recommendations and setup procedures.'
+    },
+    {
+      name: '🛑 woaru stop',
+      description: 'Stop the WAU supervisor',
+      usage: 'woaru stop [options]',
+      purpose: 'Stops any running supervisor process. Use this when you want to stop continuous monitoring or before starting a new supervisor session.'
+    },
+    {
+      name: '📋 woaru recommendations',
+      description: 'Show current tool recommendations',
+      usage: 'woaru recommendations [options]',
+      purpose: 'Displays prioritized tool recommendations for your project. Shows what tools would improve your development workflow and code quality.'
+    },
+    {
+      name: '📄 woaru logs',
+      description: 'Show supervisor logs',
+      usage: 'woaru logs [options]',
+      purpose: 'Shows logs from the supervisor process. Useful for debugging issues or understanding what the supervisor has been doing.'
+    },
+    {
+      name: '🚫 woaru ignore',
+      description: 'Add a tool to the ignore list',
+      usage: 'woaru ignore <tool>',
+      purpose: 'Tells the supervisor to stop recommending a specific tool. Useful when you have good reasons not to use a particular tool.'
+    },
+    {
+      name: '⏪ woaru rollback',
+      description: 'Rollback changes made by a specific tool',
+      usage: 'woaru rollback <tool> [options]',
+      purpose: 'Undoes changes made by the setup command for a specific tool. Provides a safety net when tool configurations cause issues.'
+    },
+    {
+      name: '📚 woaru commands',
+      description: 'Show this detailed command reference',
+      usage: 'woaru commands',
+      purpose: 'Displays comprehensive documentation for all WOARU commands. Your go-to reference for understanding what each command does and when to use it.'
+    }
+  ];
+
+  commands.forEach((cmd, index) => {
+    console.log(chalk.yellow.bold(cmd.name));
+    console.log(chalk.gray(`  Description: ${cmd.description}`));
+    console.log(chalk.gray(`  Usage: ${cmd.usage}`));
+    console.log(chalk.blue(`  Purpose: ${cmd.purpose}`));
+    
+    if (cmd.subcommands) {
+      console.log(chalk.cyan('  Subcommands:'));
+      cmd.subcommands.forEach(sub => {
+        console.log(chalk.yellow(`    • ${sub.name}`));
+        console.log(chalk.gray(`      Description: ${sub.description}`));
+        console.log(chalk.gray(`      Usage: ${sub.usage}`));
+        console.log(chalk.blue(`      Purpose: ${sub.purpose}`));
+      });
+    }
+    
+    if (index < commands.length - 1) {
+      console.log();
+    }
+  });
+  
+  console.log();
+  console.log(chalk.gray('═'.repeat(50)));
+  console.log(chalk.cyan('💡 Tip: Use --help with any command for detailed options'));
+  console.log(chalk.cyan('🔗 For more information: https://github.com/your-repo/woaru'));
+}
+
+program
+  .command('commands')
+  .description('Show detailed command reference documentation')
+  .action(() => {
+    displayCommandReference();
   });
 
 // Handle unknown commands
