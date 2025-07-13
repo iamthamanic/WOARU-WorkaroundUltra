@@ -1,0 +1,44 @@
+🔍 Analyzing project...
+📦 Project: woaru (1.1.0)
+🔧 Language: TypeScript
+⚡ Frameworks: None detected
+🔬 Analyzing codebase for insights...
+🔒 Running comprehensive security analysis...
+   Running Snyk + Gitleaks security scan...
+⚠️  Gitleaks not installed. Skipping secret detection.
+   ⚠️  snyk: Snyk is not installed. Run "npm install -g snyk" and "snyk auth" to set up.
+🛡️ Running infrastructure security audit...
+   Scanning containers and infrastructure...
+   ❌ Infrastructure scan failed: Error: Command failed: which trivy
+
+🏗️ Running production readiness audit...
+🚨 1 critical security issues found across codebase and infrastructure!
+📋 Analysis Results:
+
+✅ Already Installed:
+  • eslint
+  • prettier
+  • husky
+  • jest
+  • typescript
+
+🔬 Code Analysis Insights:
+  • PRETTIER: Inkonsistente Code-Formatierung gefunden. Unterschiedliche Einrückungen und Stile in mehreren Dateien.
+    - test-production-auditor.js:16: Trailing whitespace
+    - test-production-auditor.js:25: Trailing whitespace
+    - test-production-auditor.js:31: Trailing whitespace
+  • ESLINT: Debug-Statements (console.log) im Code gefunden. ESLint kann diese automatisch erkennen.
+    - test-security.js:1: console.log('test secret key: sk_live_abc123'); const api_key = 'ghp_secret123';
+    - test-quality-runner.js:15: console.log('Testing QualityRunner...');
+    - test-quality-runner.js:17: console.log('Test completed.');
+  • HUSKY: Git-Repository ohne Pre-Commit Hooks. Code-Qualität wird nicht vor Commits geprüft.
+    - Kein .husky Verzeichnis gefunden
+    - Git-Repository aktiv
+
+🤖 Claude Automation Ideas:
+  • Generate TypeScript interfaces from API responses
+  • Add strict typing to existing JavaScript functions
+  • Create utility types for better type safety
+  • Generate README.md with project setup instructions
+  • Create CONTRIBUTING.md with development guidelines
+  • Generate API documentation from code comments
