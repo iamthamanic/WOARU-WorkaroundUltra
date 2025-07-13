@@ -1,9 +1,9 @@
 # WOARU 🚀
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
-The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks and production-readiness audits.
+The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-WOARU is an intelligent CLI tool that **scans your actual codebase**, detects issues, provides **live quality monitoring**, and ensures your project is **production-ready** with specific explanations based on what it finds in your code.
+WOARU is an intelligent CLI tool that **scans your actual codebase**, detects issues, provides **live quality monitoring**, checks **SOLID principles compliance**, and ensures your project is **production-ready** with specific explanations based on what it finds in your code.
 
 ## ⚡ **Quick Start - Zero Installation Required**
 
@@ -72,6 +72,16 @@ WOARU supports **8 major programming languages** with intelligent detection:
 - **📊 Security Health Score** - Quantified security posture measurement
 - **🎯 Automated Security Recommendations** - Framework-specific security advice
 
+### 🏗️ **NEW: SOLID Architecture Analysis (v1.2.0)**
+WOARU now includes **comprehensive SOLID principles checking** to make it a true **"Tech Lead in a Box"**:
+
+- **🎯 Single Responsibility Principle (SRP)** - Detects classes with too many methods, high complexity, or multiple concerns
+- **📊 SOLID Score (0-100)** - Quantified architecture quality with severity-weighted scoring
+- **🔍 Detailed Violation Analysis** - Precise location, explanation, impact, and solution for each issue
+- **🚀 Smart Recommendations** - Context-aware architectural improvement suggestions
+- **⚙️ Seamless Integration** - Automatically runs during `woaru review` commands
+- **🌍 Multi-language Support** - TypeScript/JavaScript (Python, Go, Rust coming soon)
+
 ## 🚨 **Live Quality Monitoring**
 
 When you run `woaru watch`, WOARU becomes your **personal code quality guardian**:
@@ -128,11 +138,11 @@ WOARU automatically detects your framework and provides **specific recommendatio
 
 ### Core Commands
 ```bash
-woaru analyze        # Deep project analysis with security audit (★ NEW!)
+woaru analyze        # Deep project analysis with security audit + SOLID analysis (★ NEW!)
 woaru setup          # Auto-setup recommended tools
 woaru helpers        # Show active vs missing tools (★ most useful)
 woaru watch          # Start live quality monitoring with security (★ supervisor mode)
-woaru review         # Code review: analyze only changed files with security (★ NEW SUB-COMMANDS!)
+woaru review         # Code review: analyze only changed files with security + SOLID (★ NEW SUB-COMMANDS!)
 woaru commands       # Show detailed command reference (★ NEW!)
 ```
 
@@ -224,6 +234,29 @@ woaru review path "src/**/*.tsx"
 **ESLint:**
 - Zeile 23: 'userData' is assigned a value but never used
 - Zeile 45: Missing dependency in useEffect hook
+
+## 🏗️ SOLID Architecture Analysis
+
+📊 **SOLID Score: 65/100** (3 Verstöße gefunden)
+
+### 🔴 Single Responsibility Principle (3 Verstöße)
+
+#### 🟡 HOCH (2)
+
+**1. Klasse UserManager hat 18 Methoden**
+📍 **Klasse:** UserManager:15
+💡 **Problem:** Klassen mit vielen Methoden haben oft mehrere Verantwortlichkeiten
+⚠️ **Auswirkung:** Schwer zu testen, zu verstehen und zu warten
+🔨 **Lösung:** Teile die Klasse UserManager in kleinere, fokussierte Klassen auf
+
+**2. Klasse UserManager importiert aus 4 verschiedenen Bereichen: database, http, validation, email**
+📍 **Klasse:** UserManager:15
+💡 **Problem:** Imports aus verschiedenen Bereichen deuten auf multiple Verantwortlichkeiten hin
+🔨 **Lösung:** Separiere die verschiedenen Concerns in eigene Services
+
+### 💡 SOLID-Empfehlungen
+1. 🎯 1 Klassen mit zu vielen Methoden - teile diese in kleinere Services auf
+2. 📦 1 Klassen mit zu vielen verschiedenen Concerns - verwende Dependency Injection
 
 ## 🟡 Empfehlungen zur Produktionsreife
 
