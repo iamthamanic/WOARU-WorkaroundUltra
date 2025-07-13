@@ -12,7 +12,7 @@
   "codeIssues": [],
   "lastAnalysis": "2025-06-25T17:11:05.170Z",
   "healthScore": 0,
-  "fileCount": 8783,
+  "fileCount": 8787,
   "watchedFiles": [
     "README.md",
     "jest.config.js",
@@ -8750,7 +8750,6 @@
     "node_modules/eslint/lib/rules/utils/unicode/is-emoji-modifier.js",
     "node_modules/eslint/lib/rules/utils/unicode/is-regional-indicator-symbol.js",
     "node_modules/eslint/lib/rules/utils/unicode/is-surrogate-pair.js",
-    "woaru-review.md",
     "test-security.js",
     "savepoints/20250713_211528_enhanced-detailed-analysis/cli.ts",
     "savepoints/20250713_211528_enhanced-detailed-analysis/index.ts",
@@ -8796,6 +8795,11 @@
     "savepoints/20250713_211528_enhanced-detailed-analysis/SAVEPOINT_INFO.md",
     "snapshots/20250713-enhanced-detailed-analysis/enhanced-review-report.md",
     "snapshots/20250713-enhanced-detailed-analysis/commands-reference.txt",
-    "snapshots/20250713-enhanced-detailed-analysis/SNAPSHOT_INFO.md"
+    "snapshots/20250713-enhanced-detailed-analysis/SNAPSHOT_INFO.md",
+    "src/solid/types/solid-types.ts",
+    "src/solid/principles/BaseSOLIDChecker.ts",
+    "src/solid/parsers/TypeScriptParser.ts",
+    "src/solid/principles/SRPChecker.ts",
+    "src/solid/SOLIDChecker.ts"
   ]
 }

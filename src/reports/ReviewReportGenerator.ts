@@ -4,6 +4,7 @@ import { QualityCheckResult, SnykResult } from '../quality/QualityRunner';
 import { ProductionAudit } from '../auditor/ProductionReadinessAuditor';
 import { GitDiffResult } from '../utils/GitDiffAnalyzer';
 import { SecurityScanResult, SecurityFinding } from '../types/security';
+import { SOLIDCheckResult, SOLIDViolation } from '../solid/types/solid-types';
 
 export interface ReviewReportData {
   context?: { type: string; description: string };
@@ -177,6 +178,9 @@ export class ReviewReportGenerator {
         });
       });
     }
+
+    // SOLID Architecture Analysis
+    this.addSOLIDAnalysisSection(lines, data.qualityResults);
 
     // Production Audits
     if (data.productionAudits.length > 0) {
@@ -587,5 +591,246 @@ export class ReviewReportGenerator {
     });
 
     return allFindings;
+  }
+
+  /**
+   * Adds SOLID Architecture Analysis section to the report
+   */
+  private addSOLIDAnalysisSection(
+    lines: string[],
+    qualityResults: QualityCheckResult[]
+  ): void {
+    // Extract SOLID results from quality results
+    const solidResults = qualityResults
+      .map(result => result.solidResult)
+      .filter(
+        (solidResult): solidResult is SOLIDCheckResult =>
+          solidResult !== undefined
+      );
+
+    if (solidResults.length === 0) {
+      return; // No SOLID analysis available
+    }
+
+    // Calculate summary metrics
+    const totalViolations = solidResults.reduce(
+      (sum, result) => sum + result.violations.length,
+      0
+    );
+    const avgSOLIDScore =
+      solidResults.reduce((sum, result) => sum + result.metrics.solidScore, 0) /
+      solidResults.length;
+
+    // Only show section if there are violations or low scores
+    if (totalViolations === 0 && avgSOLIDScore >= 80) {
+      // Add short positive note
+      lines.push('## 🏗️ SOLID Architecture Analysis');
+      lines.push('');
+      lines.push(
+        `✅ **Excellent SOLID Score: ${Math.round(avgSOLIDScore)}/100** - Keine Architektur-Probleme gefunden!`
+      );
+      lines.push('');
+      return;
+    }
+
+    lines.push('## 🏗️ SOLID Architecture Analysis');
+    lines.push('');
+    lines.push(
+      `📊 **SOLID Score: ${Math.round(avgSOLIDScore)}/100** (${totalViolations} Verstöße gefunden)`
+    );
+    lines.push('');
+
+    // Group violations by principle
+    const violationsByPrinciple =
+      this.groupSOLIDViolationsByPrinciple(solidResults);
+
+    // Show violations by principle
+    Object.entries(violationsByPrinciple).forEach(([principle, violations]) => {
+      if (violations.length === 0) return;
+
+      const principleNames: { [key: string]: string } = {
+        SRP: 'Single Responsibility Principle',
+        OCP: 'Open/Closed Principle',
+        LSP: 'Liskov Substitution Principle',
+        ISP: 'Interface Segregation Principle',
+        DIP: 'Dependency Inversion Principle',
+      };
+
+      lines.push(
+        `### 🔴 ${principleNames[principle]} (${violations.length} Verstöße)`
+      );
+      lines.push('');
+
+      // Group by severity
+      const critical = violations.filter(v => v.severity === 'critical');
+      const high = violations.filter(v => v.severity === 'high');
+      const medium = violations.filter(v => v.severity === 'medium');
+
+      [
+        { label: 'KRITISCH', violations: critical, emoji: '🔴' },
+        { label: 'HOCH', violations: high, emoji: '🟡' },
+        { label: 'MITTEL', violations: medium, emoji: '🔵' },
+      ].forEach(({ label, violations: severityViolations, emoji }) => {
+        if (severityViolations.length === 0) return;
+
+        lines.push(`#### ${emoji} ${label} (${severityViolations.length})`);
+        lines.push('');
+
+        severityViolations.slice(0, 5).forEach((violation, index) => {
+          lines.push(`**${index + 1}. ${violation.description}**`);
+
+          // Location info
+          if (violation.class) {
+            const location = violation.line
+              ? `${violation.class}:${violation.line}`
+              : violation.class;
+            lines.push(`📍 **Klasse:** ${location}`);
+          }
+          if (violation.method) {
+            lines.push(`🔧 **Methode:** ${violation.method}`);
+          }
+
+          // Explanation
+          lines.push(`💡 **Problem:** ${violation.explanation}`);
+
+          // Impact
+          lines.push(`⚠️ **Auswirkung:** ${violation.impact}`);
+
+          // Suggestion
+          lines.push(`🔨 **Lösung:** ${violation.suggestion}`);
+
+          // Metrics if available
+          if (violation.metrics) {
+            const metrics = [];
+            if (violation.metrics.complexity)
+              metrics.push(`Komplexität: ${violation.metrics.complexity}`);
+            if (violation.metrics.methodCount)
+              metrics.push(`Methoden: ${violation.metrics.methodCount}`);
+            if (violation.metrics.parameters)
+              metrics.push(`Parameter: ${violation.metrics.parameters}`);
+            if (violation.metrics.linesOfCode)
+              metrics.push(`Zeilen: ${violation.metrics.linesOfCode}`);
+
+            if (metrics.length > 0) {
+              lines.push(`📊 **Metriken:** ${metrics.join(', ')}`);
+            }
+          }
+
+          lines.push('');
+        });
+
+        if (severityViolations.length > 5) {
+          lines.push(
+            `*... und ${severityViolations.length - 5} weitere ${label}-Verstöße*`
+          );
+          lines.push('');
+        }
+      });
+    });
+
+    // Add general SOLID recommendations
+    lines.push('### 💡 SOLID-Empfehlungen');
+    lines.push('');
+
+    const recommendations = this.generateSOLIDRecommendations(solidResults);
+    recommendations.forEach((rec, index) => {
+      lines.push(`${index + 1}. ${rec}`);
+    });
+    lines.push('');
+  }
+
+  /**
+   * Groups SOLID violations by principle
+   */
+  private groupSOLIDViolationsByPrinciple(solidResults: SOLIDCheckResult[]): {
+    [principle: string]: SOLIDViolation[];
+  } {
+    const grouped: { [principle: string]: SOLIDViolation[] } = {
+      SRP: [],
+      OCP: [],
+      LSP: [],
+      ISP: [],
+      DIP: [],
+    };
+
+    solidResults.forEach(result => {
+      result.violations.forEach(violation => {
+        grouped[violation.principle].push(violation);
+      });
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Generates specific SOLID recommendations based on violations
+   */
+  private generateSOLIDRecommendations(
+    solidResults: SOLIDCheckResult[]
+  ): string[] {
+    const recommendations: string[] = [];
+    const allViolations = solidResults.flatMap(result => result.violations);
+
+    // SRP recommendations
+    const srpViolations = allViolations.filter(v => v.principle === 'SRP');
+    if (srpViolations.length > 0) {
+      const classesWithManyMethods = srpViolations.filter(
+        v => v.metrics?.methodCount && v.metrics.methodCount > 15
+      ).length;
+
+      if (classesWithManyMethods > 0) {
+        recommendations.push(
+          `🎯 ${classesWithManyMethods} Klassen mit zu vielen Methoden gefunden - teile diese in kleinere, fokussierte Services auf`
+        );
+      }
+
+      const complexClasses = srpViolations.filter(
+        v => v.metrics?.complexity && v.metrics.complexity > 30
+      ).length;
+
+      if (complexClasses > 0) {
+        recommendations.push(
+          `🔄 ${complexClasses} Klassen mit hoher Komplexität - extrahiere komplexe Logik in separate Utility-Klassen`
+        );
+      }
+
+      const concernViolations = srpViolations.filter(
+        v => v.metrics?.importConcerns && v.metrics.importConcerns.length > 3
+      ).length;
+
+      if (concernViolations > 0) {
+        recommendations.push(
+          `📦 ${concernViolations} Klassen mit zu vielen verschiedenen Concerns - verwende Dependency Injection und Service-Pattern`
+        );
+      }
+    }
+
+    // General recommendations
+    const avgScore =
+      solidResults.reduce((sum, r) => sum + r.metrics.solidScore, 0) /
+      solidResults.length;
+    if (avgScore < 70) {
+      recommendations.push(
+        '🏗️ Führe systematisches Refactoring durch - beginne mit den kritischsten SOLID-Verstößen'
+      );
+    }
+
+    const filesWithManyViolations = solidResults.filter(
+      r => r.violations.length > 5
+    ).length;
+    if (filesWithManyViolations > 0) {
+      recommendations.push(
+        `⚠️ ${filesWithManyViolations} Dateien mit vielen SOLID-Verstößen - priorisiere diese für Architektur-Überarbeitung`
+      );
+    }
+
+    // Add fallback recommendation
+    if (recommendations.length === 0 && allViolations.length > 0) {
+      recommendations.push(
+        '📚 Überprüfe die SOLID-Prinzipien Dokumentation für weitere Verbesserungsideen'
+      );
+    }
+
+    return recommendations;
   }
 }

@@ -15,6 +15,8 @@ import {
   GitleaksResult,
   SecurityCheckOptions,
 } from '../types/security';
+import { SOLIDChecker } from '../solid/SOLIDChecker';
+import { SOLIDCheckResult, SOLIDViolation } from '../solid/types/solid-types';
 
 const execAsync = promisify(exec);
 
@@ -26,6 +28,7 @@ export interface QualityCheckResult {
   raw_output?: string; // Store full tool output for detailed analysis
   fixes?: string[]; // Suggested fixes for the issues
   explanation?: string; // Human-readable explanation of the problems
+  solidResult?: SOLIDCheckResult; // SOLID analysis results
 }
 
 export interface SnykVulnerability {
@@ -76,11 +79,13 @@ export class QualityRunner {
   private notificationManager: NotificationManager;
   private databaseManager: ToolsDatabaseManager;
   private corePlugins: Map<string, any>;
+  private solidChecker: SOLIDChecker;
 
   constructor(notificationManager: NotificationManager) {
     this.notificationManager = notificationManager;
     this.databaseManager = new ToolsDatabaseManager();
     this.corePlugins = new Map();
+    this.solidChecker = new SOLIDChecker();
 
     // Initialize core plugins
     this.initializeCorePlugins();
@@ -385,8 +390,19 @@ export class QualityRunner {
       try {
         // TypeScript/JavaScript files
         if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
-          const result = await this.runESLintCheckForReview(relativePath);
-          if (result) results.push(result);
+          const eslintResult = await this.runESLintCheckForReview(relativePath);
+          if (eslintResult) {
+            // Add SOLID analysis to ESLint results
+            const language = ext.startsWith('.ts')
+              ? 'typescript'
+              : 'javascript';
+            const solidResult = await this.runSOLIDCheckForReview(
+              filePath,
+              language
+            );
+            eslintResult.solidResult = solidResult;
+            results.push(eslintResult);
+          }
         }
 
         // Python files
@@ -1507,5 +1523,63 @@ export class QualityRunner {
     }
 
     return uniqueFixes;
+  }
+
+  /**
+   * Run SOLID principles check for review
+   */
+  private async runSOLIDCheckForReview(
+    filePath: string,
+    language: string
+  ): Promise<SOLIDCheckResult | undefined> {
+    try {
+      if (!this.solidChecker.supportsLanguage(language)) {
+        return undefined;
+      }
+
+      const result = await this.solidChecker.analyzeFile(filePath, language);
+
+      // Return result even if no violations (for metrics)
+      return result;
+    } catch (error) {
+      console.warn(
+        `SOLID-Checker: Fehler beim Analysieren von ${filePath}:`,
+        error
+      );
+      return undefined;
+    }
+  }
+
+  /**
+   * Run comprehensive SOLID analysis for all files (used by ProductionReadinessAuditor)
+   */
+  async runSOLIDChecksForProject(
+    filePaths: string[],
+    language: string
+  ): Promise<SOLIDCheckResult[]> {
+    const results: SOLIDCheckResult[] = [];
+
+    for (const filePath of filePaths) {
+      const result = await this.runSOLIDCheckForReview(filePath, language);
+      if (result) {
+        results.push(result);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Get available SOLID principles for a language
+   */
+  getAvailableSOLIDPrinciples(language: string): string[] {
+    return this.solidChecker.getAvailablePrinciples(language);
+  }
+
+  /**
+   * Check if SOLID analysis is supported for a language
+   */
+  supportsSOLIDAnalysis(language: string): boolean {
+    return this.solidChecker.supportsLanguage(language);
   }
 }
