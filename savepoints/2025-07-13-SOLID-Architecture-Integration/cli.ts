@@ -263,7 +263,7 @@ program
       // Check if running in detached mode (but NOT for Claude Code environment)
       if (options.detached) {
         // Write PID file for detached mode
-        const pidFile = path.join(projectPath, '.woaru', 'supervisor.pid');
+        const pidFile = path.join(projectPath, '.wau', 'supervisor.pid');
         await fs.ensureDir(path.dirname(pidFile));
         await fs.writeFile(pidFile, process.pid.toString());
 
@@ -431,7 +431,7 @@ program
 
       if (!supervisor) {
         // Check if there's a state file indicating a previous session
-        const stateFile = path.join(projectPath, '.woaru', 'state.json');
+        const stateFile = path.join(projectPath, '.wau', 'state.json');
         if (await fs.pathExists(stateFile)) {
           const state = await fs.readJson(stateFile);
           console.log(
@@ -503,7 +503,7 @@ program
   .action(async options => {
     try {
       const projectPath = path.resolve(options.path);
-      const pidFile = path.join(projectPath, '.woaru', 'supervisor.pid');
+      const pidFile = path.join(projectPath, '.wau', 'supervisor.pid');
 
       // First check if supervisor is running in current process
       if (supervisor) {
@@ -547,7 +547,7 @@ program
   .action(async options => {
     try {
       const projectPath = path.resolve(options.path);
-      const logFile = path.join(projectPath, '.woaru', 'supervisor.log');
+      const logFile = path.join(projectPath, '.wau', 'supervisor.log');
 
       if (!(await fs.pathExists(logFile))) {
         console.log(
@@ -1084,10 +1084,10 @@ async function runReviewAnalysis(
     const jsonReport = reportGenerator.generateJsonReport(reportData);
     console.log(jsonReport);
   } else {
-    const woaruDir = path.join(projectPath, '.woaru');
-    await fs.ensureDir(woaruDir);
-    const defaultOutput = path.join(woaruDir, 'woaru-review.md');
-    const outputPath = options.output ? path.resolve(projectPath, options.output) : defaultOutput;
+    const outputPath = path.resolve(
+      projectPath,
+      options.output || 'woaru-review.md'
+    );
     await reportGenerator.generateMarkdownReport(reportData, outputPath);
 
     console.log(
@@ -1132,7 +1132,7 @@ reviewCommand
   .option(
     '-o, --output <file>',
     'Output file for review report',
-    path.join('.woaru', 'woaru-review.md')
+    'woaru-review.md'
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async options => {
@@ -1215,7 +1215,7 @@ reviewCommand
   .option(
     '-o, --output <file>',
     'Output file for review report',
-    path.join('.woaru', 'woaru-review.md')
+    'woaru-review.md'
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async options => {
@@ -1303,7 +1303,7 @@ reviewCommand
   .option(
     '-o, --output <file>',
     'Output file for review report',
-    path.join('.woaru', 'woaru-review.md')
+    'woaru-review.md'
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async (targetPath, options) => {
@@ -1731,7 +1731,7 @@ program
       );
       console.log(
         chalk.gray(
-          'You can manually restore backup files ending with .woaru-backup-*'
+          'You can manually restore backup files ending with .wau-backup-*'
         )
       );
     } catch (error) {

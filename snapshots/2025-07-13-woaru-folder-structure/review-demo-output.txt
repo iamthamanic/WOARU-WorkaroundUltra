@@ -1,0 +1,11 @@
+🔍 Analyzing path: test_demo.js
+📋 Found 1 files for analysis:
+   • test_demo.js
+🔍 Running quality checks on files...
+🔒 Running comprehensive security analysis...
+⚠️  Gitleaks not installed. Skipping secret detection.
+
+✅ Review report generated: woaru-review.md
+📊 ⚠️ Gefunden: 1 Qualitäts-Probleme
+
+💡 Open woaru-review.md to see detailed findings

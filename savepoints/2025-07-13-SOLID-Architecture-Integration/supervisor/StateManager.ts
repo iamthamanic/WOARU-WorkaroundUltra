@@ -44,7 +44,7 @@ export class StateManager extends EventEmitter {
 
   constructor(projectPath: string) {
     super();
-    this.stateFile = path.join(projectPath, '.woaru', 'state.json');
+    this.stateFile = path.join(projectPath, '.wau', 'state.json');
     this.state = this.initializeState(projectPath);
   }
 

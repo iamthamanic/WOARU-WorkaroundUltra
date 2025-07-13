@@ -32,7 +32,7 @@ export class FileWatcher extends EventEmitter {
       /\.next/,
       /coverage/,
       /\.log$/,
-      /\.woaru/,
+      /\.wau/,
       /\.DS_Store/,
       /package-lock\.json$/,
       /yarn\.lock$/,

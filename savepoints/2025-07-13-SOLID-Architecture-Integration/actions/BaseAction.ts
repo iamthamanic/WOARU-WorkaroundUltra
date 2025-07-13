@@ -214,7 +214,7 @@ export abstract class BaseAction {
     try {
       const sanitizedPath = this.sanitizePath(filePath);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = `${sanitizedPath}.woaru-backup-${timestamp}`;
+      const backupPath = `${sanitizedPath}.wau-backup-${timestamp}`;
 
       if (await fs.pathExists(sanitizedPath)) {
         await fs.copy(sanitizedPath, backupPath);
@@ -239,7 +239,7 @@ export abstract class BaseAction {
       const files = await fs.readdir(dir);
 
       const backupFiles = files
-        .filter(file => file.startsWith(`${basename}.woaru-backup-`))
+        .filter(file => file.startsWith(`${basename}.wau-backup-`))
         .sort()
         .reverse(); // Most recent first
 

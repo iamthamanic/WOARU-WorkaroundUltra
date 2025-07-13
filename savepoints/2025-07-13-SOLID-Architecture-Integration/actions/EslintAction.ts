@@ -156,11 +156,11 @@ export class EslintAction extends BaseAction {
 
       // Find backup files
       const backupFiles = await glob.glob(
-        path.join(projectPath, '*.woaru-backup-*')
+        path.join(projectPath, '*.wau-backup-*')
       );
 
       for (const backupFile of backupFiles) {
-        const originalFile = backupFile.replace(/\.woaru-backup-\d+$/, '');
+        const originalFile = backupFile.replace(/\.wau-backup-\d+$/, '');
         await fs.move(backupFile, originalFile, { overwrite: true });
       }
 

@@ -1,0 +1,4 @@
+total 8
+drwxr-xr-x   3 halteverbotsocialmacpro  staff    96 Jul 13 22:05 .
+drwxr-xr-x@ 51 halteverbotsocialmacpro  staff  1632 Jul 13 22:12 ..
+-rw-r--r--   1 halteverbotsocialmacpro  staff  1628 Jul 13 22:12 woaru-review.md

@@ -1,0 +1,22 @@
+Usage: woaru review [options] [command]
+
+Code review and analysis tools
+
+Options:
+  -h, --help                          display help for command
+
+Commands:
+  git [options]                       Analyze changes since a specific branch
+                                      (git diff)
+  local [options]                     Analyze uncommitted changes in working
+                                      directory
+  path [options] <file_or_directory>  Analyze specific files or directories
+  help [command]                      display help for command
+
+Examples:
+  woaru review git                    # Analyze changes since main branch
+  woaru review git --branch develop  # Analyze changes since develop branch
+  woaru review local                  # Analyze uncommitted changes
+  woaru review path src/components    # Analyze specific directory
+  woaru review path src/file.ts       # Analyze specific file
+
