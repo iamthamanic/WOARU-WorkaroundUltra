@@ -6,6 +6,7 @@
 import { BaseSOLIDChecker } from './BaseSOLIDChecker';
 import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
 import { TypeScriptParser } from '../parsers/TypeScriptParser';
+import { APP_CONFIG } from '../../config/constants';
 
 export class SRPChecker extends BaseSOLIDChecker {
   protected principle: SOLIDPrinciple = 'SRP';
@@ -71,7 +72,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     const methodCount = classAnalysis.methods.length;
 
     // Thresholds für Method Count
-    const thresholds = { low: 8, medium: 15, high: 25 };
+    const thresholds = APP_CONFIG.SOLID_THRESHOLDS.METHODS_PER_CLASS;
     
     if (methodCount >= thresholds.low) {
       const severity = this.calculateSeverity(methodCount, thresholds);
@@ -103,7 +104,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     const complexity = classAnalysis.complexity;
 
     // Thresholds für Complexity
-    const thresholds = { low: 15, medium: 30, high: 50 };
+    const thresholds = APP_CONFIG.SOLID_THRESHOLDS.LINES_PER_METHOD;
     
     if (complexity >= thresholds.low) {
       const severity = this.calculateSeverity(complexity, thresholds);
@@ -135,7 +136,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     const concernCount = classAnalysis.concerns.length;
 
     // Thresholds für Concern Diversity
-    const thresholds = { low: 3, medium: 4, high: 6 };
+    const thresholds = APP_CONFIG.SOLID_THRESHOLDS.CONSTRUCTOR_PARAMS;
     
     if (concernCount >= thresholds.low) {
       const severity = this.calculateSeverity(concernCount, thresholds);
@@ -167,7 +168,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     const linesOfCode = classAnalysis.linesOfCode;
 
     // Thresholds für Class Size
-    const thresholds = { low: 100, medium: 200, high: 400 };
+    const thresholds = APP_CONFIG.SOLID_THRESHOLDS.CHARACTERS_PER_LINE;
     
     if (linesOfCode >= thresholds.low) {
       const severity = this.calculateSeverity(linesOfCode, thresholds);
@@ -199,7 +200,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     
     classAnalysis.methods.forEach((method: any) => {
       // Thresholds für Parameter Count
-      const thresholds = { low: 4, medium: 6, high: 8 };
+      const thresholds = APP_CONFIG.SOLID_THRESHOLDS.METHODS_PER_INTERFACE;
       
       if (method.parameters >= thresholds.low) {
         const severity = this.calculateSeverity(method.parameters, thresholds);
@@ -233,7 +234,7 @@ export class SRPChecker extends BaseSOLIDChecker {
     const classCount = classes.length;
 
     // Thresholds für Class Count per File
-    const thresholds = { low: 2, medium: 4, high: 6 };
+    const thresholds = APP_CONFIG.SOLID_THRESHOLDS.ABSTRACT_METHODS;
     
     if (classCount >= thresholds.low) {
       const severity = this.calculateSeverity(classCount, thresholds);

@@ -59,7 +59,7 @@ export class CodeSmellAnalyzer {
           severity: 'warning',
           line: index + 1,
           column,
-          rule: 'no-var',
+          rule: APP_CONFIG.ESLINT_RULES.NO_VAR,
           suggestion: 'Replace "var" with "let" or "const"'
         });
       }
@@ -88,7 +88,7 @@ export class CodeSmellAnalyzer {
           severity: 'warning',
           line: index + 1,
           column,
-          rule: 'eqeqeq',
+          rule: APP_CONFIG.ESLINT_RULES.EQEQEQ,
           suggestion: `Replace "${operator}" with "${strictOperator}"`
         });
       }
@@ -158,7 +158,7 @@ export class CodeSmellAnalyzer {
         findings.push({
           type: 'complexity',
           message: `Function "${func.name}" has high cyclomatic complexity (${complexity}). Consider breaking it down.`,
-          severity: complexity > 15 ? 'error' : 'warning',
+          severity: complexity > APP_CONFIG.QUALITY_THRESHOLDS.COMPLEXITY_WARNING ? 'error' : 'warning',
           line: func.line,
           column: func.column,
           rule: 'complexity',
@@ -328,7 +328,7 @@ export class CodeSmellAnalyzer {
   }
 
   private calculateCyclomaticComplexity(functionBody: string): number {
-    let complexity = 1; // Base complexity
+    let complexity = APP_CONFIG.QUALITY_THRESHOLDS.BASE_COMPLEXITY; // Base complexity
 
     // Count decision points
     const decisionPoints = [

@@ -1,0 +1,50 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Read version from package.json dynamically
+const packageJsonPath = join(__dirname, '../../package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+
+export const APP_CONFIG = {
+  // Application metadata
+  NAME: 'woaru',
+  DISPLAY_NAME: 'WOARU',
+  VERSION: packageJson.version,
+  DESCRIPTION: 'WorkaroundUltra - Project Setup Autopilot',
+  
+  // Directory structure
+  DIRECTORIES: {
+    BASE: '.woaru',
+    REPORTS: '.woaru/reports',
+    LOGS: '.woaru/logs',
+    CACHE: '.woaru/cache',
+    SAVEPOINTS: '.woaru/savepoints',
+    SENT_REPORTS: '.woaru/sent-reports',
+    HOME_BASE: '~/.woaru',
+    HOME_LOGS: '~/.woaru/logs',
+    HOME_CACHE: '~/.woaru/cache'
+  },
+  
+  // File names
+  FILES: {
+    STATE: 'state.json',
+    PID: 'supervisor.pid',
+    ACTIONS_LOG: 'woaru_actions.log',
+    TOOLS_CONFIG: 'tools.json',
+    AI_MODELS: 'ai-models.json',
+    IGNORE: '.woaruignore'
+  },
+  
+  // GitHub URLs
+  GITHUB: {
+    REPO_URL: 'https://github.com/iamthamanic/WOARU-WorkaroundUltra',
+    TOOLS_CONFIG_URL: 'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/tools.json',
+    AI_MODELS_URL: 'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/ai-models.json'
+  },
+  
+  // API endpoints
+  API: {
+    ANTHROPIC: 'https://api.anthropic.com/v1/messages',
+    OPENAI: 'https://api.openai.com/v1/chat/completions',
+    GOOGLE: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+    OLLAMA: 'http://localhost:11434/api/generate',

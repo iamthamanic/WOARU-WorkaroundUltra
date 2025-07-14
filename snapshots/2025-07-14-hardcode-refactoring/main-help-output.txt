@@ -1,0 +1,34 @@
+Usage: woaru [options] [command]
+
+WorkaroundUltra - Project Setup Autopilot
+
+Options:
+  -V, --version              output the version number
+  -h, --help                 display help for command
+
+Commands:
+  quick-analyze [options]    Quick analysis for project setup recommendations
+  setup                      Setup tools and LLM integrations
+  update-db                  Update the tools database from remote source
+  watch [options]            Start WOARU supervisor to continuously monitor the
+                             project
+  status [options]           Show WOARU supervisor status and project health
+  update                     Updates WOARU to the latest version from npm
+  stop [options]             Stop the WOARU supervisor
+  logs [options]             Show supervisor logs
+  recommendations [options]  Show current tool recommendations
+  helpers [options]          Show all detected/activated development tools and
+                             helpers
+  docu                       AI-powered code documentation generator
+  ignore <tool>              Add a tool to the ignore list
+  review                     Code review and analysis tools
+  analyze [options]          Comprehensive project analysis including security
+                             audit
+  rollback [options] <tool>  Rollback changes made by a specific tool
+  commands                   Show detailed command reference documentation
+  wiki                       Show comprehensive WOARU documentation and concept
+                             guide
+  message                    Send reports from history to configured message
+                             channels
+  logs [options]             View and manage WOARU activity logs
+  help [command]             display help for command

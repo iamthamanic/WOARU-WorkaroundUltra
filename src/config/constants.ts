@@ -134,6 +134,55 @@ export const APP_CONFIG = {
       PRETTIER: 'npx prettier'
     }
   },
+
+  // ESLint Rules Configuration
+  ESLINT_RULES: {
+    NO_VAR: 'no-var',
+    EQEQEQ: 'eqeqeq',
+    NO_CONSOLE: 'no-console',
+    PREFER_CONST: 'prefer-const',
+    NO_UNUSED_VARS: 'no-unused-vars'
+  },
+
+  // SOLID Principle Thresholds
+  SOLID_THRESHOLDS: {
+    METHODS_PER_CLASS: { low: 8, medium: 15, high: 25 },
+    LINES_PER_METHOD: { low: 15, medium: 30, high: 50 },
+    CONSTRUCTOR_PARAMS: { low: 3, medium: 4, high: 6 },
+    CHARACTERS_PER_LINE: { low: 100, medium: 200, high: 400 },
+    METHODS_PER_INTERFACE: { low: 4, medium: 6, high: 8 },
+    ABSTRACT_METHODS: { low: 2, medium: 4, high: 6 }
+  },
+
+  // Code Quality Thresholds
+  QUALITY_THRESHOLDS: {
+    COMPLEXITY_WARNING: 15,
+    COMPLEXITY_ERROR: 20,
+    BASE_COMPLEXITY: 1,
+    MAX_FILE_SIZE_LINES: 500,
+    MAX_FUNCTION_LINES: 50,
+    NOTIFICATION_COOLDOWN_MINUTES: 5
+  },
+
+  // NPM and Tool Commands
+  TOOL_COMMANDS: {
+    NPM: {
+      LINT: 'npm run lint',
+      LINT_FIX: 'npm run lint:fix',
+      FORMAT: 'npm run format',
+      TEST: 'npm test',
+      BUILD: 'npm run build'
+    },
+    ESLINT: {
+      BASE: 'npx eslint',
+      WITH_FORMAT: 'npx eslint --format stylish',
+      FIX: 'npx eslint --fix'
+    },
+    PRETTIER: {
+      BASE: 'npx prettier',
+      WRITE: 'npx prettier --write'
+    }
+  },
   
   // Package manager detection files
   PACKAGE_MANAGERS: {

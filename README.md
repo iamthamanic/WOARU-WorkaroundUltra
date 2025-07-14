@@ -1,32 +1,72 @@
-# WOARU 🚀 v3.6.0
+# WOARU 🚀 v3.6.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.6.0 - MAJOR: AI-Powered Code Documentation System**
+## 🆕 **Latest Release: v3.6.1 - REFACTOR: Comprehensive Hardcode Elimination & Central Configuration**
 **Release Date:** July 14, 2025
 
-### 🎯 **REVOLUTIONARY: AI-Powered Code Documentation System**
-**Problem Solved:** Manual code documentation is time-consuming and often inconsistent. Teams struggle with maintaining documentation for non-technical stakeholders vs. technical developers.
+### 🔧 **MAJOR REFACTOR: Enterprise-Grade Configuration Management**
+**Problem Solved:** WOARU had scattered hardcoded values across the codebase making maintenance difficult and configuration inconsistent. Magic numbers, API URLs, and tool commands were duplicated throughout the code.
 
-**Game-Changing Solution:**
-- **📝 Dual Documentation Modes**:
-  - `woaru docu nopro` - Human-friendly "Explain-for-humans" comments for managers, designers, and business stakeholders
-  - `woaru docu pro` - Technical TSDoc/JSDoc documentation for developers with parameters, return values, and examples
-- **🎯 Smart Review Mode Integration**:
-  - `--local` - Document only uncommitted changes
-  - `--git [branch]` - Document only changes compared to branch
-  - `--path-only <path>` - Document specific files or directories
-- **🔒 Safe File Modification**:
-  - `--preview` - Preview changes without writing to files
-  - `--force` - Skip interactive confirmation
-  - Interactive confirmation for all file modifications
-- **🧠 AI-Powered Analysis**:
-  - Multi-language support (JavaScript, TypeScript, Python, Java, C++, etc.)
-  - Pattern-based function/class detection
-  - Context-aware documentation generation
-  - Existing documentation detection and smart updates
-- **🎯 Provider-Specific Customization** - Optimize prompts for each LLM's strengths
+**Revolutionary Solution:**
+- **🏗️ Complete Hardcode Elimination**:
+  - All ESLint rules centralized (`no-var`, `eqeqeq`, etc.)
+  - SOLID principle thresholds unified in central config
+  - API endpoints for all LLM providers standardized
+  - Tool commands (`npx eslint`, `npm run lint`) centralized
+- **📋 Enhanced constants.ts Architecture**:
+  - `ESLINT_RULES` - All linter rules in one place
+  - `SOLID_THRESHOLDS` - Configurable complexity limits
+  - `QUALITY_THRESHOLDS` - Adjustable quality standards
+  - `TOOL_COMMANDS` - Standardized CLI commands
+  - `API_ENDPOINTS` - Central API URL management
+- **⚡ Maintenance Benefits**:
+  - Single source of truth for all configuration values
+  - Easy threshold adjustments without code changes
+  - Consistent tool command usage across the codebase
+  - Type-safe configuration with TypeScript support
+
+### 🏗️ **Technical Implementation Examples**
+
+**Before Refactoring (Scattered Hardcodes):**
+```typescript
+// ❌ Multiple files with hardcoded values
+// CodeSmellAnalyzer.ts
+rule: 'no-var'
+severity: complexity > 15 ? 'error' : 'warning'
+
+// SRPChecker.ts  
+const thresholds = { low: 8, medium: 15, high: 25 };
+
+// cli.ts
+baseUrl: "https://api.anthropic.com/v1/messages"
+
+// QualityRunner.ts
+await execAsync(`npx eslint "${filePath}"`);
+```
+
+**After Refactoring (Centralized Configuration):**
+```typescript
+// ✅ Single source of truth in constants.ts
+// All files now import from central config
+rule: APP_CONFIG.ESLINT_RULES.NO_VAR
+severity: complexity > APP_CONFIG.QUALITY_THRESHOLDS.COMPLEXITY_WARNING
+const thresholds = APP_CONFIG.SOLID_THRESHOLDS.METHODS_PER_CLASS
+baseUrl: APP_CONFIG.API.ANTHROPIC
+await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE} "${filePath}"`);
+```
+
+### 🎯 **Configuration Categories Centralized**
+1. **ESLint Rules**: `NO_VAR`, `EQEQEQ`, `PREFER_CONST`, `NO_CONSOLE`
+2. **SOLID Thresholds**: Method counts, line limits, parameter counts
+3. **Quality Standards**: Complexity warnings, error thresholds
+4. **Tool Commands**: NPM scripts, ESLint commands, Prettier commands  
+5. **API Endpoints**: All LLM provider URLs centralized
+
+---
+
+## 📚 **Previous Release: v3.6.0 - AI-Powered Code Documentation System**
 
 ### 💡 **Real-World Examples**
 

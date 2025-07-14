@@ -1,0 +1,20 @@
+src/analyzer/CodeSmellAnalyzer.ts:6:  private readonly complexityThreshold = APP_CONFIG.QUALITY.COMPLEXITY_THRESHOLD;
+src/analyzer/CodeSmellAnalyzer.ts:7:  private readonly functionLengthThreshold = APP_CONFIG.QUALITY.FUNCTION_LENGTH_THRESHOLD;
+src/analyzer/CodeSmellAnalyzer.ts:8:  private readonly parameterCountThreshold = APP_CONFIG.QUALITY.PARAMETER_COUNT_THRESHOLD;
+src/analyzer/CodeSmellAnalyzer.ts:9:  private readonly nestingDepthThreshold = APP_CONFIG.QUALITY.NESTING_DEPTH_THRESHOLD;
+src/analyzer/CodeSmellAnalyzer.ts:62:          rule: APP_CONFIG.ESLINT_RULES.NO_VAR,
+src/analyzer/CodeSmellAnalyzer.ts:91:          rule: APP_CONFIG.ESLINT_RULES.EQEQEQ,
+src/analyzer/CodeSmellAnalyzer.ts:161:          severity: complexity > APP_CONFIG.QUALITY_THRESHOLDS.COMPLEXITY_WARNING ? 'error' : 'warning',
+src/analyzer/CodeSmellAnalyzer.ts:331:    let complexity = APP_CONFIG.QUALITY_THRESHOLDS.BASE_COMPLEXITY; // Base complexity
+src/quality/QualityRunner.ts:509:      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE} "${filePath}"`);
+src/quality/QualityRunner.ts:739:      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT} "${filePath}"`);
+src/quality/QualityRunner.ts:1523:          `Führe "${APP_CONFIG.TOOL_COMMANDS.NPM.LINT_FIX}" aus, um Einrückung automatisch zu korrigieren`
+src/quality/QualityRunner.ts:1539:      if (issue.includes(APP_CONFIG.ESLINT_RULES.NO_VAR)) {
+src/quality/QualityRunner.ts:1566:        `Führe "${APP_CONFIG.TOOL_COMMANDS.NPM.LINT_FIX}" aus, um automatisch behebbare Probleme zu korrigieren`
+src/cli.ts:35:  .name(APP_CONFIG.NAME)
+src/cli.ts:36:  .description(APP_CONFIG.DESCRIPTION)
+src/cli.ts:37:  .version(APP_CONFIG.VERSION);
+src/cli.ts:173:          console.log(`  • Run your linter: ${APP_CONFIG.TOOL_COMMANDS.NPM.LINT}`);
+src/cli.ts:174:          console.log(`  • Format your code: ${APP_CONFIG.TOOL_COMMANDS.NPM.FORMAT}`);
+src/cli.ts:469:        const pidFile = path.join(projectPath, APP_CONFIG.DIRECTORIES.BASE, APP_CONFIG.FILES.PID);
+src/cli.ts:637:        const stateFile = path.join(projectPath, APP_CONFIG.DIRECTORIES.BASE, APP_CONFIG.FILES.STATE);

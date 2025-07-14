@@ -5,6 +5,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
+import { APP_CONFIG } from '../../config/constants';
 
 const execAsync = promisify(exec);
 
@@ -36,7 +37,7 @@ export abstract class BaseSOLIDChecker {
       const fullCommand = `${command} ${args.join(' ')}`;
       const { stdout, stderr } = await execAsync(fullCommand, {
         cwd: options.cwd || process.cwd(),
-        timeout: options.timeout || 30000,
+        timeout: options.timeout || APP_CONFIG.TIMEOUTS.DEFAULT,
         maxBuffer: 10 * 1024 * 1024 // 10MB buffer
       });
       

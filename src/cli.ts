@@ -170,8 +170,8 @@ setupCommand
 
         if (!options.dryRun) {
           console.log(chalk.blue('\n💡 Next steps:'));
-          console.log('  • Run your linter: npm run lint');
-          console.log('  • Format your code: npm run format');
+          console.log(`  • Run your linter: ${APP_CONFIG.TOOL_COMMANDS.NPM.LINT}`);
+          console.log(`  • Format your code: ${APP_CONFIG.TOOL_COMMANDS.NPM.FORMAT}`);
           console.log('  • Commit your changes to test the git hooks');
         }
       } else {
@@ -3110,7 +3110,7 @@ function displayCommandReference() {
     chalk.cyan('💡 Tip: Use --help with any command for detailed options')
   );
   console.log(
-    chalk.cyan('🔗 For more information: https://github.com/your-repo/woaru')
+    chalk.cyan(`🔗 For more information: ${APP_CONFIG.GITHUB.REPO_URL}`)
   );
 }
 
@@ -3902,7 +3902,7 @@ async function setupAnthropicProvider(): Promise<any> {
     id: "anthropic-claude",
     providerType: "anthropic",
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
-    baseUrl: "https://api.anthropic.com/v1/messages",
+    baseUrl: APP_CONFIG.API.ANTHROPIC,
     model: answers.model,
     headers: {
       "anthropic-version": "2023-06-01"
@@ -3991,7 +3991,7 @@ async function setupOpenAIProvider(): Promise<any> {
     id: "openai-gpt4",
     providerType: "openai",
     apiKeyEnvVar: 'OPENAI_API_KEY',
-    baseUrl: "https://api.openai.com/v1/chat/completions",
+    baseUrl: APP_CONFIG.API.OPENAI,
     model: answers.model,
     headers: {},
     bodyTemplate: JSON.stringify({
@@ -4069,7 +4069,7 @@ async function setupGoogleProvider(): Promise<any> {
     id: "google-gemini",
     providerType: "google",
     apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+    baseUrl: APP_CONFIG.API.GOOGLE,
     model: answers.model,
     headers: {},
     bodyTemplate: JSON.stringify({

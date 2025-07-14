@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { APP_CONFIG } from '../config/constants';
 import { NotificationManager } from '../supervisor/NotificationManager';
 import {
   ToolsDatabaseManager,
@@ -505,7 +506,7 @@ export class QualityRunner {
 
   private async runESLintCheck(filePath: string): Promise<void> {
     try {
-      await execAsync(`npx eslint "${filePath}"`);
+      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE} "${filePath}"`);
       this.notificationManager.showQualitySuccess(filePath, 'ESLint');
     } catch (error: any) {
       // ESLint failed - extract error output
@@ -735,7 +736,7 @@ export class QualityRunner {
   ): Promise<QualityCheckResult | null> {
     try {
       // Run ESLint with detailed formatter
-      await execAsync(`npx eslint --format stylish "${filePath}"`);
+      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT} "${filePath}"`);
       return null; // No issues found
     } catch (error: any) {
       const output = error.stdout || error.stderr || error.message;
@@ -1519,7 +1520,7 @@ export class QualityRunner {
       }
       if (issue.includes('indent')) {
         fixes.push(
-          'Führe "npm run lint:fix" aus, um Einrückung automatisch zu korrigieren'
+          `Führe "${APP_CONFIG.TOOL_COMMANDS.NPM.LINT_FIX}" aus, um Einrückung automatisch zu korrigieren`
         );
       }
       if (issue.includes('quotes')) {
@@ -1535,7 +1536,7 @@ export class QualityRunner {
           'Ersetze console.log durch Logger oder entferne Debug-Ausgaben'
         );
       }
-      if (issue.includes('no-var')) {
+      if (issue.includes(APP_CONFIG.ESLINT_RULES.NO_VAR)) {
         fixes.push('Ersetze "var" durch "let" oder "const"');
       }
       if (issue.includes('prefer-const')) {
@@ -1562,7 +1563,7 @@ export class QualityRunner {
     const uniqueFixes = Array.from(new Set(fixes));
     if (uniqueFixes.length === 0) {
       uniqueFixes.push(
-        'Führe "npm run lint:fix" aus, um automatisch behebbare Probleme zu korrigieren'
+        `Führe "${APP_CONFIG.TOOL_COMMANDS.NPM.LINT_FIX}" aus, um automatisch behebbare Probleme zu korrigieren`
       );
     }
 
