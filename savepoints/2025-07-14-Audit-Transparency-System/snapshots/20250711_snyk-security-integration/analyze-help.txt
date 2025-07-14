@@ -1,0 +1,9 @@
+Usage: woaru analyze [options]
+
+Analyze current project and get recommendations
+
+Options:
+  -p, --path <path>  Project path (default:
+                     "/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)")
+  -j, --json         Output as JSON
+  -h, --help         display help for command

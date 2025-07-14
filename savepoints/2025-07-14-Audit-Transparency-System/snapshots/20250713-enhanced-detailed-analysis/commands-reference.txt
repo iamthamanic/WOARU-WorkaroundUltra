@@ -1,0 +1,84 @@
+📚 WOARU Command Reference
+══════════════════════════════════════════════════
+
+🔍 woaru analyze
+  Description: Comprehensive project analysis including security audit
+  Usage: woaru analyze [options]
+  Purpose: Performs a full analysis of your project including code quality, security vulnerabilities, production readiness, and tool recommendations. Perfect for understanding the overall health of your codebase.
+
+👁️ woaru watch
+  Description: Start WOARU supervisor to continuously monitor the project
+  Usage: woaru watch [options]
+  Purpose: Continuously monitors your project for changes and provides real-time recommendations. Automatically detects new issues as you code and suggests improvements.
+
+⚙️ woaru setup
+  Description: Automatically setup recommended tools
+  Usage: woaru setup [options]
+  Purpose: Automatically installs and configures development tools based on your project analysis. Saves time by setting up linters, formatters, git hooks, and other productivity tools.
+
+📊 woaru status
+  Description: Show WOARU supervisor status and project health
+  Usage: woaru status [options]
+  Purpose: Displays the current status of the supervisor and provides a quick overview of your project health, detected tools, and any issues that need attention.
+
+🔧 woaru helpers
+  Description: Show all detected/activated development tools and helpers
+  Usage: woaru helpers [options]
+  Purpose: Lists all development tools found in your project, both active and recommended. Helps you understand your current tooling setup and what might be missing.
+
+🔄 woaru review <subcommand>
+  Description: Code review and analysis tools
+  Usage: woaru review <git|local|path> [options]
+  Purpose: Focused analysis tools for code reviews. Choose from git diff analysis, uncommitted changes review, or specific file/directory analysis.
+  Subcommands:
+    • woaru review git
+      Description: Analyze changes since a specific branch (git diff)
+      Usage: woaru review git [--branch <name>]
+      Purpose: Analyzes changes between your current branch and a base branch (default: main). Perfect for code review preparation and CI/CD quality gates.
+    • woaru review local
+      Description: Analyze uncommitted changes in working directory
+      Usage: woaru review local
+      Purpose: Reviews your uncommitted changes before you commit them. Helps catch issues early and ensures code quality before pushing to remote.
+    • woaru review path
+      Description: Analyze specific files or directories
+      Usage: woaru review path <file_or_directory>
+      Purpose: Focused analysis of specific files or directories. Useful for deep-diving into particular components or modules of your codebase.
+
+🗄️ woaru update-db
+  Description: Update the tools database from remote source
+  Usage: woaru update-db
+  Purpose: Updates the internal database of development tools and their configurations. Ensures you have the latest tool recommendations and setup procedures.
+
+🛑 woaru stop
+  Description: Stop the WOARU supervisor
+  Usage: woaru stop [options]
+  Purpose: Stops any running supervisor process. Use this when you want to stop continuous monitoring or before starting a new supervisor session.
+
+📋 woaru recommendations
+  Description: Show current tool recommendations
+  Usage: woaru recommendations [options]
+  Purpose: Displays prioritized tool recommendations for your project. Shows what tools would improve your development workflow and code quality.
+
+📄 woaru logs
+  Description: Show supervisor logs
+  Usage: woaru logs [options]
+  Purpose: Shows logs from the supervisor process. Useful for debugging issues or understanding what the supervisor has been doing.
+
+🚫 woaru ignore
+  Description: Add a tool to the ignore list
+  Usage: woaru ignore <tool>
+  Purpose: Tells the supervisor to stop recommending a specific tool. Useful when you have good reasons not to use a particular tool.
+
+⏪ woaru rollback
+  Description: Rollback changes made by a specific tool
+  Usage: woaru rollback <tool> [options]
+  Purpose: Undoes changes made by the setup command for a specific tool. Provides a safety net when tool configurations cause issues.
+
+📚 woaru commands
+  Description: Show this detailed command reference
+  Usage: woaru commands
+  Purpose: Displays comprehensive documentation for all WOARU commands. Your go-to reference for understanding what each command does and when to use it.
+
+══════════════════════════════════════════════════
+💡 Tip: Use --help with any command for detailed options
+🔗 For more information: https://github.com/your-repo/woaru

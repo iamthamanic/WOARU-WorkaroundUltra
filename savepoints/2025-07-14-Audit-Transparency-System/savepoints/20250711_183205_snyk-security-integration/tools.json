@@ -1,0 +1,292 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-11T20:30:00Z",
+  "categories": {
+    "linting": {
+      "description": "Code quality and style checking tools",
+      "tools": {
+        "eslint": {
+          "name": "ESLint",
+          "languages": ["javascript", "typescript"],
+          "frameworks": ["react", "vue", "angular", "node"],
+          "popularity": 95,
+          "keywords": ["eslint", "@eslint/js", "eslint-config-standard"],
+          "installCommand": "npm install -D eslint",
+          "configFiles": [".eslintrc.js", ".eslintrc.json", "eslint.config.js"],
+          "description": "Pluggable JavaScript and TypeScript linter",
+          "homepage": "https://eslint.org",
+          "isRecommended": true
+        },
+        "ruff": {
+          "name": "Ruff",
+          "languages": ["python"],
+          "frameworks": ["django", "flask", "fastapi"],
+          "popularity": 87,
+          "keywords": ["ruff"],
+          "installCommand": "pip install ruff",
+          "configFiles": ["ruff.toml", "pyproject.toml"],
+          "description": "An extremely fast Python linter and code formatter",
+          "homepage": "https://docs.astral.sh/ruff/",
+          "isRecommended": true,
+          "isNewAndTrending": true
+        },
+        "black": {
+          "name": "Black",
+          "languages": ["python"],
+          "frameworks": ["django", "flask", "fastapi"],
+          "popularity": 78,
+          "keywords": ["black"],
+          "installCommand": "pip install black",
+          "configFiles": ["pyproject.toml"],
+          "description": "The uncompromising Python code formatter",
+          "homepage": "https://black.readthedocs.io/",
+          "isRecommended": false,
+          "successorOf": "autopep8"
+        }
+      }
+    },
+    "error-monitoring": {
+      "description": "Production error tracking and monitoring",
+      "tools": {
+        "sentry": {
+          "name": "Sentry",
+          "languages": ["javascript", "typescript", "python", "go", "rust", "java", "csharp", "php", "ruby"],
+          "frameworks": {
+            "react": "@sentry/react",
+            "nextjs": "@sentry/nextjs", 
+            "vue": "@sentry/vue",
+            "angular": "@sentry/angular",
+            "node": "@sentry/node",
+            "express": "@sentry/node",
+            "django": "sentry-sdk[django]",
+            "flask": "sentry-sdk[flask]",
+            "fastapi": "sentry-sdk[fastapi]"
+          },
+          "popularity": 92,
+          "keywords": ["@sentry/", "sentry-sdk"],
+          "installCommand": {
+            "react": "npm install @sentry/react",
+            "node": "npm install @sentry/node",
+            "python": "pip install sentry-sdk"
+          },
+          "configFiles": ["sentry.properties", ".sentryclirc"],
+          "description": "Real-time error tracking and performance monitoring",
+          "homepage": "https://sentry.io",
+          "isRecommended": true,
+          "priority": "high"
+        },
+        "rollbar": {
+          "name": "Rollbar",
+          "languages": ["javascript", "typescript", "python", "java", "php", "ruby"],
+          "frameworks": {
+            "react": "rollbar-react",
+            "node": "rollbar",
+            "django": "rollbar",
+            "flask": "rollbar"
+          },
+          "popularity": 71,
+          "keywords": ["rollbar"],
+          "installCommand": {
+            "javascript": "npm install rollbar",
+            "python": "pip install rollbar"
+          },
+          "description": "Real-time error tracking for production applications",
+          "homepage": "https://rollbar.com",
+          "isRecommended": false
+        },
+        "bugsnag": {
+          "name": "Bugsnag",
+          "languages": ["javascript", "typescript", "python", "java", "php", "ruby"],
+          "frameworks": {
+            "react": "@bugsnag/js",
+            "node": "@bugsnag/js",
+            "django": "bugsnag",
+            "flask": "bugsnag"
+          },
+          "popularity": 68,
+          "keywords": ["@bugsnag/", "bugsnag"],
+          "installCommand": {
+            "javascript": "npm install @bugsnag/js",
+            "python": "pip install bugsnag"
+          },
+          "description": "Stability monitoring for web and mobile applications",
+          "homepage": "https://www.bugsnag.com",
+          "isRecommended": false
+        }
+      }
+    },
+    "testing": {
+      "description": "Testing frameworks and utilities",
+      "tools": {
+        "jest": {
+          "name": "Jest",
+          "languages": ["javascript", "typescript"],
+          "frameworks": ["react", "node", "express"],
+          "popularity": 89,
+          "keywords": ["jest", "@types/jest"],
+          "installCommand": "npm install -D jest",
+          "configFiles": ["jest.config.js", "jest.config.json"],
+          "description": "Delightful JavaScript testing framework",
+          "homepage": "https://jestjs.io",
+          "isRecommended": true
+        },
+        "vitest": {
+          "name": "Vitest",
+          "languages": ["javascript", "typescript"],
+          "frameworks": ["vue", "vite"],
+          "popularity": 76,
+          "keywords": ["vitest"],
+          "installCommand": "npm install -D vitest",
+          "configFiles": ["vitest.config.js", "vitest.config.ts"],
+          "description": "Next generation testing framework powered by Vite",
+          "homepage": "https://vitest.dev",
+          "isRecommended": true,
+          "isNewAndTrending": true
+        },
+        "pytest": {
+          "name": "pytest",
+          "languages": ["python"],
+          "frameworks": ["django", "flask", "fastapi"],
+          "popularity": 91,
+          "keywords": ["pytest", "pytest-django", "pytest-flask"],
+          "installCommand": "pip install pytest",
+          "configFiles": ["pytest.ini", "pyproject.toml"],
+          "description": "Simple and powerful testing framework for Python",
+          "homepage": "https://pytest.org",
+          "isRecommended": true
+        }
+      }
+    },
+    "containerization": {
+      "description": "Docker and container-related tools",
+      "tools": {
+        "docker": {
+          "name": "Docker",
+          "languages": ["all"],
+          "frameworks": ["all"],
+          "popularity": 94,
+          "keywords": ["FROM", "WORKDIR", "COPY"],
+          "configFiles": ["Dockerfile", ".dockerignore", "docker-compose.yml"],
+          "description": "Containerization platform for applications",
+          "homepage": "https://www.docker.com",
+          "isRecommended": true,
+          "filePatterns": {
+            "dockerfile": ["Dockerfile", "Dockerfile.*"],
+            "dockerignore": [".dockerignore"],
+            "compose": ["docker-compose.yml", "docker-compose.yaml", "compose.yml"]
+          }
+        }
+      }
+    },
+    "security": {
+      "description": "Security and vulnerability scanning tools",
+      "tools": {
+        "helmet": {
+          "name": "Helmet.js",
+          "languages": ["javascript", "typescript"],
+          "frameworks": ["express", "node"],
+          "popularity": 82,
+          "keywords": ["helmet"],
+          "installCommand": "npm install helmet",
+          "description": "Secure Express.js apps with various HTTP headers",
+          "homepage": "https://helmetjs.github.io",
+          "isRecommended": true
+        },
+        "bandit": {
+          "name": "Bandit",
+          "languages": ["python"],
+          "frameworks": ["django", "flask", "fastapi"],
+          "popularity": 74,
+          "keywords": ["bandit"],
+          "installCommand": "pip install bandit",
+          "configFiles": [".bandit", "bandit.yaml"],
+          "description": "Security linter for Python code",
+          "homepage": "https://bandit.readthedocs.io/",
+          "isRecommended": true
+        }
+      }
+    },
+    "formatting": {
+      "description": "Code formatting and style tools",
+      "tools": {
+        "prettier": {
+          "name": "Prettier",
+          "languages": ["javascript", "typescript"],
+          "frameworks": ["react", "vue", "angular", "node"],
+          "popularity": 88,
+          "keywords": ["prettier"],
+          "installCommand": "npm install -D prettier",
+          "configFiles": [".prettierrc", ".prettierrc.json", "prettier.config.js"],
+          "description": "Opinionated code formatter",
+          "homepage": "https://prettier.io",
+          "isRecommended": true
+        },
+        "black": {
+          "name": "Black",
+          "languages": ["python"],
+          "frameworks": ["django", "flask", "fastapi"],
+          "popularity": 78,
+          "keywords": ["black"],
+          "installCommand": "pip install black",
+          "configFiles": ["pyproject.toml"],
+          "description": "The uncompromising Python code formatter",
+          "homepage": "https://black.readthedocs.io/",
+          "isRecommended": true
+        }
+      }
+    }
+  },
+  "frameworks": {
+    "react": {
+      "name": "React",
+      "language": "javascript",
+      "keywords": ["react", "react-dom"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "testing": ["jest"],
+        "formatting": ["prettier"],
+        "error-monitoring": ["sentry"]
+      }
+    },
+    "nextjs": {
+      "name": "Next.js",
+      "language": "javascript",
+      "keywords": ["next"],
+      "recommendedTools": {
+        "linting": ["eslint"],
+        "testing": ["jest"],
+        "formatting": ["prettier"],
+        "error-monitoring": ["sentry"]
+      }
+    },
+    "django": {
+      "name": "Django",
+      "language": "python",
+      "keywords": ["django"],
+      "recommendedTools": {
+        "linting": ["ruff"],
+        "testing": ["pytest"],
+        "formatting": ["black"],
+        "error-monitoring": ["sentry"],
+        "security": ["bandit"]
+      }
+    },
+    "flask": {
+      "name": "Flask",
+      "language": "python", 
+      "keywords": ["flask"],
+      "recommendedTools": {
+        "linting": ["ruff"],
+        "testing": ["pytest"],
+        "formatting": ["black"],
+        "error-monitoring": ["sentry"]
+      }
+    }
+  },
+  "meta": {
+    "sourceUrl": "https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/tools.json",
+    "updateFrequency": "weekly",
+    "maintainers": ["WOARU Team"],
+    "schemaVersion": "1.0"
+  }
+}

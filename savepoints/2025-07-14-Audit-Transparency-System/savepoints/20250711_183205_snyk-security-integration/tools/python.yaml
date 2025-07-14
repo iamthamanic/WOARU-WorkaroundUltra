@@ -1,0 +1,101 @@
+tools:
+  black:
+    category: formatter
+    languages: ['python']
+    priority: high
+    detectPatterns:
+      - type: code_smell
+        pattern: inconsistent_formatting
+        severity: medium
+        message: "Inconsistent Python formatting detected"
+      - type: missing_config
+        pattern: pyproject.toml
+        severity: low
+        message: "Black configuration could be added to pyproject.toml"
+    setupInstructions:
+      - packageManager: pip
+        command: pip install black && black --check .
+      - packageManager: poetry
+        command: poetry add --dev black && poetry run black --check .
+      - packageManager: pipenv
+        command: pipenv install --dev black && pipenv run black --check .
+
+  ruff:
+    category: linter
+    languages: ['python']
+    priority: high
+    detectPatterns:
+      - type: code_smell
+        pattern: print
+        severity: medium
+        message: "Print statements found in Python code"
+      - type: code_smell
+        pattern: unused_import
+        severity: low
+        message: "Unused imports detected"
+      - type: missing_config
+        pattern: .ruff.toml
+        severity: low
+    setupInstructions:
+      - packageManager: pip
+        command: pip install ruff && ruff check .
+      - packageManager: poetry
+        command: poetry add --dev ruff && poetry run ruff check .
+      - packageManager: pipenv
+        command: pipenv install --dev ruff && pipenv run ruff check .
+
+  mypy:
+    category: linter
+    languages: ['python']
+    priority: medium
+    detectPatterns:
+      - type: code_smell
+        pattern: missing_type_hints
+        severity: medium
+        message: "Functions missing type hints"
+      - type: missing_config
+        pattern: mypy.ini
+        severity: low
+    setupInstructions:
+      - packageManager: pip
+        command: pip install mypy && mypy --install-types .
+      - packageManager: poetry
+        command: poetry add --dev mypy && poetry run mypy --install-types .
+
+  pytest:
+    category: test
+    languages: ['python']
+    priority: high
+    detectPatterns:
+      - type: file_pattern
+        pattern: "**/test_*.py"
+        severity: medium
+        message: "Test files found but pytest not configured"
+      - type: file_pattern
+        pattern: "**/*_test.py"
+        severity: medium
+      - type: missing_dependency
+        pattern: pytest
+        severity: medium
+    setupInstructions:
+      - packageManager: pip
+        command: pip install pytest pytest-cov
+      - packageManager: poetry
+        command: poetry add --dev pytest pytest-cov
+      - packageManager: pipenv
+        command: pipenv install --dev pytest pytest-cov
+
+  pre-commit:
+    category: git-hook
+    languages: ['python']
+    priority: medium
+    detectPatterns:
+      - type: missing_config
+        pattern: .pre-commit-config.yaml
+        severity: medium
+        message: "Pre-commit hooks not configured"
+    setupInstructions:
+      - packageManager: pip
+        command: pip install pre-commit && pre-commit install
+      - packageManager: poetry
+        command: poetry add --dev pre-commit && poetry run pre-commit install

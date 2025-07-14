@@ -1,0 +1,11 @@
+Usage: woaru review path [options] <file_or_directory>
+
+Analyze specific files or directories
+
+Options:
+  -p, --path <path>    Project path (default:
+                       "/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)")
+  -o, --output <file>  Output file for review report (default:
+                       "woaru-review.md")
+  -j, --json           Output as JSON instead of markdown
+  -h, --help           display help for command
