@@ -7,6 +7,7 @@ import inquirer from 'inquirer';
 import { WAUEngine } from './core/WAUEngine';
 import { WOARUSupervisor } from './supervisor/WAUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
+import { APP_CONFIG } from './config/constants';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
@@ -17,9 +18,9 @@ const program = new Command();
 const wauEngine = new WAUEngine();
 
 program
-  .name('woaru')
-  .description('WorkaroundUltra - Project Setup Autopilot')
-  .version('3.0.0');
+  .name(APP_CONFIG.NAME)
+  .description(APP_CONFIG.DESCRIPTION)
+  .version(APP_CONFIG.VERSION);
 
 program
   .command('quick-analyze')
@@ -451,7 +452,7 @@ program
       // Check if running in detached mode (but NOT for Claude Code environment)
       if (options.detached) {
         // Write PID file for detached mode
-        const pidFile = path.join(projectPath, '.woaru', 'supervisor.pid');
+        const pidFile = path.join(projectPath, APP_CONFIG.DIRECTORIES.BASE, APP_CONFIG.FILES.PID);
         await fs.ensureDir(path.dirname(pidFile));
         await fs.writeFile(pidFile, process.pid.toString());
 
@@ -619,7 +620,7 @@ program
 
       if (!supervisor) {
         // Check if there's a state file indicating a previous session
-        const stateFile = path.join(projectPath, '.woaru', 'state.json');
+        const stateFile = path.join(projectPath, APP_CONFIG.DIRECTORIES.BASE, APP_CONFIG.FILES.STATE);
         if (await fs.pathExists(stateFile)) {
           const state = await fs.readJson(stateFile);
           console.log(
@@ -700,7 +701,7 @@ program
       
       const { spawn } = await import('child_process');
       
-      const updateProcess = spawn('npm', ['install', '-g', 'woaru@latest'], {
+      const updateProcess = spawn('npm', ['install', '-g', `${APP_CONFIG.NAME}@latest`], {
         stdio: 'inherit',
         shell: true
       });
@@ -3520,7 +3521,7 @@ async function setupAnthropicProvider(): Promise<any> {
     {
       type: 'input',
       name: 'apiKey',
-      message: 'Environment variable name for API key:',
+      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. ANTHROPIC_API_KEY)',
       default: 'ANTHROPIC_API_KEY',
       validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
     },
@@ -3544,6 +3545,10 @@ async function setupAnthropicProvider(): Promise<any> {
       default: true
     }
   ]);
+
+  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
+  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
+  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
 
   return {
     id: "anthropic-claude",
@@ -3580,7 +3585,7 @@ async function setupOpenAIProvider(): Promise<any> {
     {
       type: 'input',
       name: 'apiKey',
-      message: 'Environment variable name for API key:',
+      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. OPENAI_API_KEY)',
       default: 'OPENAI_API_KEY',
       validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
     },
@@ -3604,6 +3609,10 @@ async function setupOpenAIProvider(): Promise<any> {
       default: true
     }
   ]);
+
+  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
+  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
+  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
 
   return {
     id: "openai-gpt4",
@@ -3642,7 +3651,7 @@ async function setupGoogleProvider(): Promise<any> {
     {
       type: 'input',
       name: 'apiKey',
-      message: 'Environment variable name for API key:',
+      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. GOOGLE_AI_API_KEY)',
       default: 'GOOGLE_AI_API_KEY',
       validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
     },
@@ -3664,6 +3673,10 @@ async function setupGoogleProvider(): Promise<any> {
       default: true
     }
   ]);
+
+  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
+  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
+  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
 
   return {
     id: "google-gemini",
@@ -3702,7 +3715,7 @@ async function setupAzureProvider(): Promise<any> {
     {
       type: 'input',
       name: 'apiKey',
-      message: 'Environment variable name for API key:',
+      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. AZURE_OPENAI_API_KEY)',
       default: 'AZURE_OPENAI_API_KEY',
       validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
     },
@@ -3739,6 +3752,10 @@ async function setupAzureProvider(): Promise<any> {
       default: true
     }
   ]);
+
+  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
+  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
+  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
 
   const baseUrl = `${answers.endpoint}/openai/deployments/${answers.deploymentName}/chat/completions?api-version=${answers.apiVersion}`;
 

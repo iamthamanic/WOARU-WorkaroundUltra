@@ -1,11 +1,12 @@
 import * as fs from 'fs-extra';
 import { CodeSmellFinding, CodeSmellType, ComplexityMetric, CodeMetrics } from '../types/code-smell';
+import { APP_CONFIG } from '../config/constants';
 
 export class CodeSmellAnalyzer {
-  private readonly complexityThreshold = 10;
-  private readonly functionLengthThreshold = 50;
-  private readonly parameterCountThreshold = 5;
-  private readonly nestingDepthThreshold = 4;
+  private readonly complexityThreshold = APP_CONFIG.QUALITY.COMPLEXITY_THRESHOLD;
+  private readonly functionLengthThreshold = APP_CONFIG.QUALITY.FUNCTION_LENGTH_THRESHOLD;
+  private readonly parameterCountThreshold = APP_CONFIG.QUALITY.PARAMETER_COUNT_THRESHOLD;
+  private readonly nestingDepthThreshold = APP_CONFIG.QUALITY.NESTING_DEPTH_THRESHOLD;
 
   async analyzeFile(filePath: string, language: string): Promise<CodeSmellFinding[]> {
     try {

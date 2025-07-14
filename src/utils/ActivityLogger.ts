@@ -8,6 +8,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { FilenameHelper } from './filenameHelper';
+import { APP_CONFIG } from '../config/constants';
 
 /**
  * Structure for individual activity log entries
@@ -51,8 +52,8 @@ export class ActivityLogger {
   private constructor() {
     // Create logs directory in user's home
     const homeDir = require('os').homedir();
-    const logsDir = path.join(homeDir, '.woaru', 'logs');
-    this.logFile = path.join(logsDir, 'woaru_actions.log');
+    const logsDir = path.join(homeDir, APP_CONFIG.DIRECTORIES.HOME_LOGS);
+    this.logFile = path.join(logsDir, APP_CONFIG.FILES.ACTIONS_LOG);
     
     // Ensure logs directory exists
     fs.ensureDirSync(logsDir);

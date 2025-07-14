@@ -45,10 +45,16 @@ export class UsageTracker {
     try {
       if (await fs.pathExists(this.usageFile)) {
         const data = await fs.readJson(this.usageFile);
-        this.stats = data;
+        // Validate that the data is a valid object
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          this.stats = data;
+        } else {
+          console.warn('⚠️ Invalid usage statistics format, initializing with empty stats');
+          this.stats = {};
+        }
       }
     } catch (error) {
-      console.warn('⚠️ Failed to load usage statistics:', error);
+      console.warn('⚠️ Failed to load usage statistics (file may be corrupted):', error instanceof Error ? error.message : error);
       this.stats = {};
     }
   }

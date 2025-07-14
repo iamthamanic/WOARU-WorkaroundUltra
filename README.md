@@ -3,10 +3,23 @@
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.2.0 - Unified Versioning & Update Command**
+## 🆕 **Latest Release: v3.2.0 - Production-Ready Bug Fixes & Architecture Improvements**
 **Release Date:** July 14, 2025
 
-### 🔧 **Critical Fix: Version Unification**
+### 🐛 **Critical Bug Fixes:**
+- **🔧 Improved Setup Dialog** - Fixed confusing API key prompts in `woaru setup llm`
+  - Clear instructions: "Gib hier nur den Namen der Variable ein"
+  - Helpful examples and shell configuration guidance
+  - Prevents users from accidentally pasting actual API keys
+- **🛡️ Robust Error Handling** - Fixed crashes when usage.json is empty or corrupted
+  - Graceful fallback to empty statistics
+  - Better error messages for troubleshooting
+- **🏗️ Architecture Refactoring** - Eliminated hardcoded values throughout codebase
+  - Centralized configuration in `src/config/constants.ts`
+  - Dynamic version loading from package.json
+  - Consistent path and threshold management
+
+### 🔧 **Version Unification (Previous Fix):**
 - **📦 Unified Version System** - Resolved version inconsistencies across npm, git tags, and package.json
 - **🔄 New Update Command** - `woaru update` now updates WOARU to the latest npm version
 - **🏷️ Clean Versioning** - Single source of truth: v3.2.0 replaces all previous version confusion
@@ -17,6 +30,11 @@ The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically conf
 # Update WOARU to the latest version:
 woaru update
 ```
+
+### 💡 **Improved User Experience:**
+- **Clear Setup Guidance** - Step-by-step instructions for API key configuration
+- **Robust Error Recovery** - No more crashes from corrupted configuration files
+- **Consistent Behavior** - All constants and paths managed centrally
 
 ## 🔍 **Previous Release: v1.3.0 - Comprehensive Audit & Transparency System**
 **Release Date:** July 14, 2025
