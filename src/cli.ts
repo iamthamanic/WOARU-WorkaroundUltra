@@ -1171,6 +1171,69 @@ program
     }
   });
 
+// Documentation command with sub-commands
+const docuCommand = program
+  .command('docu')
+  .description('AI-powered code documentation generator');
+
+// Documentation nopro sub-command (human-friendly explanations)
+docuCommand
+  .command('nopro')
+  .description('Generate human-friendly "Explain-for-humans" comments for non-technical audiences')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('--local', 'Document only uncommitted changes')
+  .option('--git [branch]', 'Document only changes compared to branch', 'main')
+  .option('--path-only <file_or_directory>', 'Document only specific path')
+  .option('--force', 'Skip interactive confirmation')
+  .option('--preview', 'Preview changes without writing to files')
+  .action(async options => {
+    try {
+      const projectPath = path.resolve(options.path);
+      console.log(chalk.blue('📝 Generating human-friendly documentation...'));
+      
+      await runDocumentationGeneration(projectPath, options, {
+        type: 'nopro',
+        description: 'Human-friendly code explanations'
+      });
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Documentation generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Documentation pro sub-command (technical TSDoc/JSDoc)
+docuCommand
+  .command('pro')
+  .description('Generate technical TSDoc/JSDoc documentation for developers')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('--local', 'Document only uncommitted changes')
+  .option('--git [branch]', 'Document only changes compared to branch', 'main')
+  .option('--path-only <file_or_directory>', 'Document only specific path')
+  .option('--force', 'Skip interactive confirmation')
+  .option('--preview', 'Preview changes without writing to files')
+  .action(async options => {
+    try {
+      const projectPath = path.resolve(options.path);
+      console.log(chalk.blue('📚 Generating technical documentation...'));
+      
+      await runDocumentationGeneration(projectPath, options, {
+        type: 'pro',
+        description: 'Technical TSDoc/JSDoc documentation'
+      });
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Documentation generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
 program
   .command('ignore')
   .description('Add a tool to the ignore list')
@@ -1198,6 +1261,226 @@ program
       process.exit(1);
     }
   });
+
+// Helper function for Documentation Generation
+async function runDocumentationGeneration(
+  projectPath: string,
+  options: any,
+  context: { type: 'nopro' | 'pro'; description: string }
+) {
+  try {
+    // Determine file list based on options
+    let fileList: string[] = [];
+    
+    if (options.local) {
+      // Get uncommitted changes
+      fileList = await getUncommittedFiles(projectPath);
+    } else if (options.git) {
+      // Get git diff files
+      const branch = typeof options.git === 'string' ? options.git : 'main';
+      fileList = await getGitDiffFiles(projectPath, branch);
+    } else if (options.pathOnly) {
+      // Get files from specific path
+      fileList = await getPathFiles(projectPath, options.pathOnly);
+    } else {
+      // Get all relevant code files
+      fileList = await getAllCodeFiles(projectPath);
+    }
+
+    if (fileList.length === 0) {
+      console.log(chalk.green('✅ No files found for documentation.'));
+      return;
+    }
+
+    console.log(chalk.cyan(`📋 Found ${fileList.length} files for documentation:`));
+    fileList.forEach(file => {
+      console.log(chalk.gray(`   • ${path.relative(projectPath, file)}`));
+    });
+
+    // Load AI configuration
+    const { ConfigLoader } = await import('./ai/ConfigLoader');
+    const configLoader = ConfigLoader.getInstance();
+    const aiConfig = await configLoader.loadConfig(projectPath);
+    
+    if (!aiConfig) {
+      console.log(chalk.red('❌ No AI configuration found.'));
+      console.log(chalk.yellow('💡 Create woaru.config.js to enable AI features.'));
+      console.log(chalk.gray('📄 See woaru.config.example.js for template.'));
+      process.exit(1);
+    }
+
+    const enabledProviders = aiConfig.providers.filter(p => p.enabled);
+    if (enabledProviders.length === 0) {
+      console.log(chalk.red('❌ No LLM providers enabled.'));
+      console.log(chalk.yellow('💡 Enable providers in woaru.config.js.'));
+      process.exit(1);
+    }
+
+    // Load appropriate prompt template
+    const promptName = context.type === 'nopro' ? 'docu_nopro' : 'docu_pro';
+    const { PromptManager } = await import('./ai/PromptManager');
+    const promptManager = PromptManager.getInstance();
+    
+    const promptTemplates: Record<string, any> = {};
+    for (const provider of enabledProviders) {
+      try {
+        const promptTemplate = await promptManager.loadPrompt(provider.id, promptName);
+        promptTemplates[provider.id] = promptTemplate;
+        console.log(chalk.gray(`   ✓ Loaded ${promptName} template for ${provider.id}`));
+      } catch (error) {
+        console.warn(chalk.yellow(`⚠️ Could not load ${promptName} template for ${provider.id}`));
+      }
+    }
+
+    // Show transparent output
+    console.log(chalk.cyan(`🧠 Generating ${context.description} using ${enabledProviders.length} LLM provider(s)`));
+
+    // Create documentation agent
+    const { DocumentationAgent } = await import('./ai/DocumentationAgent');
+    const docAgent = new DocumentationAgent(aiConfig, promptTemplates);
+
+    // Generate documentation
+    const results = await docAgent.generateDocumentation(fileList, projectPath, context.type);
+
+    // Preview or apply changes
+    if (options.preview) {
+      console.log(chalk.cyan('\n📋 Preview of documentation changes:'));
+      results.forEach(result => {
+        console.log(chalk.blue(`\n📄 ${result.filePath}:`));
+        console.log(chalk.gray(result.generatedDoc));
+      });
+    } else {
+      // Interactive confirmation unless --force is used
+      if (!options.force) {
+        const { confirm } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: `Apply documentation changes to ${results.length} files?`,
+            default: false
+          }
+        ]);
+        
+        if (!confirm) {
+          console.log(chalk.yellow('Documentation generation cancelled.'));
+          return;
+        }
+      }
+
+      // Apply changes
+      await docAgent.applyDocumentation(results);
+      console.log(chalk.green(`✅ Documentation generated for ${results.length} files`));
+    }
+
+  } catch (error) {
+    console.error(chalk.red(`❌ Documentation generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    throw error;
+  }
+}
+
+// Helper functions for file discovery
+async function getUncommittedFiles(projectPath: string): Promise<string[]> {
+  const { spawn } = require('child_process');
+  
+  return new Promise((resolve, reject) => {
+    const gitProcess = spawn('git', ['status', '--porcelain'], { cwd: projectPath });
+    let output = '';
+    
+    gitProcess.stdout.on('data', (data: Buffer) => {
+      output += data.toString();
+    });
+    
+    gitProcess.on('close', (code: number) => {
+      if (code !== 0) {
+        reject(new Error('Git status failed'));
+        return;
+      }
+      
+      const files = output
+        .trim()
+        .split('\n')
+        .filter(line => line.length > 0)
+        .map(line => path.join(projectPath, line.substring(3)))
+        .filter(file => fs.existsSync(file));
+      
+      resolve(files);
+    });
+  });
+}
+
+async function getGitDiffFiles(projectPath: string, branch: string): Promise<string[]> {
+  const { spawn } = require('child_process');
+  
+  return new Promise((resolve, reject) => {
+    const gitProcess = spawn('git', ['diff', '--name-only', `${branch}...HEAD`], { cwd: projectPath });
+    let output = '';
+    
+    gitProcess.stdout.on('data', (data: Buffer) => {
+      output += data.toString();
+    });
+    
+    gitProcess.on('close', (code: number) => {
+      if (code !== 0) {
+        reject(new Error(`Git diff failed against ${branch}`));
+        return;
+      }
+      
+      const files = output
+        .trim()
+        .split('\n')
+        .filter(line => line.length > 0)
+        .map(line => path.join(projectPath, line));
+      
+      resolve(files);
+    });
+  });
+}
+
+async function getPathFiles(projectPath: string, targetPath: string): Promise<string[]> {
+  const { glob } = await import('glob');
+  const absoluteTargetPath = path.resolve(projectPath, targetPath);
+  
+  if (!(await fs.pathExists(absoluteTargetPath))) {
+    return [];
+  }
+  
+  const stat = await fs.stat(absoluteTargetPath);
+  
+  if (stat.isFile()) {
+    return [absoluteTargetPath];
+  } else if (stat.isDirectory()) {
+    const globPattern = path.join(absoluteTargetPath, '**/*');
+    const files = await glob(globPattern, {
+      ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**']
+    });
+    
+    return files.filter(file => {
+      try {
+        return fs.statSync(file).isFile();
+      } catch {
+        return false;
+      }
+    });
+  }
+  
+  return [];
+}
+
+async function getAllCodeFiles(projectPath: string): Promise<string[]> {
+  const { glob } = await import('glob');
+  const codeExtensions = ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/*.py', '**/*.java', '**/*.cpp', '**/*.c', '**/*.cs', '**/*.go', '**/*.rs', '**/*.php', '**/*.rb'];
+  
+  const allFiles: string[] = [];
+  
+  for (const pattern of codeExtensions) {
+    const files = await glob(path.join(projectPath, pattern), {
+      ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/.next/**', '**/coverage/**']
+    });
+    allFiles.push(...files);
+  }
+  
+  return [...new Set(allFiles)]; // Remove duplicates
+}
 
 // Helper function for AI Review with comprehensive reporting
 async function runAIReviewAnalysis(

@@ -1,0 +1,15 @@
+Usage: woaru docu nopro [options]
+
+Generate human-friendly "Explain-for-humans" comments for non-technical
+audiences
+
+Options:
+  -p, --path <path>                Project path (default:
+                                   "/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)")
+  --local                          Document only uncommitted changes
+  --git [branch]                   Document only changes compared to branch
+                                   (default: "main")
+  --path-only <file_or_directory>  Document only specific path
+  --force                          Skip interactive confirmation
+  --preview                        Preview changes without writing to files
+  -h, --help                       display help for command

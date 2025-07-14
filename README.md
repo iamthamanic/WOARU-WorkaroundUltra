@@ -1,24 +1,82 @@
-# WOARU 🚀 v3.5.0
+# WOARU 🚀 v3.6.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.5.0 - MAJOR: Dynamic & Customizable AI Prompt Templates System**
+## 🆕 **Latest Release: v3.6.0 - MAJOR: AI-Powered Code Documentation System**
 **Release Date:** July 14, 2025
 
-### 🎯 **REVOLUTIONARY: User-Controlled AI Analysis with Dynamic Prompts**
-**Problem Solved:** Fixed AI analysis prompts meant one-size-fits-all reviews. Users couldn't customize analysis focus for security, performance, refactoring, or testing needs.
+### 🎯 **REVOLUTIONARY: AI-Powered Code Documentation System**
+**Problem Solved:** Manual code documentation is time-consuming and often inconsistent. Teams struggle with maintaining documentation for non-technical stakeholders vs. technical developers.
 
 **Game-Changing Solution:**
-- **🎨 5 Specialized Prompt Templates** - Choose your analysis focus:
-  - `default_review` - Comprehensive code quality analysis
-  - `security_audit` - Deep security vulnerability scanning  
-  - `refactoring_suggestions` - Architecture and code improvement recommendations
-  - `performance_optimization` - Performance bottleneck identification
-  - `testing_strategy` - Test coverage and quality assessment
-- **📝 YAML-Based Templates** - Human-readable, easily customizable prompt configuration
-- **🔄 Dynamic Template Loading** - Switch analysis modes with simple `--prompt` flag
+- **📝 Dual Documentation Modes**:
+  - `woaru docu nopro` - Human-friendly "Explain-for-humans" comments for managers, designers, and business stakeholders
+  - `woaru docu pro` - Technical TSDoc/JSDoc documentation for developers with parameters, return values, and examples
+- **🎯 Smart Review Mode Integration**:
+  - `--local` - Document only uncommitted changes
+  - `--git [branch]` - Document only changes compared to branch
+  - `--path-only <path>` - Document specific files or directories
+- **🔒 Safe File Modification**:
+  - `--preview` - Preview changes without writing to files
+  - `--force` - Skip interactive confirmation
+  - Interactive confirmation for all file modifications
+- **🧠 AI-Powered Analysis**:
+  - Multi-language support (JavaScript, TypeScript, Python, Java, C++, etc.)
+  - Pattern-based function/class detection
+  - Context-aware documentation generation
+  - Existing documentation detection and smart updates
 - **🎯 Provider-Specific Customization** - Optimize prompts for each LLM's strengths
+
+### 💡 **Real-World Examples**
+
+**Human-Friendly Documentation (`nopro`):**
+```javascript
+// Explain-for-humans: This function calculates the total cost including tax for customer purchases.
+function calculateTotal(items, taxRate) {
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const tax = subtotal * taxRate;
+  return subtotal + tax;
+}
+```
+
+**Technical Documentation (`pro`):**
+```javascript
+/**
+ * Calculates the total cost including tax for a collection of items
+ * 
+ * @param {Array<Object>} items - Array of items with price property
+ * @param {number} taxRate - Tax rate as decimal (e.g., 0.08 for 8%)
+ * @returns {number} Total cost including tax
+ * @example
+ * // Calculate total for $100 worth of items with 8% tax
+ * const total = calculateTotal([{price: 100}], 0.08); // returns 108
+ */
+function calculateTotal(items, taxRate) {
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const tax = subtotal * taxRate;
+  return subtotal + tax;
+}
+```
+
+### 🎯 **Usage Examples**
+```bash
+# Generate human-friendly documentation for uncommitted changes
+woaru docu nopro --local
+
+# Generate technical documentation for all files in src/
+woaru docu pro --path-only src/
+
+# Preview documentation changes before applying
+woaru docu nopro --git main --preview
+
+# Force documentation without interactive confirmation
+woaru docu pro --local --force
+```
+
+---
+
+## 📚 **Previous Release: v3.5.0 - Dynamic & Customizable AI Prompt Templates System**
 
 ### 🏗️ **MAJOR: Complete Prompt Management Architecture**
 - **📚 Template Library** - Professional prompt templates in `templates/prompts/`
@@ -406,6 +464,7 @@ woaru setup          # Auto-setup recommended tools
 woaru helpers        # Show active vs missing tools (★ most useful)
 woaru watch          # Start live quality monitoring with security (★ supervisor mode)
 woaru review         # Code review: analyze only changed files with security + SOLID (★ NEW SUB-COMMANDS!)
+woaru docu           # AI-powered code documentation generator (★ NEW v3.6.0!)
 woaru commands       # Show detailed command reference (★ NEW!)
 ```
 

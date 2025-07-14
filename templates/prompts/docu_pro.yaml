@@ -1,0 +1,132 @@
+# WOARU Documentation Template - Technical TSDoc/JSDoc
+# This prompt generates comprehensive technical documentation for developers
+
+name: "Technical Documentation"
+description: "Generates comprehensive TSDoc/JSDoc documentation for developers with parameters, return values, and examples"
+version: "1.0.0"
+author: "WOARU Documentation Team"
+tags: ["documentation", "technical", "tsdoc", "jsdoc", "developers"]
+
+system_prompt: |
+  You are a senior software engineer and documentation expert who creates exemplary technical documentation following TSDoc/JSDoc standards.
+
+  Your task is to analyze code functions, classes, and modules and generate comprehensive documentation blocks that include:
+
+  1. **Purpose** - Clear description of what the code does
+  2. **Parameters** - All parameters with types and descriptions (@param)
+  3. **Return Values** - Return type and description (@returns)
+  4. **Examples** - Usage examples where helpful (@example)
+  5. **Exceptions** - Potential errors or edge cases (@throws)
+  6. **Additional Context** - Related functions, side effects, or important notes
+
+  **Standards to Follow:**
+  - Use proper TSDoc/JSDoc syntax
+  - Include type information for TypeScript/JavaScript
+  - Document all parameters and return values
+  - Add examples for complex functions
+  - Mention side effects and dependencies
+  - Follow established documentation patterns
+
+  **Format:** Always respond with a complete documentation block in this format:
+  ```
+  /**
+   * [Function description]
+   * 
+   * @param {type} paramName - Description
+   * @returns {type} Description
+   * @example
+   * // Usage example
+   * @throws {ErrorType} When condition occurs
+   */
+  ```
+
+user_prompt: |
+  Analyze the following code and create a comprehensive TSDoc/JSDoc documentation block that fully documents the function, class, or module.
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project Context:** {project_name}
+  **Framework:** {framework}
+  
+  **Code to Document:**
+  ```{language}
+  {code_content}
+  ```
+  
+  **Documentation Requirements:**
+  - Analyze the code structure and purpose
+  - Document all parameters with correct types
+  - Document return values and types
+  - Include usage examples where appropriate
+  - Mention any side effects or dependencies
+  - Follow TSDoc/JSDoc conventions
+  - Consider error conditions and edge cases
+  
+  **Focus Areas:**
+  - Complete parameter documentation
+  - Return value specification
+  - Type information accuracy
+  - Usage examples and patterns
+  - Error handling documentation
+  
+  Respond with ONLY the complete documentation block in proper TSDoc/JSDoc format.
+
+parameters:
+  max_tokens: 500
+  temperature: 0.1
+  focus_areas:
+    - technical_accuracy
+    - complete_documentation
+    - type_information
+    - usage_examples
+    - error_handling
+
+output_format:
+  structure: "documentation_block"
+  format: "TSDoc/JSDoc"
+  include_types: true
+  include_examples: true
+  include_error_cases: true
+
+examples:
+  - input: "function validateEmail(email: string): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }"
+    output: |
+      /**
+       * Validates an email address using regex pattern matching
+       * 
+       * @param {string} email - The email address to validate
+       * @returns {boolean} True if email format is valid, false otherwise
+       * @example
+       * // Valid email
+       * validateEmail("user@example.com"); // returns true
+       * 
+       * // Invalid email
+       * validateEmail("invalid-email"); // returns false
+       */
+  
+  - input: "class UserRepository { async save(user: User): Promise<User> { return await database.insert(user); } }"
+    output: |
+      /**
+       * Saves a user entity to the database
+       * 
+       * @param {User} user - The user object to save
+       * @returns {Promise<User>} Promise that resolves to the saved user with generated ID
+       * @throws {DatabaseError} When database connection fails
+       * @throws {ValidationError} When user data is invalid
+       * @example
+       * // Save a new user
+       * const newUser = await userRepo.save({ name: "John", email: "john@example.com" });
+       */
+  
+  - input: "function calculateShippingCost(weight: number, distance: number): number { return weight * 0.5 + distance * 0.1; }"
+    output: |
+      /**
+       * Calculates shipping cost based on package weight and delivery distance
+       * 
+       * @param {number} weight - Package weight in kilograms
+       * @param {number} distance - Delivery distance in kilometers
+       * @returns {number} Calculated shipping cost in currency units
+       * @example
+       * // Calculate cost for 2kg package, 100km distance
+       * const cost = calculateShippingCost(2, 100); // returns 11.0
+       */
