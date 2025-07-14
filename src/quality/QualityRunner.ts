@@ -17,6 +17,9 @@ import {
 } from '../types/security';
 import { SOLIDChecker } from '../solid/SOLIDChecker';
 import { SOLIDCheckResult, SOLIDViolation } from '../solid/types/solid-types';
+import { CodeSmellAnalyzer } from '../analyzer/CodeSmellAnalyzer';
+import { CodeSmellFinding } from '../types/code-smell';
+import { CodeIssue } from '../supervisor/types';
 
 const execAsync = promisify(exec);
 
@@ -29,6 +32,7 @@ export interface QualityCheckResult {
   fixes?: string[]; // Suggested fixes for the issues
   explanation?: string; // Human-readable explanation of the problems
   solidResult?: SOLIDCheckResult; // SOLID analysis results
+  codeSmellFindings?: CodeSmellFinding[]; // Internal code smell analysis
 }
 
 export interface SnykVulnerability {
@@ -80,12 +84,14 @@ export class QualityRunner {
   private databaseManager: ToolsDatabaseManager;
   private corePlugins: Map<string, any>;
   private solidChecker: SOLIDChecker;
+  private codeSmellAnalyzer: CodeSmellAnalyzer;
 
   constructor(notificationManager: NotificationManager) {
     this.notificationManager = notificationManager;
     this.databaseManager = new ToolsDatabaseManager();
     this.corePlugins = new Map();
     this.solidChecker = new SOLIDChecker();
+    this.codeSmellAnalyzer = new CodeSmellAnalyzer();
 
     // Initialize core plugins
     this.initializeCorePlugins();
@@ -108,6 +114,9 @@ export class QualityRunner {
     const relativePath = path.relative(process.cwd(), filePath);
 
     try {
+      // Phase 0: Always run internal code smell analysis first (no external dependencies)
+      await this.runInternalCodeSmellAnalysis(relativePath, ext);
+
       // Phase 1: Try core plugins first (secure, established tools)
       const coreHandled = await this.runCorePluginCheck(relativePath, ext);
 
@@ -390,18 +399,53 @@ export class QualityRunner {
       try {
         // TypeScript/JavaScript files
         if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
+          const language = ext.startsWith('.ts') ? 'typescript' : 'javascript';
+          
+          // Always run internal code smell analysis first
+          const codeSmellFindings = await this.codeSmellAnalyzer.analyzeFile(
+            filePath,
+            language
+          );
+
+          // Try ESLint check
           const eslintResult = await this.runESLintCheckForReview(relativePath);
+          
           if (eslintResult) {
-            // Add SOLID analysis to ESLint results
-            const language = ext.startsWith('.ts')
-              ? 'typescript'
-              : 'javascript';
+            // Add SOLID analysis and code smell findings to ESLint results
             const solidResult = await this.runSOLIDCheckForReview(
               filePath,
               language
             );
             eslintResult.solidResult = solidResult;
+            eslintResult.codeSmellFindings = codeSmellFindings;
             results.push(eslintResult);
+          } else if (codeSmellFindings.length > 0) {
+            // No ESLint but we have code smell findings - create a result
+            const issues = codeSmellFindings.map(finding => 
+              `Line ${finding.line}:${finding.column} - ${finding.message}`
+            );
+            const fixes = codeSmellFindings
+              .filter(finding => finding.suggestion)
+              .map(finding => finding.suggestion!);
+            const criticalFindings = codeSmellFindings.filter(f => f.severity === 'error');
+            const severity = criticalFindings.length > 0 ? 'error' as const : 'warning' as const;
+
+            // Add SOLID analysis
+            const solidResult = await this.runSOLIDCheckForReview(
+              filePath,
+              language
+            );
+
+            results.push({
+              filePath: relativePath,
+              tool: 'WOARU Code Smell Analyzer',
+              severity,
+              issues,
+              fixes: fixes.length > 0 ? fixes : undefined,
+              explanation: `WOARU internal analysis found ${codeSmellFindings.length} code quality issues`,
+              codeSmellFindings,
+              solidResult
+            });
           }
         }
 
@@ -1581,5 +1625,99 @@ export class QualityRunner {
    */
   supportsSOLIDAnalysis(language: string): boolean {
     return this.solidChecker.supportsLanguage(language);
+  }
+
+  /**
+   * Phase 0: Run internal code smell analysis (no external dependencies)
+   */
+  private async runInternalCodeSmellAnalysis(
+    filePath: string,
+    fileExtension: string
+  ): Promise<void> {
+    try {
+      // Only analyze JavaScript/TypeScript files for now
+      const supportedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+      if (!supportedExtensions.includes(fileExtension)) {
+        return;
+      }
+
+      const language = this.getLanguageFromExtension(fileExtension);
+      const codeSmellFindings = await this.codeSmellAnalyzer.analyzeFile(
+        filePath,
+        language
+      );
+
+      if (codeSmellFindings.length > 0) {
+        // Convert code smell findings to quality check results
+        const issues = codeSmellFindings.map(finding => 
+          `Line ${finding.line}:${finding.column} - ${finding.message}`
+        );
+
+        const fixes = codeSmellFindings
+          .filter(finding => finding.suggestion)
+          .map(finding => finding.suggestion!);
+
+        const criticalFindings = codeSmellFindings.filter(f => f.severity === 'error');
+        const severity = criticalFindings.length > 0 ? 'error' as const : 'warning' as const;
+
+        // Convert code smell findings to CodeIssue format
+        const codeIssues: CodeIssue[] = codeSmellFindings.map(finding => ({
+          type: finding.type,
+          severity: finding.severity === 'error' ? 'critical' : 
+                   finding.severity === 'warning' ? 'high' : 'medium',
+          file: filePath,
+          line: finding.line,
+          message: finding.message,
+          tool: 'WOARU Code Smell Analyzer',
+          autoFixable: false
+        }));
+
+        await this.notificationManager.notifyIssues(codeIssues);
+      }
+    } catch (error) {
+      console.warn(`Internal code smell analysis failed for ${filePath}:`, error);
+    }
+  }
+
+  /**
+   * Helper method to determine language from file extension
+   */
+  private getLanguageFromExtension(extension: string): string {
+    const languageMap: Record<string, string> = {
+      '.js': 'javascript',
+      '.jsx': 'javascript',
+      '.mjs': 'javascript',
+      '.cjs': 'javascript',
+      '.ts': 'typescript',
+      '.tsx': 'typescript'
+    };
+    
+    return languageMap[extension] || 'javascript';
+  }
+
+  /**
+   * Get available code smell types for a language
+   */
+  getAvailableCodeSmellChecks(language: string): string[] {
+    if (language === 'javascript' || language === 'typescript') {
+      return [
+        'complexity',
+        'var-keyword',
+        'weak-equality',
+        'console-log',
+        'function-length',
+        'parameter-count',
+        'nested-depth',
+        'magic-number'
+      ];
+    }
+    return [];
+  }
+
+  /**
+   * Check if code smell analysis is supported for a language
+   */
+  supportsCodeSmellAnalysis(language: string): boolean {
+    return language === 'javascript' || language === 'typescript';
   }
 }

@@ -692,6 +692,44 @@ program
   });
 
 program
+  .command('update')
+  .description('Updates WOARU to the latest version from npm')
+  .action(async () => {
+    try {
+      console.log(chalk.blue('🔄 Updating WOARU to the latest version...'));
+      
+      const { spawn } = await import('child_process');
+      
+      const updateProcess = spawn('npm', ['install', '-g', 'woaru@latest'], {
+        stdio: 'inherit',
+        shell: true
+      });
+      
+      updateProcess.on('error', (error) => {
+        console.error(chalk.red(`❌ Failed to update: ${error.message}`));
+        process.exit(1);
+      });
+      
+      updateProcess.on('close', (code) => {
+        if (code === 0) {
+          console.log(chalk.green('✅ WOARU has been updated successfully!'));
+          console.log(chalk.cyan('🔄 Please restart any running WOARU processes to use the new version.'));
+        } else {
+          console.error(chalk.red(`❌ Update failed with exit code ${code}`));
+          process.exit(code || 1);
+        }
+      });
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Failed to update: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+program
   .command('stop')
   .description('Stop the WOARU supervisor')
   .option('-p, --path <path>', 'Project path', process.cwd())

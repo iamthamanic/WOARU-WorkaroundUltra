@@ -167,20 +167,58 @@ export interface ToolsDatabase {
   };
 }
 
+// AI Models Database Interface
+export interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+  isLatest: boolean;
+  category: 'flagship' | 'fast' | 'balanced' | 'specialized' | 'reliable';
+  contextWindow: number;
+  supportedFeatures: string[];
+}
+
+export interface AIProvider {
+  name: string;
+  description: string;
+  apiKeyEnvVar: string;
+  baseUrl: string;
+  providerType: string;
+  headers: Record<string, string>;
+  bodyTemplate: string;
+  timeout: number;
+  maxTokens: number;
+  temperature: number;
+  models: AIModel[];
+}
+
+export interface AIModelsDatabase {
+  version: string;
+  lastUpdated: string;
+  llm_providers: Record<string, AIProvider>;
+}
+
 export class ToolsDatabaseManager {
   private cacheDir: string;
   private cacheFilePath: string;
+  private aiModelsCacheFilePath: string;
   private defaultSourceUrl: string;
+  private aiModelsSourceUrl: string;
   private localFallbackPath: string;
+  private aiModelsLocalFallbackPath: string;
 
   constructor() {
     this.cacheDir = path.join(os.homedir(), '.woaru', 'cache');
     this.cacheFilePath = path.join(this.cacheDir, 'tools.json');
+    this.aiModelsCacheFilePath = path.join(this.cacheDir, 'ai-models.json');
     this.defaultSourceUrl =
       'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/tools.json';
+    this.aiModelsSourceUrl = 
+      'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/ai-models.json';
 
-    // Fallback to local tools.json in project root
+    // Fallback to local files in project root
     this.localFallbackPath = path.join(__dirname, '..', '..', 'tools.json');
+    this.aiModelsLocalFallbackPath = path.join(__dirname, '..', '..', 'ai-models.json');
   }
 
   /**

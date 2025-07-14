@@ -1,6 +1,8 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
+import { CodeSmellAnalyzer } from './CodeSmellAnalyzer';
+import { CodeSmellFinding } from '../types/code-smell';
 
 export interface CodeInsight {
   reason: string;
@@ -11,6 +13,12 @@ export interface CodeInsight {
 }
 
 export class CodeAnalyzer {
+  private codeSmellAnalyzer: CodeSmellAnalyzer;
+
+  constructor() {
+    this.codeSmellAnalyzer = new CodeSmellAnalyzer();
+  }
+
   async analyzeCodebase(
     projectPath: string,
     language: string
@@ -93,6 +101,32 @@ export class CodeAnalyzer {
         evidence: debugStatements,
         files: debugStatements.map(f => f.split(':')[0]),
         severity: 'medium',
+      });
+    }
+
+    // Run comprehensive code smell analysis
+    const codeSmellFindings = await this.runCodeSmellAnalysis(
+      projectPath,
+      jsFiles
+    );
+    if (codeSmellFindings.length > 0) {
+      const groupedFindings = this.groupCodeSmellFindings(codeSmellFindings);
+      
+      // Add WOARU Code Smell Analysis insight
+      const topIssues = Object.entries(groupedFindings)
+        .sort(([,a], [,b]) => b.length - a.length)
+        .slice(0, 3)
+        .map(([type, findings]) => `${type}: ${findings.length} occurrences`);
+
+      const criticalCount = codeSmellFindings.filter(f => f.severity === 'error').length;
+      const warningCount = codeSmellFindings.filter(f => f.severity === 'warning').length;
+
+      insights.set('code-smells', {
+        reason: `WOARU Internal Analysis found ${codeSmellFindings.length} code quality issues (${criticalCount} critical, ${warningCount} warnings)`,
+        evidence: topIssues,
+        files: [...new Set(codeSmellFindings.map(f => f.file))],
+        severity: criticalCount > 0 ? 'high' : 'medium',
+        patterns: Object.keys(groupedFindings)
       });
     }
 
@@ -485,5 +519,52 @@ export class CodeAnalyzer {
     }
 
     return issues;
+  }
+
+  /**
+   * Run code smell analysis on JavaScript/TypeScript files
+   */
+  private async runCodeSmellAnalysis(
+    projectPath: string,
+    files: string[]
+  ): Promise<Array<CodeSmellFinding & { file: string }>> {
+    const allFindings: Array<CodeSmellFinding & { file: string }> = [];
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(projectPath, file);
+        const ext = path.extname(file).toLowerCase();
+        const language = ['.ts', '.tsx'].includes(ext) ? 'typescript' : 'javascript';
+        
+        const findings = await this.codeSmellAnalyzer.analyzeFile(filePath, language);
+        
+        // Add file path to each finding
+        findings.forEach(finding => {
+          allFindings.push({
+            ...finding,
+            file
+          });
+        });
+      } catch (error) {
+        console.warn(`Code smell analysis failed for ${file}:`, error);
+      }
+    }
+
+    return allFindings;
+  }
+
+  /**
+   * Group code smell findings by type
+   */
+  private groupCodeSmellFindings(
+    findings: Array<CodeSmellFinding & { file: string }>
+  ): Record<string, Array<CodeSmellFinding & { file: string }>> {
+    return findings.reduce((acc, finding) => {
+      if (!acc[finding.type]) {
+        acc[finding.type] = [];
+      }
+      acc[finding.type].push(finding);
+      return acc;
+    }, {} as Record<string, Array<CodeSmellFinding & { file: string }>>);
   }
 }

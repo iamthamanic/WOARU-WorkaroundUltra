@@ -1,7 +1,7 @@
 # WOARU Code Review
 **Änderungen seit Branch: ``**
 **Aktueller Branch: `main`**
-**Generiert am: 13.7.2025, 22:12:50**
+**Generiert am: 14.7.2025, 07:47:37**
 
 ## 📊 Zusammenfassung
 
@@ -13,33 +13,37 @@
 
 ## 📋 Geänderte Dateien
 
-- `test_demo.js`
+- `test_code_smells.js`
 
 ## 🚨 Kritische Qualitäts-Probleme
 
-### `test_demo.js`
+### `test_code_smells.js`
 
 **ESLint - 🔴 ERROR:**
 
-💡 **Problem:** 2 unbenutzte Variablen/Imports - können entfernt werden, 2 TypeScript-spezifische Probleme, 2 weitere Code-Qualitätsprobleme
+💡 **Problem:** 1 unbenutzte Variablen/Imports - können entfernt werden, 1 TypeScript-spezifische Probleme, 5 weitere Code-Qualitätsprobleme
 
 📋 **Gefundene Probleme:**
-1. 1:10  error  'test' is defined but never used                 @typescript-eslint/no-unused-vars
-2. 5:9   error  'unused_var' is assigned a value but never used  @typescript-eslint/no-unused-vars
-3. Line 6:5 - ERROR: 'console' is not defined (Rule: no-undef)
-4. ✖ 3 problems (3 errors, 0 warnings)
+1. Line 24:1 - ERROR: 'console' is not defined (Rule: no-undef)
+2. Line 34:1 - ERROR: 'console' is not defined (Rule: no-undef)
+3. Line 38:13 - ERROR: Do not access Object.prototype method 'hasOwnProperty' from target object (Rule: no-prototype-builtins)
+4. Line 42:1 - ERROR: 'console' is not defined (Rule: no-undef)
+5. 44:10  error  'complexFunction' is defined but never used                                @typescript-eslint/no-unused-vars
+6. ✖ 5 problems (5 errors, 0 warnings)
 
 🔧 **Lösungsvorschläge:**
 1. Entferne unbenutzte Variablen oder füge "_" vor den Namen hinzu
 
 📄 **Code-Kontext:**
 ```
-/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)/test_demo.js
-  1:10  error  'test' is defined but never used                 @typescript-eslint/no-unused-vars
-  5:9   error  'unused_var' is assigned a value but never used  @typescript-eslint/no-unused-vars
-  6:5   error  'console' is not defined                         no-undef
+/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)/test_code_smells.js
+  24:1   error  'console' is not defined                                                   no-undef
+  34:1   error  'console' is not defined                                                   no-undef
+  38:13  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
+  42:1   error  'console' is not defined                                                   no-undef
+  44:10  error  'complexFunction' is defined but never used                                @typescript-eslint/no-unused-vars
 
-✖ 3 problems (3 errors, 0 warnings)
+✖ 5 problems (5 errors, 0 warnings)
 
 
 ```
