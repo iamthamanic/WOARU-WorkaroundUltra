@@ -30,7 +30,7 @@ export class ActionManager {
       [];
     let overallSuccess = true;
 
-    console.log(chalk.blue('🚀 Starting WAU setup process...\n'));
+    console.log(chalk.blue('🚀 Starting WOARU setup process...\n'));
 
     for (const recommendation of recommendations) {
       const action = this.actions.get(recommendation.tool);

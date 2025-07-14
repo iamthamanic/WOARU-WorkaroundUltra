@@ -1,9 +1,26 @@
-# WOARU 🚀 v3.3.0
+# WOARU 🚀 v3.3.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.3.0 - Secure API Key Management & Revolutionary Setup Experience**
+## 🆕 **Latest Release: v3.3.1 - Production Polish & Legacy Cleanup**
+**Release Date:** July 14, 2025
+
+### 🔧 **Hotfix: Legacy References & Initialization**
+- **🧹 Complete Legacy Cleanup** - Removed all outdated "WAU" references throughout codebase
+  - Updated notifications, error messages, and user-facing text to "WOARU"
+  - Fixed GitHub URLs pointing to old repository names
+  - Consistent branding across all components
+- **⚡ ConfigManager Initialization Fix** - Resolved race condition in environment loading
+  - Proper async/await structure ensures configuration loads before commands
+  - Eliminates "API key not found" issues on first startup
+  - Guaranteed environment variable availability across all commands
+- **🛡️ First-Time User Experience** - Enhanced startup behavior for new users
+  - Automatic directory creation (`~/.woaru/`) on first run
+  - Graceful handling of missing configuration files
+  - Clear guidance for setup without crashes or confusion
+
+## 🔍 **Previous Release: v3.3.0 - Secure API Key Management & Revolutionary Setup Experience**
 **Release Date:** July 14, 2025
 
 ### 🔐 **MAJOR: Secure ConfigManager System**

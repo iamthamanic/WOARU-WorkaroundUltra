@@ -16,14 +16,17 @@ import * as fs from 'fs-extra';
 let supervisor: WOARUSupervisor | null = null;
 
 // Initialize environment variables from global WOARU .env file
-(async () => {
+async function initializeConfig() {
   try {
     const configManager = ConfigManager.getInstance();
     await configManager.loadEnvironmentVariables();
   } catch (error) {
     // Silent fail - environment variables are optional
   }
-})();
+}
+
+// Initialize config before any command execution
+initializeConfig();
 
 const program = new Command();
 const wauEngine = new WAUEngine();
@@ -524,7 +527,7 @@ program
       }
 
       // Normal watch mode with aggressive heartbeat for Claude Code environment
-      console.log(chalk.green('✅ WAU Supervisor started successfully!'));
+      console.log(chalk.green('✅ WOARU Supervisor started successfully!'));
       console.log(chalk.cyan(`📍 Project: ${projectPath}`));
       console.log(chalk.cyan(`👁️ Starting continuous monitoring...`));
 
@@ -1155,7 +1158,7 @@ program
 
       if (recommendations.length > 0) {
         console.log(
-          chalk.gray(`💡 Run "wau setup" to install recommended tools`)
+          chalk.gray(`💡 Run "woaru setup" to install recommended tools`)
         );
       }
     } catch (error) {

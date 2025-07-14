@@ -11,7 +11,7 @@ export class DatabaseManager {
   constructor() {
     this.localDbPath = path.join(__dirname, 'tools-db.json');
     this.remoteDbUrl =
-      'https://raw.githubusercontent.com/iamthamanic/WAU-WorkaroundUltra/main/src/database/tools-db.json';
+      'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/src/database/tools-db.json';
   }
 
   async getDatabase(): Promise<ToolsDatabase> {

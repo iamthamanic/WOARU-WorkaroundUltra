@@ -63,7 +63,7 @@ export class NotificationManager extends EventEmitter {
     high: ToolRecommendation[],
     other: ToolRecommendation[]
   ): void {
-    console.log(chalk.cyan('\n📊 WAU Recommendations Update:\n'));
+    console.log(chalk.cyan('\n📊 WOARU Recommendations Update:\n'));
 
     if (critical.length > 0) {
       console.log(chalk.red('🔴 Critical:'));
@@ -92,7 +92,7 @@ export class NotificationManager extends EventEmitter {
       console.log();
     }
 
-    console.log(chalk.gray('💡 Run "wau recommendations" for details\n'));
+    console.log(chalk.gray('💡 Run "woaru recommendations" for details\n'));
   }
 
   private async showDesktopNotification(
@@ -111,8 +111,8 @@ export class NotificationManager extends EventEmitter {
     const tools = critical.map(r => r.tool).join(', ');
 
     notifier.notify({
-      title: 'WAU: Critical Tools Missing',
-      message: `Missing: ${tools}. Run "wau setup" to fix.`,
+      title: 'WOARU: Critical Tools Missing',
+      message: `Missing: ${tools}. Run "woaru setup" to fix.`,
       sound: true,
       wait: false,
     });
@@ -153,7 +153,7 @@ export class NotificationManager extends EventEmitter {
 
     if (this.config.desktop) {
       notifier.notify({
-        title: 'WAU Error',
+        title: 'WOARU Error',
         message,
         sound: true,
       });
