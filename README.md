@@ -1,9 +1,24 @@
-# WOARU 🚀 v1.3.0
+# WOARU 🚀 v3.2.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v1.3.0 - Comprehensive Audit & Transparency System**
+## 🆕 **Latest Release: v3.2.0 - Unified Versioning & Update Command**
+**Release Date:** July 14, 2025
+
+### 🔧 **Critical Fix: Version Unification**
+- **📦 Unified Version System** - Resolved version inconsistencies across npm, git tags, and package.json
+- **🔄 New Update Command** - `woaru update` now updates WOARU to the latest npm version
+- **🏷️ Clean Versioning** - Single source of truth: v3.2.0 replaces all previous version confusion
+- **⚡ Self-Updating** - WOARU can now update itself without manual npm commands
+
+### 🆕 **New Command:**
+```bash
+# Update WOARU to the latest version:
+woaru update
+```
+
+## 🔍 **Previous Release: v1.3.0 - Comprehensive Audit & Transparency System**
 **Release Date:** July 14, 2025
 
 ### 🔍 **MAJOR: Complete Audit & Transparency System**
