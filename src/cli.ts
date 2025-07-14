@@ -8,11 +8,22 @@ import { WAUEngine } from './core/WAUEngine';
 import { WOARUSupervisor } from './supervisor/WAUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import { APP_CONFIG } from './config/constants';
+import { ConfigManager } from './config/ConfigManager';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
+
+// Initialize environment variables from global WOARU .env file
+(async () => {
+  try {
+    const configManager = ConfigManager.getInstance();
+    await configManager.loadEnvironmentVariables();
+  } catch (error) {
+    // Silent fail - environment variables are optional
+  }
+})();
 
 const program = new Command();
 const wauEngine = new WAUEngine();
@@ -3517,13 +3528,21 @@ async function setupAnthropicProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n🤖 Setting up Anthropic Claude'));
   console.log(chalk.gray('───────────────────────────'));
   
+  const configManager = ConfigManager.getInstance();
+  
   const answers = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
       name: 'apiKey',
-      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. ANTHROPIC_API_KEY)',
-      default: 'ANTHROPIC_API_KEY',
-      validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
+      message: 'Bitte füge deinen Anthropic API-Key ein (beginnt mit \'sk-\'):',
+      mask: '*',
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        if (trimmed.length === 0) return 'API key is required';
+        if (!trimmed.startsWith('sk-')) return 'Anthropic API keys must start with "sk-"';
+        if (trimmed.length < 20) return 'API key seems too short';
+        return true;
+      }
     },
     {
       type: 'list',
@@ -3546,14 +3565,21 @@ async function setupAnthropicProvider(): Promise<any> {
     }
   ]);
 
-  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
-  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
-  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
+  // Store API key securely
+  try {
+    await configManager.storeApiKey('ANTHROPIC', answers.apiKey);
+    console.log(chalk.green('\n✅ API key stored securely!'));
+    console.log(chalk.gray(`   Stored in: ${configManager.getEnvFilePath()}`));
+    console.log(chalk.cyan('\n💡 Your API key is now available for all WOARU commands.'));
+  } catch (error) {
+    console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
+    throw error;
+  }
 
   return {
     id: "anthropic-claude",
     providerType: "anthropic",
-    apiKeyEnvVar: answers.apiKey,
+    apiKeyEnvVar: 'ANTHROPIC_API_KEY',
     baseUrl: "https://api.anthropic.com/v1/messages",
     model: answers.model,
     headers: {
@@ -3581,13 +3607,21 @@ async function setupOpenAIProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n🧠 Setting up OpenAI GPT'));
   console.log(chalk.gray('─────────────────────────'));
   
+  const configManager = ConfigManager.getInstance();
+  
   const answers = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
       name: 'apiKey',
-      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. OPENAI_API_KEY)',
-      default: 'OPENAI_API_KEY',
-      validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
+      message: 'Bitte füge deinen OpenAI API-Key ein (beginnt mit \'sk-\'):',
+      mask: '*',
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        if (trimmed.length === 0) return 'API key is required';
+        if (!trimmed.startsWith('sk-')) return 'OpenAI API keys must start with "sk-"';
+        if (trimmed.length < 20) return 'API key seems too short';
+        return true;
+      }
     },
     {
       type: 'list',
@@ -3610,14 +3644,21 @@ async function setupOpenAIProvider(): Promise<any> {
     }
   ]);
 
-  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
-  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
-  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
+  // Store API key securely
+  try {
+    await configManager.storeApiKey('OPENAI', answers.apiKey);
+    console.log(chalk.green('\n✅ API key stored securely!'));
+    console.log(chalk.gray(`   Stored in: ${configManager.getEnvFilePath()}`));
+    console.log(chalk.cyan('\n💡 Your API key is now available for all WOARU commands.'));
+  } catch (error) {
+    console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
+    throw error;
+  }
 
   return {
     id: "openai-gpt4",
     providerType: "openai",
-    apiKeyEnvVar: answers.apiKey,
+    apiKeyEnvVar: 'OPENAI_API_KEY',
     baseUrl: "https://api.openai.com/v1/chat/completions",
     model: answers.model,
     headers: {},
@@ -3647,13 +3688,20 @@ async function setupGoogleProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n🔍 Setting up Google Gemini'));
   console.log(chalk.gray('─────────────────────────────'));
   
+  const configManager = ConfigManager.getInstance();
+  
   const answers = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
       name: 'apiKey',
-      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. GOOGLE_AI_API_KEY)',
-      default: 'GOOGLE_AI_API_KEY',
-      validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
+      message: 'Bitte füge deinen Google AI API-Key ein:',
+      mask: '*',
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        if (trimmed.length === 0) return 'API key is required';
+        if (trimmed.length < 10) return 'API key seems too short';
+        return true;
+      }
     },
     {
       type: 'list',
@@ -3674,14 +3722,21 @@ async function setupGoogleProvider(): Promise<any> {
     }
   ]);
 
-  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
-  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
-  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
+  // Store API key securely
+  try {
+    await configManager.storeApiKey('GOOGLE_AI', answers.apiKey);
+    console.log(chalk.green('\n✅ API key stored securely!'));
+    console.log(chalk.gray(`   Stored in: ${configManager.getEnvFilePath()}`));
+    console.log(chalk.cyan('\n💡 Your API key is now available for all WOARU commands.'));
+  } catch (error) {
+    console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
+    throw error;
+  }
 
   return {
     id: "google-gemini",
     providerType: "google",
-    apiKeyEnvVar: answers.apiKey,
+    apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
     model: answers.model,
     headers: {},
@@ -3711,13 +3766,20 @@ async function setupAzureProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n☁️ Setting up Azure OpenAI'));
   console.log(chalk.gray('────────────────────────────'));
   
+  const configManager = ConfigManager.getInstance();
+  
   const answers = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
       name: 'apiKey',
-      message: 'Wie lautet der Name der Umgebungsvariable für deinen API-Key? (z.B. AZURE_OPENAI_API_KEY)',
-      default: 'AZURE_OPENAI_API_KEY',
-      validate: (input: string) => input.trim().length > 0 || 'API key environment variable is required'
+      message: 'Bitte füge deinen Azure OpenAI API-Key ein:',
+      mask: '*',
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        if (trimmed.length === 0) return 'API key is required';
+        if (trimmed.length < 10) return 'API key seems too short';
+        return true;
+      }
     },
     {
       type: 'input',
@@ -3753,16 +3815,23 @@ async function setupAzureProvider(): Promise<any> {
     }
   ]);
 
-  console.log(chalk.yellow('\nℹ️  Wichtig: Gib hier nur den Namen der Variable ein. Den eigentlichen Key (sk-...) musst du selbst in deiner Shell-Konfiguration setzen:'));
-  console.log(chalk.gray(`   export ${answers.apiKey}="dein_key_hier"`));
-  console.log(chalk.gray('   Füge dies zu deiner ~/.zshrc oder ~/.bashrc hinzu und lade sie neu (source ~/.zshrc)\n'));
+  // Store API key securely
+  try {
+    await configManager.storeApiKey('AZURE_OPENAI', answers.apiKey);
+    console.log(chalk.green('\n✅ API key stored securely!'));
+    console.log(chalk.gray(`   Stored in: ${configManager.getEnvFilePath()}`));
+    console.log(chalk.cyan('\n💡 Your API key is now available for all WOARU commands.'));
+  } catch (error) {
+    console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
+    throw error;
+  }
 
   const baseUrl = `${answers.endpoint}/openai/deployments/${answers.deploymentName}/chat/completions?api-version=${answers.apiVersion}`;
 
   return {
     id: "azure-openai",
     providerType: "azure-openai",
-    apiKeyEnvVar: answers.apiKey,
+    apiKeyEnvVar: 'AZURE_OPENAI_API_KEY',
     baseUrl: baseUrl,
     model: answers.deploymentName,
     headers: {},

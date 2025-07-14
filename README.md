@@ -1,40 +1,69 @@
-# WOARU 🚀 v3.2.0
+# WOARU 🚀 v3.3.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.2.0 - Production-Ready Bug Fixes & Architecture Improvements**
+## 🆕 **Latest Release: v3.3.0 - Secure API Key Management & Revolutionary Setup Experience**
 **Release Date:** July 14, 2025
 
-### 🐛 **Critical Bug Fixes:**
-- **🔧 Improved Setup Dialog** - Fixed confusing API key prompts in `woaru setup llm`
-  - Clear instructions: "Gib hier nur den Namen der Variable ein"
-  - Helpful examples and shell configuration guidance
-  - Prevents users from accidentally pasting actual API keys
-- **🛡️ Robust Error Handling** - Fixed crashes when usage.json is empty or corrupted
-  - Graceful fallback to empty statistics
-  - Better error messages for troubleshooting
-- **🏗️ Architecture Refactoring** - Eliminated hardcoded values throughout codebase
-  - Centralized configuration in `src/config/constants.ts`
-  - Dynamic version loading from package.json
-  - Consistent path and threshold management
+### 🔐 **MAJOR: Secure ConfigManager System**
+- **🛡️ Global .env Management** - New `ConfigManager` class handles secure API key storage
+  - API keys stored in `~/.woaru/.env` with 600 permissions (owner-only access)
+  - Automatic gitignore protection to prevent accidental commits
+  - Centralized configuration for all WOARU tools
+- **🔄 Dotenv Integration** - Automatic environment variable loading on startup
+  - No more manual shell configuration required
+  - Keys instantly available across all WOARU commands
+  - Silent fallback for missing configuration
 
-### 🔧 **Version Unification (Previous Fix):**
-- **📦 Unified Version System** - Resolved version inconsistencies across npm, git tags, and package.json
-- **🔄 New Update Command** - `woaru update` now updates WOARU to the latest npm version
-- **🏷️ Clean Versioning** - Single source of truth: v3.2.0 replaces all previous version confusion
-- **⚡ Self-Updating** - WOARU can now update itself without manual npm commands
+### 🚀 **Completely Overhauled Setup Process**
+- **💬 Intuitive User Interface** - Revolutionary setup dialog experience
+  - Direct API key input: "Bitte füge deinen OpenAI API-Key ein"
+  - Password-masked input for security during typing
+  - Smart validation (checks for 'sk-' prefix for OpenAI/Anthropic)
+  - Immediate feedback and helpful error messages
+- **⚡ One-Click Configuration** - No more complex shell setup required
+  - Keys stored securely and automatically
+  - Ready to use immediately after setup
+  - Cross-session persistence without manual configuration
 
-### 🆕 **New Command:**
+### 🛡️ **Enhanced Security Features**
+- **🔒 File Permissions** - Automatic 600 permissions on sensitive files
+- **🚫 Git Protection** - Automatic gitignore entries for `.woaru/.env`
+- **⚠️ Safety Warnings** - Alerts if no global gitignore is configured
+- **🔐 Input Validation** - Comprehensive API key format checking
+
+### 🐛 **Bulletproof Error Handling**
+- **💪 Super-Robust UsageTracker** - Enhanced resilience against corrupted files
+  - Empty file detection and handling
+  - Invalid JSON recovery with automatic recreation
+  - Size-based validation before parsing
+  - Multiple fallback strategies
+- **🔄 Graceful Degradation** - System continues working even with missing components
+
+### 🔧 **Previous Features (v3.2.0):**
+- **📦 Unified Version System** - Dynamic version loading from package.json
+- **🔄 Update Command** - `woaru update` for easy updates
+- **🏗️ Architecture Refactoring** - Centralized configuration system
+
+### 🆕 **Enhanced Commands:**
 ```bash
+# Secure, one-click LLM setup:
+woaru setup llm
+
 # Update WOARU to the latest version:
 woaru update
+
+# Check stored API keys:
+ls ~/.woaru/.env  # (securely stored)
 ```
 
-### 💡 **Improved User Experience:**
-- **Clear Setup Guidance** - Step-by-step instructions for API key configuration
-- **Robust Error Recovery** - No more crashes from corrupted configuration files
-- **Consistent Behavior** - All constants and paths managed centrally
+### 🎯 **User Experience Revolution:**
+- **🔥 Zero-Configuration** - API keys work immediately after setup
+- **🛡️ Security by Default** - Automatic protection against accidental commits
+- **💡 Intuitive Interface** - Clear prompts and helpful guidance
+- **⚡ Instant Availability** - No shell restarts or manual configuration required
+- **🔄 Cross-Session Persistence** - Configuration survives system restarts
 
 ## 🔍 **Previous Release: v1.3.0 - Comprehensive Audit & Transparency System**
 **Release Date:** July 14, 2025

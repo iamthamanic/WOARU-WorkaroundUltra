@@ -44,7 +44,25 @@ export class UsageTracker {
   private async loadStats(): Promise<void> {
     try {
       if (await fs.pathExists(this.usageFile)) {
-        const data = await fs.readJson(this.usageFile);
+        // Check if file is empty first
+        const fileStats = await fs.stat(this.usageFile);
+        if (fileStats.size === 0) {
+          console.warn('⚠️ Usage statistics file is empty, initializing with empty stats');
+          this.stats = {};
+          return;
+        }
+
+        // Try to read the file content manually first
+        const fileContent = await fs.readFile(this.usageFile, 'utf-8');
+        if (!fileContent.trim()) {
+          console.warn('⚠️ Usage statistics file is empty, initializing with empty stats');
+          this.stats = {};
+          return;
+        }
+
+        // Now try to parse as JSON
+        const data = JSON.parse(fileContent);
+        
         // Validate that the data is a valid object
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           this.stats = data;
@@ -54,8 +72,22 @@ export class UsageTracker {
         }
       }
     } catch (error) {
-      console.warn('⚠️ Failed to load usage statistics (file may be corrupted):', error instanceof Error ? error.message : error);
+      if (error instanceof SyntaxError) {
+        console.warn('⚠️ Usage statistics file contains invalid JSON, recreating with empty stats');
+      } else {
+        console.warn('⚠️ Failed to load usage statistics (file may be corrupted):', error instanceof Error ? error.message : error);
+      }
+      
+      // Reset stats and recreate file
       this.stats = {};
+      
+      // Try to recreate the file with valid empty JSON
+      try {
+        await fs.ensureDir(path.dirname(this.usageFile));
+        await fs.writeJson(this.usageFile, {}, { spaces: 2 });
+      } catch (writeError) {
+        console.warn('⚠️ Could not recreate usage statistics file:', writeError instanceof Error ? writeError.message : writeError);
+      }
     }
   }
 
