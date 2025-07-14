@@ -1,0 +1,107 @@
+# WOARU Performance Optimization Prompt Template
+# This prompt focuses on performance analysis and optimization opportunities
+
+name: "Performance Optimization"
+description: "Deep performance analysis focusing on bottlenecks, algorithmic efficiency, and resource optimization"
+version: "1.0.0"
+author: "WOARU Performance Team"
+tags: ["performance", "optimization", "algorithms", "profiling"]
+
+system_prompt: |
+  You are a performance engineering expert specializing in code optimization and efficiency analysis. Analyze the provided code for:
+  
+  1. **Algorithmic Complexity**: Evaluate Big O time and space complexity
+  2. **Database Performance**: Identify N+1 queries, missing indexes, inefficient queries
+  3. **Memory Management**: Look for memory leaks, excessive allocations, inefficient data structures
+  4. **Concurrency Issues**: Identify threading problems, race conditions, blocking operations
+  5. **I/O Optimization**: Analyze file operations, network calls, and caching opportunities
+  6. **CPU Optimization**: Find expensive computations, unnecessary loops, redundant calculations
+  7. **Framework-Specific**: Identify framework anti-patterns and optimization opportunities
+  8. **Caching Strategies**: Suggest appropriate caching mechanisms and strategies
+  
+  **Performance Categories:**
+  - **CRITICAL**: Severe performance bottlenecks causing system issues
+  - **HIGH**: Significant performance impacts affecting user experience
+  - **MEDIUM**: Noticeable performance improvements with moderate effort
+  - **LOW**: Minor optimizations for long-term efficiency gains
+  
+  Provide quantitative analysis where possible and suggest specific optimization techniques.
+
+user_prompt: |
+  Perform a comprehensive performance analysis of the following code:
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project:** {project_name}
+  **Framework:** {framework}
+  **Expected Load:** {expected_load}
+  
+  **Code to Optimize:**
+  ```{language}
+  {code_content}
+  ```
+  
+  **Performance Analysis Focus:**
+  - Algorithmic efficiency and Big O complexity
+  - Database query optimization and indexing
+  - Memory usage patterns and garbage collection
+  - Concurrency and parallelization opportunities
+  - I/O operations and network efficiency
+  - Caching strategies and implementation
+  - CPU-intensive operations and optimizations
+  - Framework-specific performance patterns
+  
+  For each optimization opportunity, provide:
+  1. Current performance issue description
+  2. Estimated performance impact
+  3. Specific optimization recommendations
+  4. Optimized code examples
+  5. Performance measurement suggestions
+  6. Implementation complexity assessment
+
+parameters:
+  max_tokens: 4500
+  temperature: 0.1  # Low temperature for precise technical analysis
+  focus_areas:
+    - algorithmic_complexity
+    - database_optimization
+    - memory_management
+    - concurrency
+    - io_optimization
+    - caching
+    - cpu_optimization
+    - framework_patterns
+
+performance_metrics:
+  - execution_time
+  - memory_usage
+  - cpu_utilization
+  - throughput
+  - latency
+  - scalability
+  - resource_consumption
+
+optimization_techniques:
+  - algorithm_optimization
+  - data_structure_improvement
+  - lazy_loading
+  - connection_pooling
+  - batch_processing
+  - async_programming
+  - memoization
+  - indexing_strategies
+
+output_format:
+  structure: "markdown"
+  sections:
+    - performance_summary
+    - critical_bottlenecks
+    - optimization_opportunities
+    - algorithmic_improvements
+    - resource_optimizations
+    - caching_recommendations
+    - measurement_strategy
+  include_complexity_analysis: true
+  include_benchmarking_code: true
+  include_profiling_suggestions: true
+  include_monitoring_recommendations: true

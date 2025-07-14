@@ -1,9 +1,103 @@
-# WOARU 🚀 v3.4.0
+# WOARU 🚀 v3.5.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.4.0 - MAJOR: Revolutionary Secure API Key Management System**
+## 🆕 **Latest Release: v3.5.0 - MAJOR: Dynamic & Customizable AI Prompt Templates System**
+**Release Date:** July 14, 2025
+
+### 🎯 **REVOLUTIONARY: User-Controlled AI Analysis with Dynamic Prompts**
+**Problem Solved:** Fixed AI analysis prompts meant one-size-fits-all reviews. Users couldn't customize analysis focus for security, performance, refactoring, or testing needs.
+
+**Game-Changing Solution:**
+- **🎨 5 Specialized Prompt Templates** - Choose your analysis focus:
+  - `default_review` - Comprehensive code quality analysis
+  - `security_audit` - Deep security vulnerability scanning  
+  - `refactoring_suggestions` - Architecture and code improvement recommendations
+  - `performance_optimization` - Performance bottleneck identification
+  - `testing_strategy` - Test coverage and quality assessment
+- **📝 YAML-Based Templates** - Human-readable, easily customizable prompt configuration
+- **🔄 Dynamic Template Loading** - Switch analysis modes with simple `--prompt` flag
+- **🎯 Provider-Specific Customization** - Optimize prompts for each LLM's strengths
+
+### 🏗️ **MAJOR: Complete Prompt Management Architecture**
+- **📚 Template Library** - Professional prompt templates in `templates/prompts/`
+  - Each template includes system prompts, user prompts, parameters, and output formats
+  - Variable interpolation for context-aware analysis
+  - Structured YAML format for easy customization
+- **🏠 User Customization** - Personal templates in `~/.woaru/config/woaru_llm_prompts/[provider]/`
+  - Automatic template copying during `woaru setup llm`
+  - Edit templates to match your team's standards
+  - Provider-specific optimization capabilities
+- **⚡ Seamless Integration** - Works with all LLM commands
+  - `woaru analyze llm --prompt security_audit`
+  - `woaru review git llm --prompt performance_optimization`
+  - `woaru review local llm --prompt refactoring_suggestions`
+  - `woaru review path llm --prompt testing_strategy`
+
+### 🚀 **User Experience Revolution**
+**Before (Limited & Inflexible):**
+```
+❌ Single generic prompt for all analyses
+❌ No focus control for specific concerns
+❌ Same analysis whether checking security or performance
+```
+
+**After (Dynamic & Powerful):**
+```
+✅ Choose specialized analysis focus with --prompt flag
+✅ Security audits find vulnerabilities, not style issues
+✅ Performance analysis targets bottlenecks, not formatting
+✅ Customize prompts for your team's specific needs
+```
+
+### 🔧 **Technical Implementation**
+- **🏗️ PromptManager Class** - `src/ai/PromptManager.ts` handles all prompt operations
+  - Template loading and validation
+  - Variable interpolation system
+  - Provider-specific prompt management
+  - Fallback mechanisms for stability
+- **🔄 Enhanced AIReviewAgent** - Dynamic prompt injection per provider
+  - Provider-specific template selection
+  - Context-aware variable substitution
+  - Backwards compatibility maintained
+- **📋 Professional Templates** - 5 expert-crafted analysis templates
+  - Comprehensive documentation and examples
+  - Industry best practices embedded
+  - Extensible structure for custom additions
+
+### 🎉 **Impact & Benefits**
+- **🎯 Targeted Analysis** - Get exactly the insights you need, when you need them
+- **📈 Improved Accuracy** - Specialized prompts yield more relevant findings
+- **🔧 Team Customization** - Adapt analysis to your coding standards
+- **💡 Transparent AI** - See and control exactly what the AI is asked to analyze
+
+### 📚 **Usage Examples**
+```bash
+# Security-focused analysis
+woaru analyze llm --prompt security_audit
+
+# Performance optimization review  
+woaru review git llm --prompt performance_optimization
+
+# Refactoring suggestions for specific files
+woaru review path src/api --prompt refactoring_suggestions
+
+# Test coverage analysis
+woaru analyze llm --prompt testing_strategy
+
+# List available prompts
+ls ~/.woaru/config/woaru_llm_prompts/[provider]/
+```
+
+### 🛡️ **Available Prompt Templates**
+1. **default_review.yaml** - Balanced code quality analysis
+2. **security_audit.yaml** - OWASP-aligned security scanning
+3. **performance_optimization.yaml** - Bottleneck and efficiency analysis
+4. **refactoring_suggestions.yaml** - Clean code and pattern recommendations
+5. **testing_strategy.yaml** - Coverage and test quality assessment
+
+## 🔍 **Previous Release: v3.4.0 - MAJOR: Revolutionary Secure API Key Management System**
 **Release Date:** July 14, 2025
 
 ### 🚀 **GAME-CHANGING: Complete Setup UX Revolution**

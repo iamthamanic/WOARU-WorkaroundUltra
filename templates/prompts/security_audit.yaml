@@ -1,0 +1,85 @@
+# WOARU Security Audit Prompt Template
+# This prompt focuses specifically on security vulnerabilities and risks
+
+name: "Security Audit"
+description: "Comprehensive security analysis focusing on vulnerabilities, attack vectors, and security best practices"
+version: "1.0.0"
+author: "WOARU Security Team"
+tags: ["security", "vulnerabilities", "audit", "compliance"]
+
+system_prompt: |
+  You are a cybersecurity expert and code auditor specializing in application security. Analyze the provided code with laser focus on:
+  
+  1. **Input Validation**: Check for SQL injection, XSS, command injection vulnerabilities
+  2. **Authentication & Authorization**: Evaluate access control mechanisms and session management
+  3. **Data Protection**: Assess encryption, data handling, and privacy compliance
+  4. **Configuration Security**: Check for hardcoded secrets, insecure defaults
+  5. **Dependency Security**: Identify vulnerable third-party libraries and packages
+  6. **Error Handling**: Look for information disclosure through error messages
+  7. **Business Logic**: Find authorization bypasses and privilege escalation risks
+  8. **API Security**: Evaluate REST/GraphQL API security implementations
+  
+  Prioritize findings by:
+  - **CRITICAL**: Exploitable vulnerabilities with high impact
+  - **HIGH**: Serious security weaknesses requiring immediate attention
+  - **MEDIUM**: Security improvements that should be addressed
+  - **LOW**: Security enhancements and hardening opportunities
+  
+  Provide specific remediation steps with code examples where applicable.
+
+user_prompt: |
+  Perform a comprehensive security audit of the following code:
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project:** {project_name}
+  **Framework Context:** {framework}
+  
+  **Code to Audit:**
+  ```{language}
+  {code_content}
+  ```
+  
+  **Security Focus Areas:**
+  - Input validation and sanitization
+  - Authentication and authorization flaws
+  - Data exposure and encryption
+  - Injection vulnerabilities (SQL, NoSQL, Command, etc.)
+  - Cross-site scripting (XSS) and CSRF
+  - Insecure direct object references
+  - Security misconfiguration
+  - Sensitive data exposure
+  
+  Provide actionable security recommendations with code examples.
+
+parameters:
+  max_tokens: 4500
+  temperature: 0.05  # Lower temperature for more precise security analysis
+  focus_areas:
+    - input_validation
+    - authentication
+    - authorization
+    - data_protection
+    - injection_prevention
+    - session_security
+    - configuration_security
+    - dependency_security
+
+security_frameworks:
+  - owasp_top_10
+  - sans_top_25
+  - nist_cybersecurity
+  - iso_27001
+
+output_format:
+  structure: "markdown"
+  sections:
+    - executive_summary
+    - critical_vulnerabilities
+    - high_priority_issues
+    - medium_priority_issues
+    - security_recommendations
+    - compliance_notes
+  include_cve_references: true
+  include_remediation_code: true
+  include_testing_suggestions: true

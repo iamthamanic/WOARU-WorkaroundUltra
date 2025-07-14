@@ -15,11 +15,13 @@ import { UsageTracker } from './UsageTracker';
 export class AIReviewAgent {
   private config: AIReviewConfig;
   private promptTemplate: PromptTemplate;
+  private promptTemplates: Record<string, any>;
   private enabledProviders: LLMProviderConfig[];
 
-  constructor(config: AIReviewConfig) {
+  constructor(config: AIReviewConfig, promptTemplates?: Record<string, any>) {
     this.config = config;
     this.enabledProviders = config.providers.filter(p => p.enabled);
+    this.promptTemplates = promptTemplates || {};
     this.promptTemplate = this.createDefaultPromptTemplate();
 
     if (this.enabledProviders.length === 0) {
@@ -46,15 +48,12 @@ export class AIReviewAgent {
       throw new Error(`Code too long for analysis (${code.length} chars). Max: ${this.config.tokenLimit * 4}`);
     }
 
-    // Prepare prompt
-    const prompt = this.buildPrompt(code, context);
-    
     console.log(`🧠 Starting AI Code Review with ${this.enabledProviders.length} LLM providers...`);
 
     // Run LLM requests (parallel or sequential based on config)
     if (this.config.parallelRequests) {
       const promises = this.enabledProviders.map(provider => 
-        this.callLLMProvider(provider, prompt, code, context)
+        this.callLLMProvider(provider, code, context)
       );
       
       const responses = await Promise.allSettled(promises);
@@ -80,7 +79,7 @@ export class AIReviewAgent {
       // Sequential execution
       for (const provider of this.enabledProviders) {
         try {
-          const response = await this.callLLMProvider(provider, prompt, code, context);
+          const response = await this.callLLMProvider(provider, code, context);
           results[provider.id] = response.findings;
           responseTimesMs[provider.id] = response.responseTime;
           tokensUsed[provider.id] = response.tokensUsed || 0;
@@ -123,7 +122,6 @@ export class AIReviewAgent {
    */
   private async callLLMProvider(
     provider: LLMProviderConfig,
-    prompt: string,
     code: string,
     context: CodeContext
   ): Promise<LLMResponse> {
@@ -131,6 +129,9 @@ export class AIReviewAgent {
 
     try {
       console.log(`  🤖 Calling ${provider.id} (${provider.model})...`);
+
+      // Build provider-specific prompt
+      const prompt = this.buildPromptForProvider(provider, code, context);
 
       // Get API key from environment
       const apiKey = process.env[provider.apiKeyEnvVar];
@@ -407,7 +408,45 @@ export class AIReviewAgent {
   /**
    * Build the complete prompt for LLM
    */
-  private buildPrompt(code: string, context: CodeContext): string {
+  /**
+   * Build provider-specific prompt using dynamic templates
+   */
+  private buildPromptForProvider(provider: LLMProviderConfig, code: string, context: CodeContext): string {
+    // Check if we have a custom prompt template for this provider
+    const customTemplate = this.promptTemplates[provider.id];
+    
+    if (customTemplate) {
+      // Use custom template with variable interpolation
+      const { PromptManager } = require('./PromptManager');
+      const promptManager = PromptManager.getInstance();
+      
+      const variables = {
+        file_path: context.filePath,
+        language: context.language,
+        project_name: context.projectContext?.name || 'Unknown Project',
+        framework: context.framework || 'None',
+        code_content: code,
+        total_lines: context.totalLines.toString(),
+        expected_load: 'Standard',
+        architecture_context: context.projectContext?.type || 'Unknown',
+        testing_framework: 'Unknown',
+        coverage_percentage: '0'
+      };
+      
+      // Interpolate user prompt with variables
+      const userPrompt = promptManager.interpolatePrompt(customTemplate.user_prompt, variables);
+      
+      return userPrompt;
+    } else {
+      // Fall back to default prompt
+      return this.buildDefaultPrompt(code, context);
+    }
+  }
+
+  /**
+   * Build default prompt (legacy compatibility)
+   */
+  private buildDefaultPrompt(code: string, context: CodeContext): string {
     let prompt = this.promptTemplate.userPromptTemplate;
 
     // Add context information

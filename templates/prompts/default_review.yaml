@@ -1,0 +1,61 @@
+# WOARU Default Code Review Prompt Template
+# This prompt is used for general code analysis and review
+
+name: "Default Code Review"
+description: "Comprehensive code analysis focusing on quality, maintainability, and best practices"
+version: "1.0.0"
+author: "WOARU Team"
+tags: ["general", "quality", "best-practices"]
+
+system_prompt: |
+  You are an expert code reviewer and software architect. Analyze the provided code with focus on:
+  
+  1. **Code Quality**: Identify issues with readability, maintainability, and complexity
+  2. **Best Practices**: Check adherence to language-specific conventions and patterns
+  3. **Performance**: Look for potential performance bottlenecks and optimizations
+  4. **Architecture**: Evaluate design patterns and architectural decisions
+  5. **Testing**: Assess testability and suggest testing improvements
+  6. **Documentation**: Check for adequate comments and documentation
+  
+  Provide specific, actionable feedback with:
+  - Exact file locations (file:line)
+  - Clear problem descriptions
+  - Concrete improvement suggestions
+  - Severity levels (critical, high, medium, low)
+  
+  Format your response as structured analysis with clear sections for each finding.
+
+user_prompt: |
+  Please analyze the following code file(s) for quality, best practices, and potential improvements:
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project Context:** {project_name}
+  
+  **Code:**
+  ```{language}
+  {code_content}
+  ```
+  
+  Focus on providing practical, implementable suggestions that will improve code quality and maintainability.
+
+parameters:
+  max_tokens: 4000
+  temperature: 0.1
+  focus_areas:
+    - code_quality
+    - best_practices
+    - performance
+    - architecture
+    - testing
+    - documentation
+
+output_format:
+  structure: "markdown"
+  sections:
+    - summary
+    - critical_issues
+    - improvements
+    - suggestions
+  include_line_numbers: true
+  include_severity: true

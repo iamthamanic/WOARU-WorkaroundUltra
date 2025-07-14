@@ -1237,11 +1237,33 @@ async function runAIReviewAnalysis(
     process.exit(1);
   }
 
+  // Handle dynamic prompt loading
+  const promptName = options.prompt || 'default_review';
+  if (promptName !== 'default_review') {
+    console.log(chalk.cyan(`🎯 Using custom prompt template: ${promptName}`));
+  }
+
+  // Load and validate prompt templates for enabled providers
+  const { PromptManager } = await import('./ai/PromptManager');
+  const promptManager = PromptManager.getInstance();
+  
+  const promptTemplates: Record<string, any> = {};
+  for (const provider of enabledProviders) {
+    try {
+      const promptTemplate = await promptManager.loadPrompt(provider.id, promptName);
+      promptTemplates[provider.id] = promptTemplate;
+      console.log(chalk.gray(`   ✓ Loaded prompt "${promptTemplate.name}" for ${provider.id}`));
+    } catch (error) {
+      console.warn(chalk.yellow(`⚠️ Could not load prompt "${promptName}" for ${provider.id}: ${error instanceof Error ? error.message : error}`));
+      console.log(chalk.gray(`   Using fallback default prompt for ${provider.id}`));
+    }
+  }
+
   // Show transparent output about which LLMs will be contacted
   const llmNames = enabledProviders.map(p => `${p.id} (${p.model})`).join(', ');
   console.log(chalk.cyan(`🧠 Kontaktiere ${enabledProviders.length} LLMs für Analyse: ${llmNames}`));
 
-  const aiAgent = new AIReviewAgent(aiConfig);
+  const aiAgent = new AIReviewAgent(aiConfig, promptTemplates);
   const aiReviewResults = await runAIReviewOnFiles(aiAgent, fileList, projectPath);
 
   // Import report generator
@@ -1693,6 +1715,7 @@ gitCommand
     path.join('.woaru', 'woaru-llm-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
       const projectPath = path.resolve(options.path);
@@ -1864,6 +1887,7 @@ localCommand
     path.join('.woaru', 'woaru-llm-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
       const projectPath = path.resolve(options.path);
@@ -2022,6 +2046,7 @@ pathCommand
     path.join('.woaru', 'woaru-llm-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async (targetPath: string, options: any) => {
     try {
       const projectPath = path.resolve(options.path);
@@ -2431,6 +2456,7 @@ analyzeCommand
   .description('AI-powered comprehensive code analysis using multiple LLMs')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-j, --json', 'Output as JSON')
+  .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
       const projectPath = path.resolve(options.path);
@@ -3579,6 +3605,16 @@ async function setupAnthropicProvider(): Promise<any> {
     throw error;
   }
 
+  // Copy standard prompt templates
+  try {
+    const { PromptManager } = await import('./ai/PromptManager');
+    const promptManager = PromptManager.getInstance();
+    await promptManager.initialize();
+    await promptManager.copyStandardPrompts('anthropic-claude');
+  } catch (error) {
+    console.warn(chalk.yellow(`⚠️ Could not copy prompt templates: ${error instanceof Error ? error.message : error}`));
+  }
+
   return {
     id: "anthropic-claude",
     providerType: "anthropic",
@@ -3656,6 +3692,16 @@ async function setupOpenAIProvider(): Promise<any> {
   } catch (error) {
     console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
     throw error;
+  }
+
+  // Copy standard prompt templates
+  try {
+    const { PromptManager } = await import('./ai/PromptManager');
+    const promptManager = PromptManager.getInstance();
+    await promptManager.initialize();
+    await promptManager.copyStandardPrompts('openai-gpt4');
+  } catch (error) {
+    console.warn(chalk.yellow(`⚠️ Could not copy prompt templates: ${error instanceof Error ? error.message : error}`));
   }
 
   return {

@@ -1,0 +1,98 @@
+# WOARU Refactoring Suggestions Prompt Template
+# This prompt focuses on code improvement opportunities and architectural enhancements
+
+name: "Refactoring Suggestions"
+description: "Advanced refactoring analysis focusing on code structure, patterns, and maintainability improvements"
+version: "1.0.0"
+author: "WOARU Architecture Team"
+tags: ["refactoring", "architecture", "patterns", "maintainability"]
+
+system_prompt: |
+  You are a senior software architect and refactoring expert. Analyze the provided code to identify opportunities for structural improvements and modernization:
+  
+  1. **Design Patterns**: Suggest applicable design patterns (Strategy, Factory, Observer, etc.)
+  2. **SOLID Principles**: Identify violations and suggest corrections
+  3. **Code Smells**: Detect and propose solutions for common anti-patterns
+  4. **Architectural Improvements**: Recommend better separation of concerns
+  5. **Modern Language Features**: Suggest language-specific modernizations
+  6. **Performance Optimizations**: Identify algorithmic and structural improvements
+  7. **Maintainability**: Propose changes that improve long-term code health
+  8. **Testability**: Suggest refactorings that improve unit testing capabilities
+  
+  **Refactoring Categories:**
+  - **Extract Method/Class**: Break down large, complex functions
+  - **Rename**: Improve naming for clarity and expressiveness
+  - **Move Method/Field**: Better organization and cohesion
+  - **Replace Conditional**: Use polymorphism instead of complex conditionals
+  - **Introduce Parameter Object**: Reduce parameter lists
+  - **Extract Interface**: Improve abstraction and testability
+  
+  Provide before/after code examples and explain the benefits of each suggestion.
+
+user_prompt: |
+  Analyze the following code for refactoring opportunities and architectural improvements:
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project:** {project_name}
+  **Current Architecture:** {architecture_context}
+  
+  **Code to Refactor:**
+  ```{language}
+  {code_content}
+  ```
+  
+  **Refactoring Focus:**
+  - Identify code smells and anti-patterns
+  - Suggest design pattern applications
+  - Recommend SOLID principle improvements
+  - Propose modern language feature usage
+  - Identify extraction opportunities (methods, classes, interfaces)
+  - Suggest naming improvements
+  - Recommend architectural restructuring
+  
+  For each suggestion, provide:
+  1. Current issue description
+  2. Proposed refactoring approach
+  3. Before/after code examples
+  4. Benefits and trade-offs
+  5. Implementation priority (high/medium/low)
+
+parameters:
+  max_tokens: 4500
+  temperature: 0.2  # Slightly higher for creative refactoring ideas
+  focus_areas:
+    - design_patterns
+    - solid_principles
+    - code_smells
+    - architecture
+    - naming
+    - extraction
+    - modernization
+    - testability
+
+refactoring_categories:
+  - extract_method
+  - extract_class
+  - move_method
+  - rename_variable
+  - rename_method
+  - introduce_parameter_object
+  - replace_conditional_with_polymorphism
+  - extract_interface
+  - consolidate_duplicate_conditional_fragments
+
+output_format:
+  structure: "markdown"
+  sections:
+    - refactoring_summary
+    - high_priority_refactorings
+    - medium_priority_improvements
+    - architectural_suggestions
+    - modern_language_features
+    - design_pattern_opportunities
+    - code_examples
+  include_before_after: true
+  include_benefits: true
+  include_implementation_steps: true
+  include_testing_strategy: true

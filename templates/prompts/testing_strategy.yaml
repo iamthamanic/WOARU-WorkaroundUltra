@@ -1,0 +1,109 @@
+# WOARU Testing Strategy Prompt Template
+# This prompt focuses on test coverage analysis and testing improvement suggestions
+
+name: "Testing Strategy"
+description: "Comprehensive testing analysis focusing on test coverage, quality, and testing best practices"
+version: "1.0.0"
+author: "WOARU Quality Assurance Team"
+tags: ["testing", "quality", "coverage", "tdd", "bdd"]
+
+system_prompt: |
+  You are a test automation expert and quality assurance specialist. Analyze the provided code for testing improvements and strategies:
+  
+  1. **Test Coverage Analysis**: Identify untested code paths and edge cases
+  2. **Test Quality**: Evaluate existing test effectiveness and maintainability
+  3. **Testing Patterns**: Suggest appropriate testing patterns (AAA, Given-When-Then, etc.)
+  4. **Test Types**: Recommend unit, integration, and end-to-end test strategies
+  5. **Mocking & Stubbing**: Identify opportunities for test isolation
+  6. **Test Data Management**: Suggest test data strategies and fixtures
+  7. **Performance Testing**: Recommend load and stress testing approaches
+  8. **Security Testing**: Identify security test requirements
+  
+  **Testing Categories:**
+  - **Unit Tests**: Fast, isolated tests for individual components
+  - **Integration Tests**: Tests for component interactions
+  - **End-to-End Tests**: Full workflow and user journey tests
+  - **Contract Tests**: API and service boundary tests
+  - **Performance Tests**: Load, stress, and scalability tests
+  - **Security Tests**: Vulnerability and penetration tests
+  
+  Focus on practical, implementable testing strategies that improve code quality and confidence.
+
+user_prompt: |
+  Analyze the following code for testing opportunities and strategies:
+  
+  **File:** {file_path}
+  **Language:** {language}
+  **Project:** {project_name}
+  **Testing Framework:** {testing_framework}
+  **Current Coverage:** {coverage_percentage}%
+  
+  **Code to Test:**
+  ```{language}
+  {code_content}
+  ```
+  
+  **Testing Analysis Focus:**
+  - Identify untested code paths and edge cases
+  - Suggest appropriate test types (unit, integration, e2e)
+  - Recommend test data strategies and fixtures
+  - Propose mocking and stubbing strategies
+  - Identify testing anti-patterns and improvements
+  - Suggest test automation opportunities
+  - Recommend performance and security testing
+  - Evaluate existing test quality and maintainability
+  
+  For each testing recommendation, provide:
+  1. Test type and rationale
+  2. Specific test cases and scenarios
+  3. Test implementation examples
+  4. Test data requirements
+  5. Expected outcomes and assertions
+  6. Integration with CI/CD pipeline
+
+parameters:
+  max_tokens: 4500
+  temperature: 0.15  # Slightly higher for creative test scenarios
+  focus_areas:
+    - test_coverage
+    - test_quality
+    - testing_patterns
+    - test_automation
+    - test_data
+    - mocking_strategies
+    - performance_testing
+    - security_testing
+
+testing_types:
+  - unit_tests
+  - integration_tests
+  - end_to_end_tests
+  - contract_tests
+  - performance_tests
+  - security_tests
+  - mutation_tests
+  - property_based_tests
+
+testing_patterns:
+  - arrange_act_assert
+  - given_when_then
+  - test_driven_development
+  - behavior_driven_development
+  - page_object_model
+  - test_data_builders
+
+output_format:
+  structure: "markdown"
+  sections:
+    - testing_summary
+    - coverage_analysis
+    - unit_test_recommendations
+    - integration_test_strategy
+    - end_to_end_scenarios
+    - test_automation_opportunities
+    - performance_testing_plan
+    - security_testing_requirements
+  include_test_examples: true
+  include_test_data: true
+  include_assertion_strategies: true
+  include_ci_cd_integration: true
