@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
-import { AIReviewConfig, LLMProviderConfig, CodeContext } from '../types/ai-review';
+import { AIReviewConfig, LLMProviderConfig, CodeContext, MultiLLMReviewResult } from '../types/ai-review';
 import { AIReviewAgent } from './AIReviewAgent';
 
 export interface DocumentationResult {
@@ -31,17 +31,31 @@ export interface CodeFunction {
  * - Safely inserts documentation without breaking existing code
  * - Handles existing documentation detection and updates
  */
+interface PromptTemplate {
+  name: string;
+  description: string;
+  system_prompt: string;
+  user_prompt: string;
+  parameters?: Record<string, unknown>;
+}
+
+
 export class DocumentationAgent {
   private aiReviewAgent: AIReviewAgent;
-  private promptTemplates: Record<string, any>;
+  private promptTemplates: Record<string, PromptTemplate>;
 
-  constructor(aiConfig: AIReviewConfig, promptTemplates: Record<string, any>) {
+  constructor(aiConfig: AIReviewConfig, promptTemplates: Record<string, PromptTemplate>) {
     this.aiReviewAgent = new AIReviewAgent(aiConfig, promptTemplates);
     this.promptTemplates = promptTemplates;
   }
 
   /**
-   * Generate documentation for a list of files
+   * Generate documentation for a list of files using AI analysis
+   * 
+   * @param fileList - Array of file paths to process for documentation
+   * @param projectPath - Root path of the project for context
+   * @param documentationType - Type of documentation to generate ('nopro' for human-friendly, 'pro' for technical)
+   * @returns Promise resolving to array of documentation results with file modifications
    */
   async generateDocumentation(
     fileList: string[],
@@ -57,7 +71,9 @@ export class DocumentationAgent {
         const fileResults = await this.processFile(filePath, projectPath, documentationType);
         results.push(...fileResults);
       } catch (error) {
-        console.warn(chalk.yellow(`⚠️ Could not process ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(chalk.yellow(`⚠️ Could not process ${filePath}: ${errorMessage}`));
+        // Continue processing other files instead of failing completely
       }
     }
 
@@ -66,6 +82,11 @@ export class DocumentationAgent {
 
   /**
    * Process a single file for documentation generation
+   * 
+   * @param filePath - Path to the file to process
+   * @param projectPath - Root project path for context
+   * @param documentationType - Type of documentation to generate
+   * @returns Promise resolving to array of documentation results for this file
    */
   private async processFile(
     filePath: string,
@@ -112,7 +133,10 @@ export class DocumentationAgent {
           });
         }
       } catch (error) {
-        console.warn(chalk.yellow(`⚠️ Could not generate documentation for ${element.name}: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(chalk.yellow(`⚠️ Could not generate documentation for ${element.name}: ${errorMessage}`));
+        // Log additional context for debugging
+        console.debug(`Debug info: File=${filePath}, Element=${element.name}, Type=${documentationType}`);
       }
     }
 
@@ -121,6 +145,13 @@ export class DocumentationAgent {
 
   /**
    * Generate documentation for a specific code element using AI
+   * 
+   * @param element - Code element (function/class) to document
+   * @param filePath - Path to the file containing the element
+   * @param projectPath - Root project path for context
+   * @param language - Programming language of the file
+   * @param documentationType - Type of documentation to generate
+   * @returns Promise resolving to generated documentation string or null if failed
    */
   private async generateDocumentationForElement(
     element: CodeFunction,
@@ -164,8 +195,12 @@ export class DocumentationAgent {
 
   /**
    * Extract the best documentation from AI results
+   * 
+   * @param aiResult - Results from AI analysis containing provider responses
+   * @param documentationType - Type of documentation requested
+   * @returns Best documentation string from available results or null if none found
    */
-  private extractBestDocumentation(aiResult: any, documentationType: 'nopro' | 'pro'): string | null {
+  private extractBestDocumentation(aiResult: MultiLLMReviewResult, documentationType: 'nopro' | 'pro'): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);
     
@@ -173,6 +208,7 @@ export class DocumentationAgent {
       const providerResults = aiResult.results[provider];
       if (providerResults && providerResults.length > 0) {
         const firstResult = providerResults[0];
+        // AIReviewFinding has 'suggestion' property containing the generated documentation
         if (firstResult.suggestion) {
           return firstResult.suggestion.trim();
         }
@@ -206,6 +242,7 @@ export class DocumentationAgent {
     const lines = originalContent.split('\n');
 
     // Sort results by insertion point (reverse order to maintain line numbers)
+    // Why reverse order: When inserting multiple docs, later insertions don't affect earlier line numbers
     const sortedResults = results.sort((a, b) => b.insertionPoint - a.insertionPoint);
 
     // Apply each documentation insertion
@@ -239,6 +276,13 @@ export class DocumentationAgent {
 
   /**
    * Extract code elements (functions, classes, methods) from source code
+   * 
+   * Uses regex patterns to identify code constructs that should be documented.
+   * Why regex instead of AST parsing: Balance between complexity and reliability across languages.
+   * 
+   * @param content - Source code content to analyze
+   * @param language - Programming language for pattern selection
+   * @returns Array of detected code elements with metadata
    */
   private extractCodeElements(content: string, language: string): CodeFunction[] {
     const elements: CodeFunction[] = [];
