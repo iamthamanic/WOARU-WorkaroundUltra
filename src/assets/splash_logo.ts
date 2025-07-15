@@ -1,12 +1,7 @@
-// WOARU ANSI Art Splash Screen - High-quality ANSI art logo
-// Generated from the original WOARU logo with robot, megaphone, and checklist
+// WOARU Dynamic ASCII Art Splash Screen
+// Generates high-quality ASCII art from PNG logo using image-to-ascii library
 
-export const WOARU_ANSI_ART = `\x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄▄▄▄▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄▄\x1b[m
-\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m     \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m    \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[m
-\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[m
-\x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[38;5;254;48;5;255m▄\x1b[38;5;252;48;5;255m▄\x1b[38;5;188;48;5;255m▄\x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[m
-\x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m    \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[38;5;235;48;5;250m▄\x1b[38;5;242;48;5;233m▄\x1b[38;5;109;48;5;233m▄\x1b[38;5;66;48;5;233m▄\x1b[38;5;234;48;5;243m▄\x1b[38;5;250;48;5;255m▄\x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄▄▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[m
-\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m   \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m    \x1b[38;5;255;48;5;255m▄▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[38;5;255;48;5;188m▄\x1b[38;5;235;48;5;233m▄\x1b[38;5;239;48;5;103m▄\x1b[38;5;60;48;5;67m▄\x1b[38;5;239;48;5;60m▄\x1b[38;5;233;48;5;234m▄\x1b[38;5;250;48;5;246m▄\x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m         \x1b[38;5;255;48;5;255m▄\x1b[48;5;255m \x1b[38;5;255;48;5;255m▄▄▄\x1b[48;5;255m  \x1b[38;5;255;48;5;255m▄\x1b[m`;
+import { generateTerminalOptimizedAsciiArt, generateCompactAsciiArt } from '../utils/asciiArtGenerator';
 
 export const displaySplashScreen = async () => {
   const chalk = require('chalk');
@@ -18,15 +13,30 @@ export const displaySplashScreen = async () => {
   const packageData = await fs.readJson(packagePath);
   const version = packageData.version;
 
-  // Check if terminal supports colors
-  if (process.stdout.isTTY && process.env.TERM !== 'dumb') {
+  try {
+    // Generate dynamic ASCII art from PNG logo
+    console.log();
+    
+    // Check terminal size for appropriate ASCII art
+    const terminalWidth = process.stdout.columns || 80;
+    const terminalHeight = process.stdout.rows || 24;
+    
+    let asciiArt: string;
+    if (terminalWidth >= 100 && terminalHeight >= 20) {
+      // Use full terminal-optimized ASCII art for larger terminals
+      asciiArt = await generateTerminalOptimizedAsciiArt();
+    } else {
+      // Use compact ASCII art for smaller terminals
+      asciiArt = await generateCompactAsciiArt();
+    }
+    
+    // Output ASCII art directly to stdout for proper rendering
+    process.stdout.write(asciiArt);
     process.stdout.write('\n');
-    // Display ANSI art - first 6 lines for compact display
-    const artLines = WOARU_ANSI_ART.split('\n').slice(0, 6);
-    artLines.forEach(line => process.stdout.write(line + '\n'));
-    process.stdout.write('\n');
-  } else {
-    // Fallback to compact logo for non-TTY environments
+    
+  } catch (error) {
+    // Fallback to compact logo if ASCII generation fails
+    console.log();
     console.log(WOARU_COMPACT_LOGO);
   }
   console.log(chalk.cyan.bold(`🤖 WOARU - YOUR TECH LEAD IN A BOX`));
