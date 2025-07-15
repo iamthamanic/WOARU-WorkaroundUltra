@@ -4040,6 +4040,35 @@ async function setupAnthropicProvider(): Promise<any> {
   
   const configManager = ConfigManager.getInstance();
   
+  // Load AI models from database
+  const { ToolsDatabaseManager } = await import('./database/ToolsDatabaseManager');
+  const toolsDb = new ToolsDatabaseManager();
+  let modelChoices: Array<{ name: string; value: string }> = [];
+  let defaultModel = 'claude-4-opus-20250115';
+  
+  try {
+    const aiModelsDb = await toolsDb.getAIModelsDatabase();
+    const anthropicProvider = aiModelsDb.llm_providers.anthropic;
+    
+    if (anthropicProvider && anthropicProvider.models) {
+      modelChoices = anthropicProvider.models.map(model => ({
+        name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
+        value: model.id
+      }));
+      
+      // Find the latest model for default
+      const latestModel = anthropicProvider.models.find(model => model.isLatest);
+      if (latestModel) {
+        defaultModel = latestModel.id;
+      }
+    }
+  } catch (error) {
+    console.warn(chalk.yellow('⚠️ Could not load AI models database, using fallback models'));
+    modelChoices = [
+      { name: 'Claude 4 Opus (Fallback)', value: 'claude-4-opus-20250115' }
+    ];
+  }
+  
   const answers = await inquirer.prompt([
     {
       type: 'password',
@@ -4058,13 +4087,8 @@ async function setupAnthropicProvider(): Promise<any> {
       type: 'list',
       name: 'model',
       message: 'Select Claude model:',
-      choices: [
-        { name: 'Claude 3.5 Sonnet (Latest)', value: 'claude-3-5-sonnet-20241022' },
-        { name: 'Claude 3.5 Haiku', value: 'claude-3-5-haiku-20241022' },
-        { name: 'Claude 3 Opus', value: 'claude-3-opus-20240229' },
-        { name: 'Claude 3 Sonnet', value: 'claude-3-sonnet-20240229' }
-      ],
-      default: 'claude-3-5-sonnet-20241022'
+      choices: modelChoices,
+      default: defaultModel
     },
     {
       type: 'confirm',
@@ -4128,6 +4152,35 @@ async function setupOpenAIProvider(): Promise<any> {
   
   const configManager = ConfigManager.getInstance();
   
+  // Load AI models from database
+  const { ToolsDatabaseManager } = await import('./database/ToolsDatabaseManager');
+  const toolsDb = new ToolsDatabaseManager();
+  let modelChoices: Array<{ name: string; value: string }> = [];
+  let defaultModel = 'gpt-4o';
+  
+  try {
+    const aiModelsDb = await toolsDb.getAIModelsDatabase();
+    const openaiProvider = aiModelsDb.llm_providers.openai;
+    
+    if (openaiProvider && openaiProvider.models) {
+      modelChoices = openaiProvider.models.map(model => ({
+        name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
+        value: model.id
+      }));
+      
+      // Find the latest model for default
+      const latestModel = openaiProvider.models.find(model => model.isLatest);
+      if (latestModel) {
+        defaultModel = latestModel.id;
+      }
+    }
+  } catch (error) {
+    console.warn(chalk.yellow('⚠️ Could not load AI models database, using fallback models'));
+    modelChoices = [
+      { name: 'GPT-4o (Fallback)', value: 'gpt-4o' }
+    ];
+  }
+  
   const answers = await inquirer.prompt([
     {
       type: 'password',
@@ -4146,14 +4199,8 @@ async function setupOpenAIProvider(): Promise<any> {
       type: 'list',
       name: 'model',
       message: 'Select GPT model:',
-      choices: [
-        { name: 'GPT-4o (Latest)', value: 'gpt-4o' },
-        { name: 'GPT-4o Mini', value: 'gpt-4o-mini' },
-        { name: 'GPT-4 Turbo', value: 'gpt-4-turbo' },
-        { name: 'GPT-4', value: 'gpt-4' },
-        { name: 'GPT-3.5 Turbo', value: 'gpt-3.5-turbo' }
-      ],
-      default: 'gpt-4o'
+      choices: modelChoices,
+      default: defaultModel
     },
     {
       type: 'confirm',
@@ -4219,6 +4266,35 @@ async function setupGoogleProvider(): Promise<any> {
   
   const configManager = ConfigManager.getInstance();
   
+  // Load AI models from database
+  const { ToolsDatabaseManager } = await import('./database/ToolsDatabaseManager');
+  const toolsDb = new ToolsDatabaseManager();
+  let modelChoices: Array<{ name: string; value: string }> = [];
+  let defaultModel = 'gemini-2.5-pro';
+  
+  try {
+    const aiModelsDb = await toolsDb.getAIModelsDatabase();
+    const googleProvider = aiModelsDb.llm_providers.google;
+    
+    if (googleProvider && googleProvider.models) {
+      modelChoices = googleProvider.models.map(model => ({
+        name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
+        value: model.id
+      }));
+      
+      // Find the latest model for default
+      const latestModel = googleProvider.models.find(model => model.isLatest);
+      if (latestModel) {
+        defaultModel = latestModel.id;
+      }
+    }
+  } catch (error) {
+    console.warn(chalk.yellow('⚠️ Could not load AI models database, using fallback models'));
+    modelChoices = [
+      { name: 'Gemini 2.5 Pro (Fallback)', value: 'gemini-2.5-pro' }
+    ];
+  }
+  
   const answers = await inquirer.prompt([
     {
       type: 'password',
@@ -4236,12 +4312,8 @@ async function setupGoogleProvider(): Promise<any> {
       type: 'list',
       name: 'model',
       message: 'Select Gemini model:',
-      choices: [
-        { name: 'Gemini 1.5 Pro (Latest)', value: 'gemini-1.5-pro' },
-        { name: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' },
-        { name: 'Gemini Pro', value: 'gemini-pro' }
-      ],
-      default: 'gemini-1.5-pro'
+      choices: modelChoices,
+      default: defaultModel
     },
     {
       type: 'confirm',

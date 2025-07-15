@@ -1076,6 +1076,19 @@ export class ToolsDatabaseManager {
    */
   async getAIModelsDatabase(): Promise<AIModelsDatabase> {
     try {
+      // First try local file for development
+      if (await fs.pathExists(this.aiModelsLocalFallbackPath)) {
+        try {
+          const localData = await fs.readJson(this.aiModelsLocalFallbackPath);
+          if (localData.llm_providers && localData.version) {
+            console.log('✅ WOARU: Using local AI models database');
+            return localData as AIModelsDatabase;
+          }
+        } catch (error) {
+          // Continue to cache/remote fallback
+        }
+      }
+
       // Ensure cache directory exists
       await fs.ensureDir(this.cacheDir);
 
