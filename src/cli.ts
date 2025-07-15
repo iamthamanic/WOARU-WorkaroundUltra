@@ -9,6 +9,8 @@ import { WOARUSupervisor } from './supervisor/WAUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import { APP_CONFIG } from './config/constants';
 import { ConfigManager } from './config/ConfigManager';
+import { VersionManager } from './utils/versionManager';
+import { StartupCheck } from './utils/startupCheck';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
@@ -25,8 +27,40 @@ async function initializeConfig() {
   }
 }
 
-// Initialize config before any command execution
-initializeConfig();
+// Perform startup checks
+async function performStartupChecks() {
+  try {
+    // Use silent check to avoid blocking startup
+    const checkResult = await StartupCheck.performSilentStartupCheck();
+    
+    // Only display critical errors
+    if (checkResult.errors.length > 0) {
+      console.log(chalk.red('\n❌ Startup-Probleme:'));
+      checkResult.errors.forEach(error => {
+        console.log(`   ${error}`);
+      });
+    }
+    
+    // Display warnings briefly
+    if (checkResult.warnings.length > 0) {
+      console.log(chalk.yellow('\n📋 Hinweise:'));
+      checkResult.warnings.forEach(warning => {
+        console.log(`   ${warning}`);
+      });
+    }
+  } catch (error) {
+    // Silent fail - startup checks are optional
+  }
+}
+
+// Initialize config and perform startup checks
+async function initialize() {
+  await initializeConfig();
+  await performStartupChecks();
+}
+
+// Initialize before any command execution
+initialize();
 
 const program = new Command();
 const wauEngine = new WAUEngine();
@@ -4486,6 +4520,39 @@ async function showLogStats(): Promise<void> {
     console.log(`🔄 **Active Actions:** 0`);
   }
 }
+
+// Version command with subcommands
+const versionCommand = program
+  .command('version')
+  .description('Show version information')
+  .action(() => {
+    VersionManager.displayVersion();
+  });
+
+// Version check subcommand
+versionCommand
+  .command('check')
+  .description('Check for updates')
+  .action(async () => {
+    try {
+      await VersionManager.displayVersionCheck();
+    } catch (error) {
+      console.error(chalk.red('❌ Fehler beim Prüfen der Version:'), error);
+    }
+  });
+
+// Update command
+program
+  .command('update')
+  .description('Update WOARU to the latest version')
+  .action(async () => {
+    try {
+      await VersionManager.updateToLatest();
+    } catch (error) {
+      console.error(chalk.red('❌ Update fehlgeschlagen:'), error);
+      process.exit(1);
+    }
+  });
 
 // Show help if no command provided
 if (process.argv.length === 2) {

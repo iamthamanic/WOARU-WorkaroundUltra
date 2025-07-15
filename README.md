@@ -1,9 +1,64 @@
-# WOARU 🚀 v3.7.1
+# WOARU 🚀 v3.8.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.7.1 - Critical Bug-Fix Release**
+## 🆕 **Latest Release: v3.8.0 - Comprehensive Version & Update Management System**
+**Release Date:** July 15, 2025
+
+### 🚀 **MAJOR: Professional Version Management**
+**Problem Solved:** Development teams need reliable, automated version management and environment validation to maintain consistent, up-to-date toolchains across projects and team members.
+
+**Revolutionary Solution:**
+- **🔄 Smart Version Commands**:
+  - `woaru version` - Display current version
+  - `woaru version check` - Check for updates with release dates
+  - `woaru update` - One-command update to latest version
+- **⚡ Proactive Startup Checks**:
+  - Automatic version checking with 24-hour intelligent caching
+  - Interactive update prompts when new versions are available
+  - Environment validation for Git, Docker, and Snyk dependencies
+- **🛡️ Enterprise-Grade Reliability**:
+  - Secure update process with process isolation
+  - Robust error handling and graceful degradation
+  - Non-blocking startup checks that don't interrupt workflow
+- **💡 Professional User Experience**:
+  - Clear version information and update recommendations
+  - Transparent control over update decisions
+  - Comprehensive environment dependency validation
+
+### 🎯 **Version Management in Action**
+```bash
+# Check current version
+woaru version
+# Output: WOARU Version: 3.8.0
+
+# Check for updates
+woaru version check
+# Output: 📦 Eine neue Version (v3.8.1) ist verfügbar!
+#         Veröffentlicht am: 16.07.2025
+
+# Update to latest version
+woaru update
+# Output: 🚀 Updating WOARU to latest version...
+#         ✅ Update erfolgreich abgeschlossen!
+
+# Automatic startup checks
+woaru analyze
+# Output: 📋 Hinweise:
+#         💡 Eine neue Version ist verfügbar. Führe 'woaru update' aus.
+#         💡 TIPP: Docker ist nicht verfügbar. Containerisierung-Checks werden übersprungen.
+```
+
+### 🔍 **Environment Validation**
+WOARU now automatically validates your development environment on startup:
+- **✅ Git Detection**: Critical for `woaru review git` functionality
+- **💡 Docker Detection**: Optional for containerization checks
+- **🔒 Snyk Detection**: Optional for enhanced security analysis
+
+---
+
+## 📚 **Previous Release: v3.7.1 - Critical Bug-Fix Release**
 **Release Date:** July 15, 2025
 
 ### 🐛 **CRITICAL BUG FIXES: Production-Ready Stability**
@@ -594,6 +649,13 @@ woaru watch          # Start live quality monitoring with security (★ supervis
 woaru review         # Code review: analyze only changed files with security + SOLID (★ NEW SUB-COMMANDS!)
 woaru docu           # AI-powered code documentation generator (★ NEW v3.6.0!)
 woaru commands       # Show detailed command reference (★ NEW!)
+```
+
+### Version & Update Management (★ NEW v3.8.0!)
+```bash
+woaru version        # Show current WOARU version
+woaru version check  # Check for updates from NPM registry
+woaru update         # Update WOARU to latest version
 ```
 
 ### Status and Management
