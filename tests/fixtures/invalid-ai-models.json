@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0-invalid",
+  "lastUpdated": "2025-01-15T10:00:00Z",
+  "missing_providers": true,
+  "invalid_structure": {
+    "anthropic": {
+      "name": "Anthropic Claude",
+      "missing_models": true
+    }
+  }
+}

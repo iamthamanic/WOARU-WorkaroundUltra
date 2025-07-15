@@ -1,0 +1,50 @@
+
+> woaru@4.2.0 test
+> jest
+
+  console.log
+    ✅ WOARU: Using local AI models database
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1084:21)
+
+  console.log
+    📥 WOARU: Downloading AI models database...
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1112:15)
+
+  console.log
+    ✅ WOARU: AI models database cached successfully
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1117:15)
+
+  console.log
+    📥 WOARU: Downloading AI models database...
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1112:15)
+
+  console.log
+    ✅ WOARU: AI models database cached successfully
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1117:15)
+
+  console.log
+    ✅ WOARU: Using local AI models database
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1084:21)
+
+  console.log
+    ✅ WOARU: Using local AI models database
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1084:21)
+
+  console.log
+    ✅ WOARU: Using local AI models database
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1084:21)
+
+  console.log
+    ✅ WOARU: Using local AI models database
+
+      at ToolsDatabaseManager.getAIModelsDatabase (/Users/halteverbotsocialmacpro/Desktop/arsvivai/WOARU(WorkaroundUltra)../../../../../src/database/ToolsDatabaseManager.ts:1084:21)
+
+  console.log

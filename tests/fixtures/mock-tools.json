@@ -1,0 +1,103 @@
+{
+  "version": "3.2.0-test",
+  "lastUpdated": "2025-01-15T10:00:00Z",
+  "schema_version": "2.0",
+  "core_tools": {
+    "eslint": {
+      "name": "ESLint",
+      "description": "JavaScript and TypeScript linter",
+      "languages": ["javascript", "typescript"],
+      "fileExtensions": [".js", ".jsx", ".ts", ".tsx"],
+      "frameworks": ["react", "vue", "angular"],
+      "recommended_flags": ["--fix"],
+      "config_files": [".eslintrc.js", ".eslintrc.json"],
+      "isDeprecated": false,
+      "popularity": 95,
+      "priority": "high",
+      "plugin_class": "EslintPlugin",
+      "metadata": {
+        "npm_package": "eslint",
+        "github_repo": "eslint/eslint",
+        "weekly_downloads": 25000000,
+        "last_check": "2025-01-15T10:00:00Z"
+      }
+    },
+    "prettier": {
+      "name": "Prettier",
+      "description": "Code formatter for JavaScript, TypeScript, and more",
+      "languages": ["javascript", "typescript", "json", "markdown"],
+      "fileExtensions": [".js", ".ts", ".json", ".md"],
+      "frameworks": ["react", "vue", "angular"],
+      "recommended_flags": ["--write"],
+      "config_files": [".prettierrc", "prettier.config.js"],
+      "isDeprecated": false,
+      "popularity": 90,
+      "priority": "high",
+      "plugin_class": "PrettierPlugin",
+      "metadata": {
+        "npm_package": "prettier",
+        "github_repo": "prettier/prettier",
+        "weekly_downloads": 20000000,
+        "last_check": "2025-01-15T10:00:00Z"
+      }
+    }
+  },
+  "experimental_tools": {
+    "biome": {
+      "name": "Biome",
+      "description": "Fast formatter and linter for JavaScript and TypeScript",
+      "languages": ["javascript", "typescript"],
+      "fileExtensions": [".js", ".ts", ".jsx", ".tsx"],
+      "frameworks": ["react", "next"],
+      "commandTemplate": "npx biome lint {filePath} --apply",
+      "installCommand": "npm install -D @biomejs/biome",
+      "configFiles": ["biome.json"],
+      "isExperimental": true,
+      "popularity": 75,
+      "priority": "medium",
+      "metadata": {
+        "npm_package": "@biomejs/biome",
+        "github_repo": "biomejs/biome",
+        "weekly_downloads": 500000,
+        "trending": true,
+        "last_check": "2025-01-15T10:00:00Z"
+      }
+    }
+  },
+  "deprecation_warnings": {
+    "tslint": {
+      "name": "TSLint",
+      "reason": "Deprecated in favor of ESLint",
+      "successor": "eslint",
+      "migration_guide": "https://typescript-eslint.io/docs/linting/troubleshooting#migrating-from-tslint",
+      "sunset_date": "2019-12-01"
+    }
+  },
+  "framework_recommendations": {
+    "react": {
+      "core_tools": ["eslint", "prettier"],
+      "experimental_tools": ["biome"],
+      "eslint_config": "@typescript-eslint/recommended",
+      "prettier_config": "standard"
+    },
+    "vue": {
+      "core_tools": ["eslint", "prettier"],
+      "experimental_tools": [],
+      "eslint_config": "@vue/typescript/recommended",
+      "prettier_config": "standard"
+    }
+  },
+  "meta": {
+    "source_url": "test://mock-tools.json",
+    "update_frequency": "weekly",
+    "maintainers": ["WOARU Test Suite"],
+    "schema_documentation": "https://docs.woaru.dev/schemas/tools",
+    "version_history": [
+      {
+        "version": "3.2.0-test",
+        "date": "2025-01-15",
+        "changes": "Test version with mock data"
+      }
+    ]
+  }
+}

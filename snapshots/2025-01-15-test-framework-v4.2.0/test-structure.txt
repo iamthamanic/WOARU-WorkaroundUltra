@@ -1,0 +1,8 @@
+total 32
+drwxr-xr-x   7 halteverbotsocialmacpro  staff   224 Jul 15 16:36 .
+drwxr-xr-x@ 66 halteverbotsocialmacpro  staff  2112 Jul 15 16:47 ..
+-rw-r--r--   1 halteverbotsocialmacpro  staff  4091 Jun 25 10:20 CodeAnalyzer.test.ts
+drwxr-xr-x   6 halteverbotsocialmacpro  staff   192 Jul 15 16:13 fixtures
+drwxr-xr-x   4 halteverbotsocialmacpro  staff   128 Jul 15 16:34 integration
+-rw-r--r--   1 halteverbotsocialmacpro  staff  4643 Jun 25 10:19 ProjectAnalyzer.test.ts
+-rw-r--r--   1 halteverbotsocialmacpro  staff  1997 Jul 15 16:36 setup.ts

@@ -1,0 +1,104 @@
+{
+  "version": "1.0.0-test",
+  "lastUpdated": "2025-01-15T10:00:00Z",
+  "llm_providers": {
+    "anthropic": {
+      "name": "Anthropic Claude",
+      "description": "Advanced AI assistant models by Anthropic",
+      "apiKeyEnvVar": "ANTHROPIC_API_KEY",
+      "baseUrl": "https://api.anthropic.com/v1/messages",
+      "providerType": "anthropic",
+      "headers": {
+        "anthropic-version": "2023-06-01"
+      },
+      "bodyTemplate": "{\"model\":\"{model}\",\"max_tokens\":4000,\"temperature\":0.1,\"messages\":[{\"role\":\"user\",\"content\":\"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```\"}]}",
+      "timeout": 30000,
+      "maxTokens": 4000,
+      "temperature": 0.1,
+      "models": [
+        {
+          "id": "claude-3-5-sonnet-20241022",
+          "name": "Claude 3.5 Sonnet",
+          "description": "Most capable model with superior reasoning",
+          "isLatest": true,
+          "category": "flagship",
+          "contextWindow": 200000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
+        },
+        {
+          "id": "claude-3-5-haiku-20241022",
+          "name": "Claude 3.5 Haiku",
+          "description": "Fastest model for quick responses",
+          "isLatest": false,
+          "category": "fast",
+          "contextWindow": 200000,
+          "supportedFeatures": ["code_analysis", "quick_responses"]
+        }
+      ]
+    },
+    "openai": {
+      "name": "OpenAI GPT",
+      "description": "Advanced language models by OpenAI",
+      "apiKeyEnvVar": "OPENAI_API_KEY",
+      "baseUrl": "https://api.openai.com/v1/chat/completions",
+      "providerType": "openai",
+      "headers": {},
+      "bodyTemplate": "{\"model\":\"{model}\",\"messages\":[{\"role\":\"system\",\"content\":\"{systemPrompt}\"},{\"role\":\"user\",\"content\":\"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```\"}],\"max_tokens\":4000,\"temperature\":0.1}",
+      "timeout": 30000,
+      "maxTokens": 4000,
+      "temperature": 0.1,
+      "models": [
+        {
+          "id": "gpt-4o",
+          "name": "GPT-4o",
+          "description": "Latest flagship model with multimodal capabilities",
+          "isLatest": true,
+          "category": "flagship",
+          "contextWindow": 128000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "multimodal"]
+        },
+        {
+          "id": "gpt-4o-mini",
+          "name": "GPT-4o Mini",
+          "description": "Smaller, faster version of GPT-4o",
+          "isLatest": false,
+          "category": "fast",
+          "contextWindow": 128000,
+          "supportedFeatures": ["code_analysis", "quick_responses"]
+        }
+      ]
+    },
+    "deepseek": {
+      "name": "DeepSeek AI",
+      "description": "Powerful reasoning and coding models by DeepSeek",
+      "apiKeyEnvVar": "DEEPSEEK_API_KEY",
+      "baseUrl": "https://api.deepseek.com/v1/chat/completions",
+      "providerType": "openai",
+      "headers": {},
+      "bodyTemplate": "{\"model\":\"{model}\",\"messages\":[{\"role\":\"system\",\"content\":\"{systemPrompt}\"},{\"role\":\"user\",\"content\":\"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```\"}],\"max_tokens\":4000,\"temperature\":0.1}",
+      "timeout": 30000,
+      "maxTokens": 4000,
+      "temperature": 0.1,
+      "models": [
+        {
+          "id": "deepseek-chat",
+          "name": "DeepSeek Chat",
+          "description": "General-purpose conversational model",
+          "isLatest": true,
+          "category": "flagship",
+          "contextWindow": 32768,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
+        },
+        {
+          "id": "deepseek-coder",
+          "name": "DeepSeek Coder",
+          "description": "Specialized model for code generation",
+          "isLatest": false,
+          "category": "specialized",
+          "contextWindow": 32768,
+          "supportedFeatures": ["code_analysis", "code_generation"]
+        }
+      ]
+    }
+  }
+}
