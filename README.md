@@ -1,20 +1,20 @@
-# WOARU 🚀 v4.0.0
+# WOARU 🚀 v4.1.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v4.0.0 - Revolutionary AI Models Database System**
-**Release Date:** July 15, 2025
+## 🆕 **Latest Release: v4.1.0 - Enhanced AI Models Database with Claude 4 & DeepSeek**
+**Release Date:** January 15, 2025
 
-### 🚀 **MAJOR: Database-Driven LLM Configuration System**
-**Problem Solved:** WOARU had a critical, recurring problem with outdated LLM model lists hardcoded throughout the codebase. Users constantly faced missing or deprecated model options, limiting WOARU's effectiveness as a flexible LLM analysis platform.
+### 🚀 **MINOR: Complete AI Models Database Implementation**
+**Problem Solved:** After the initial v4.0.0 release, testing revealed that the AI models database wasn't properly loading from the local `ai-models.json` file, and hardcoded model references still existed in the setup functions.
 
-**Revolutionary Solution:**
-- **🔧 Comprehensive AI Models Database**:
-  - Complete `ai-models.json` database with 6 LLM providers
-  - 25+ models across Anthropic, OpenAI, Google, DeepSeek, Azure, and Ollama
-  - Dynamic model loading replaces all hardcoded lists
-  - Future-proof centralized database enables automatic updates
+**Complete Solution:**
+- **🔧 Fully Functional AI Models Database**:
+  - Fixed local `ai-models.json` loading priority in ToolsDatabaseManager
+  - Removed ALL hardcoded model references from setup functions
+  - Added latest models: Claude 4 Opus, GPT-4.1, Gemini 2.5 Pro
+  - 16+ models across 5 LLM providers now properly loaded dynamically
 - **🧠 DeepSeek AI Integration**:
   - Full DeepSeek AI provider support with 3 specialized models
   - Cost-effective pricing at $0.00014/$0.00028 per 1k tokens
@@ -36,27 +36,37 @@ The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically conf
 # Available LLM providers and models
 woaru setup llm                       # Interactive setup with all providers
 
-# 6 Providers with 25+ Models:
-- Anthropic: Claude 3.5 Sonnet, Haiku, Opus
-- OpenAI: GPT-4o, GPT-4o Mini, GPT-4 Turbo  
-- Google: Gemini 1.5 Pro, Flash, Pro
-- DeepSeek: Chat, Coder, Reasoner (NEW!)
-- Azure: Enterprise GPT models
-- Ollama: Llama 3.2, Code Llama, DeepSeek Coder, Qwen2.5
+# 5 Providers with 16+ Models:
+- Anthropic: Claude 4 Opus (NEW!), Claude 4 Sonnet, Claude 3.7 Sonnet, Claude 3.5 Sonnet
+- OpenAI: GPT-4o, GPT-4.1 (NEW!), GPT-4o Mini  
+- Google: Gemini 2.5 Pro (NEW!), Gemini 2.5 Flash
+- DeepSeek: Chat, Coder, Reasoner (NEW PROVIDER!)
+- Ollama: Llama 3.2 Latest, Qwen2.5 Coder, DeepSeek Coder 33B, Code Llama 34B
 
 # Database-driven configuration
 ai-models.json                        # Centralized models database
 ```
 
 ### 🔄 **Migration Guide**
-- **BREAKING**: Hardcoded model lists removed from setup functions
-- **Enhanced**: All model configurations now sourced from ai-models.json
-- **NEW**: DeepSeek AI provider available in `woaru setup llm`
+- **Fixed**: Local `ai-models.json` now properly loads before remote fallback
+- **Enhanced**: All hardcoded model references completely removed
+- **NEW**: Latest AI models including Claude 4 Opus, GPT-4.1, Gemini 2.5 Pro
 - **Compatible**: Existing LLM configurations remain functional
 
 ---
 
-## 📚 **Previous Release: v3.9.0 - Revolutionary Review Commands Refactoring**
+## 📚 **Previous Release: v4.0.0 - Revolutionary AI Models Database System**
+**Release Date:** July 15, 2025
+
+### Initial database-driven LLM configuration implementation
+- Introduced `ai-models.json` for centralized model management
+- Added DeepSeek AI provider support
+- Enhanced local Ollama model integration
+- Replaced hardcoded model lists with dynamic loading
+
+---
+
+## 📚 **v3.9.0 - Revolutionary Review Commands Refactoring**
 **Release Date:** July 15, 2025
 
 ### 🚀 **MAJOR: Professional Version Management**

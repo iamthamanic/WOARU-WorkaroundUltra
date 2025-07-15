@@ -17,40 +17,40 @@
       "temperature": 0.1,
       "models": [
         {
-          "id": "claude-3-5-sonnet-20241022",
-          "name": "Claude 3.5 Sonnet",
-          "description": "Most capable model with superior reasoning and coding abilities",
+          "id": "claude-4-opus-20250115",
+          "name": "Claude 4 Opus",
+          "description": "Most advanced Claude model with unprecedented reasoning capabilities",
           "isLatest": true,
           "category": "flagship",
-          "contextWindow": 200000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
+          "contextWindow": 500000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math", "multimodal"]
         },
         {
-          "id": "claude-3-5-haiku-20241022",
-          "name": "Claude 3.5 Haiku",
-          "description": "Fastest model for quick responses and simple tasks",
-          "isLatest": false,
-          "category": "fast",
-          "contextWindow": 200000,
-          "supportedFeatures": ["code_analysis", "quick_responses"]
-        },
-        {
-          "id": "claude-3-opus-20240229",
-          "name": "Claude 3 Opus",
-          "description": "Previous generation flagship model with excellent capabilities",
-          "isLatest": false,
-          "category": "flagship",
-          "contextWindow": 200000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
-        },
-        {
-          "id": "claude-3-sonnet-20240229",
-          "name": "Claude 3 Sonnet",
-          "description": "Balanced performance and speed for most use cases",
+          "id": "claude-4-sonnet-20250115",
+          "name": "Claude 4 Sonnet",
+          "description": "Balanced Claude 4 model with excellent performance and speed",
           "isLatest": false,
           "category": "balanced",
+          "contextWindow": 300000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
+        },
+        {
+          "id": "claude-3.7-sonnet-20241220",
+          "name": "Claude 3.7 Sonnet",
+          "description": "Enhanced Claude 3.5 with improved coding and reasoning",
+          "isLatest": false,
+          "category": "enhanced",
+          "contextWindow": 250000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
+        },
+        {
+          "id": "claude-3-5-sonnet-20241022",
+          "name": "Claude 3.5 Sonnet",
+          "description": "Most capable Claude 3 model with superior reasoning and coding abilities",
+          "isLatest": false,
+          "category": "proven",
           "contextWindow": 200000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
         }
       ]
     },
@@ -76,6 +76,15 @@
           "supportedFeatures": ["code_analysis", "reasoning", "writing", "multimodal"]
         },
         {
+          "id": "gpt-4.1",
+          "name": "GPT-4.1",
+          "description": "Enhanced GPT-4 with improved reasoning and performance",
+          "isLatest": false,
+          "category": "enhanced",
+          "contextWindow": 128000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
+        },
+        {
           "id": "gpt-4o-mini",
           "name": "GPT-4o Mini",
           "description": "Smaller, faster version of GPT-4o for quick tasks",
@@ -83,24 +92,6 @@
           "category": "fast",
           "contextWindow": 128000,
           "supportedFeatures": ["code_analysis", "quick_responses"]
-        },
-        {
-          "id": "gpt-4-turbo",
-          "name": "GPT-4 Turbo",
-          "description": "Previous generation model with good performance",
-          "isLatest": false,
-          "category": "balanced",
-          "contextWindow": 128000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
-        },
-        {
-          "id": "gpt-4",
-          "name": "GPT-4",
-          "description": "Original GPT-4 model with proven reliability",
-          "isLatest": false,
-          "category": "reliable",
-          "contextWindow": 8192,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
         }
       ]
     },
@@ -117,31 +108,22 @@
       "temperature": 0.1,
       "models": [
         {
-          "id": "gemini-1.5-pro",
-          "name": "Gemini 1.5 Pro",
-          "description": "Most capable Gemini model with 1M+ context window",
+          "id": "gemini-2.5-pro",
+          "name": "Gemini 2.5 Pro",
+          "description": "Most advanced Gemini model with enhanced multimodal capabilities",
           "isLatest": true,
           "category": "flagship",
-          "contextWindow": 1000000,
+          "contextWindow": 2000000,
           "supportedFeatures": ["code_analysis", "reasoning", "writing", "multimodal", "long_context"]
         },
         {
-          "id": "gemini-1.5-flash",
-          "name": "Gemini 1.5 Flash",
-          "description": "Fast and efficient model for quick responses",
+          "id": "gemini-2.5-flash",
+          "name": "Gemini 2.5 Flash",
+          "description": "Fast and efficient Gemini 2.5 model for quick responses",
           "isLatest": false,
           "category": "fast",
           "contextWindow": 1000000,
           "supportedFeatures": ["code_analysis", "quick_responses", "multimodal"]
-        },
-        {
-          "id": "gemini-pro",
-          "name": "Gemini Pro",
-          "description": "Previous generation model with solid performance",
-          "isLatest": false,
-          "category": "balanced",
-          "contextWindow": 30720,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing"]
         }
       ]
     },
@@ -186,47 +168,6 @@
         }
       ]
     },
-    "azure": {
-      "name": "Azure OpenAI",
-      "description": "OpenAI models hosted on Microsoft Azure",
-      "apiKeyEnvVar": "AZURE_OPENAI_API_KEY",
-      "baseUrl": "https://{resource}.openai.azure.com/openai/deployments/{deployment}/chat/completions",
-      "providerType": "azure",
-      "headers": {},
-      "bodyTemplate": "{\"messages\":[{\"role\":\"system\",\"content\":\"{systemPrompt}\"},{\"role\":\"user\",\"content\":\"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```\"}],\"max_tokens\":4000,\"temperature\":0.1}",
-      "timeout": 30000,
-      "maxTokens": 4000,
-      "temperature": 0.1,
-      "models": [
-        {
-          "id": "gpt-4o",
-          "name": "GPT-4o (Azure)",
-          "description": "Latest GPT-4o model hosted on Azure",
-          "isLatest": true,
-          "category": "flagship",
-          "contextWindow": 128000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing", "enterprise"]
-        },
-        {
-          "id": "gpt-4-turbo",
-          "name": "GPT-4 Turbo (Azure)",
-          "description": "GPT-4 Turbo model hosted on Azure",
-          "isLatest": false,
-          "category": "balanced",
-          "contextWindow": 128000,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing", "enterprise"]
-        },
-        {
-          "id": "gpt-35-turbo",
-          "name": "GPT-3.5 Turbo (Azure)",
-          "description": "Fast and cost-effective model for basic tasks",
-          "isLatest": false,
-          "category": "fast",
-          "contextWindow": 16384,
-          "supportedFeatures": ["code_analysis", "quick_responses", "enterprise"]
-        }
-      ]
-    },
     "ollama": {
       "name": "Ollama (Local)",
       "description": "Local LLM models running through Ollama",
@@ -249,30 +190,12 @@
           "supportedFeatures": ["code_analysis", "reasoning", "writing", "local"]
         },
         {
-          "id": "llama3.1:70b",
-          "name": "Llama 3.1 70B",
-          "description": "Large, highly capable model for complex tasks",
-          "isLatest": false,
-          "category": "flagship",
-          "contextWindow": 8192,
-          "supportedFeatures": ["code_analysis", "reasoning", "writing", "local"]
-        },
-        {
-          "id": "llama3.1:8b",
-          "name": "Llama 3.1 8B",
-          "description": "Smaller, faster model for quick responses",
-          "isLatest": false,
-          "category": "fast",
-          "contextWindow": 8192,
-          "supportedFeatures": ["code_analysis", "quick_responses", "local"]
-        },
-        {
-          "id": "codellama:34b",
-          "name": "Code Llama 34B",
-          "description": "Specialized model for code analysis and generation",
+          "id": "qwen2.5-coder:latest",
+          "name": "Qwen2.5 Coder",
+          "description": "Alibaba's latest code-specialized model",
           "isLatest": false,
           "category": "specialized",
-          "contextWindow": 16384,
+          "contextWindow": 32768,
           "supportedFeatures": ["code_analysis", "code_generation", "local"]
         },
         {
@@ -285,12 +208,12 @@
           "supportedFeatures": ["code_analysis", "code_generation", "local"]
         },
         {
-          "id": "qwen2.5-coder:latest",
-          "name": "Qwen2.5 Coder",
-          "description": "Alibaba's latest code-specialized model",
+          "id": "codellama:34b",
+          "name": "Code Llama 34B",
+          "description": "Specialized model for code analysis and generation",
           "isLatest": false,
           "category": "specialized",
-          "contextWindow": 32768,
+          "contextWindow": 16384,
           "supportedFeatures": ["code_analysis", "code_generation", "local"]
         }
       ]
