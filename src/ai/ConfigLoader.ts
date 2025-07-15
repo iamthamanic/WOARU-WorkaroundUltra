@@ -27,20 +27,21 @@ export class ConfigLoader {
       projectPath ? path.join(projectPath, 'woaru.config.js') : null,
       path.join(process.cwd(), 'woaru.config.js'),
       path.join(process.cwd(), '.woaru', 'config.js'),
-      path.join(process.env.HOME || '~', '.woaru', 'config.js')
+      path.join(process.env.HOME || '~', '.woaru', 'config.js'),
     ].filter(Boolean) as string[];
 
     for (const configPath of searchPaths) {
       try {
         if (await fs.pathExists(configPath)) {
           console.log(`📄 Loading AI config from: ${configPath}`);
-          
+
           // Clear require cache to allow hot reloading
           delete require.cache[require.resolve(configPath)];
-          
+
           const configModule = require(configPath);
-          const config = configModule.ai || configModule.default?.ai || configModule;
-          
+          const config =
+            configModule.ai || configModule.default?.ai || configModule;
+
           if (this.validateConfig(config)) {
             this.config = config;
             return this.config;
@@ -49,13 +50,18 @@ export class ConfigLoader {
           }
         }
       } catch (error) {
-        console.warn(`⚠️ Failed to load config from ${configPath}:`, error instanceof Error ? error.message : error);
+        console.warn(
+          `⚠️ Failed to load config from ${configPath}:`,
+          error instanceof Error ? error.message : error
+        );
       }
     }
 
     console.log('🤖 No AI review configuration found. AI features disabled.');
-    console.log('💡 Create woaru.config.js to enable AI code review. See woaru.config.example.js for template.');
-    
+    console.log(
+      '💡 Create woaru.config.js to enable AI code review. See woaru.config.example.js for template.'
+    );
+
     return null;
   }
 
@@ -66,36 +72,37 @@ export class ConfigLoader {
     return {
       providers: [
         {
-          id: "anthropic-claude",
-          providerType: "anthropic",
-          apiKeyEnvVar: "ANTHROPIC_API_KEY",
-          baseUrl: "https://api.anthropic.com/v1/messages",
-          model: "claude-3-5-sonnet-20241022",
+          id: 'anthropic-claude',
+          providerType: 'anthropic',
+          apiKeyEnvVar: 'ANTHROPIC_API_KEY',
+          baseUrl: 'https://api.anthropic.com/v1/messages',
+          model: 'claude-3-5-sonnet-20241022',
           headers: {
-            "anthropic-version": "2023-06-01"
+            'anthropic-version': '2023-06-01',
           },
           bodyTemplate: JSON.stringify({
-            model: "{model}",
+            model: '{model}',
             max_tokens: 4000,
             temperature: 0.1,
             messages: [
               {
-                role: "user", 
-                content: "{prompt}\n\nCode to analyze:\n```{language}\n{code}\n```"
-              }
-            ]
+                role: 'user',
+                content:
+                  '{prompt}\n\nCode to analyze:\n```{language}\n{code}\n```',
+              },
+            ],
           }),
           timeout: 30000,
           maxTokens: 4000,
           temperature: 0.1,
-          enabled: true
-        }
+          enabled: true,
+        },
       ],
       parallelRequests: true,
       consensusMode: false,
       minConsensusCount: 2,
       tokenLimit: 8000,
-      costThreshold: 0.50
+      costThreshold: 0.5,
     };
   }
 
@@ -113,8 +120,16 @@ export class ConfigLoader {
     }
 
     for (const provider of config.providers) {
-      if (!provider.id || !provider.providerType || !provider.baseUrl || !provider.model) {
-        console.warn('Config validation failed: provider missing required fields', provider);
+      if (
+        !provider.id ||
+        !provider.providerType ||
+        !provider.baseUrl ||
+        !provider.model
+      ) {
+        console.warn(
+          'Config validation failed: provider missing required fields',
+          provider
+        );
         return false;
       }
     }

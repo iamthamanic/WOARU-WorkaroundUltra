@@ -1,14 +1,26 @@
 import * as fs from 'fs-extra';
-import { CodeSmellFinding, CodeSmellType, ComplexityMetric, CodeMetrics } from '../types/code-smell';
+import {
+  CodeSmellFinding,
+  CodeSmellType,
+  ComplexityMetric,
+  CodeMetrics,
+} from '../types/code-smell';
 import { APP_CONFIG } from '../config/constants';
 
 export class CodeSmellAnalyzer {
-  private readonly complexityThreshold = APP_CONFIG.QUALITY.COMPLEXITY_THRESHOLD;
-  private readonly functionLengthThreshold = APP_CONFIG.QUALITY.FUNCTION_LENGTH_THRESHOLD;
-  private readonly parameterCountThreshold = APP_CONFIG.QUALITY.PARAMETER_COUNT_THRESHOLD;
-  private readonly nestingDepthThreshold = APP_CONFIG.QUALITY.NESTING_DEPTH_THRESHOLD;
+  private readonly complexityThreshold =
+    APP_CONFIG.QUALITY.COMPLEXITY_THRESHOLD;
+  private readonly functionLengthThreshold =
+    APP_CONFIG.QUALITY.FUNCTION_LENGTH_THRESHOLD;
+  private readonly parameterCountThreshold =
+    APP_CONFIG.QUALITY.PARAMETER_COUNT_THRESHOLD;
+  private readonly nestingDepthThreshold =
+    APP_CONFIG.QUALITY.NESTING_DEPTH_THRESHOLD;
 
-  async analyzeFile(filePath: string, language: string): Promise<CodeSmellFinding[]> {
+  async analyzeFile(
+    filePath: string,
+    language: string
+  ): Promise<CodeSmellFinding[]> {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       const findings: CodeSmellFinding[] = [];
@@ -33,7 +45,7 @@ export class CodeSmellAnalyzer {
     findings.push(...this.checkWeakEquality(lines));
     findings.push(...this.checkConsoleLog(lines));
     findings.push(...this.checkMagicNumbers(lines));
-    
+
     // More sophisticated analysis
     findings.push(...this.analyzeComplexity(content));
     findings.push(...this.analyzeFunctionLength(content));
@@ -45,13 +57,17 @@ export class CodeSmellAnalyzer {
 
   private checkVarKeyword(lines: string[]): CodeSmellFinding[] {
     const findings: CodeSmellFinding[] = [];
-    
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
-      
+
       // Match var declarations but avoid false positives in comments
       const varMatch = line.match(/(?:^|\s|;)(var\s+\w+)/);
-      if (varMatch && !trimmedLine.startsWith('//') && !trimmedLine.startsWith('*')) {
+      if (
+        varMatch &&
+        !trimmedLine.startsWith('//') &&
+        !trimmedLine.startsWith('*')
+      ) {
         const column = line.indexOf(varMatch[1]) + 1;
         findings.push({
           type: 'var-keyword',
@@ -60,7 +76,7 @@ export class CodeSmellAnalyzer {
           line: index + 1,
           column,
           rule: APP_CONFIG.ESLINT_RULES.NO_VAR,
-          suggestion: 'Replace "var" with "let" or "const"'
+          suggestion: 'Replace "var" with "let" or "const"',
         });
       }
     });
@@ -70,7 +86,7 @@ export class CodeSmellAnalyzer {
 
   private checkWeakEquality(lines: string[]): CodeSmellFinding[] {
     const findings: CodeSmellFinding[] = [];
-    
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
       if (trimmedLine.startsWith('//') || trimmedLine.startsWith('*')) return;
@@ -81,7 +97,7 @@ export class CodeSmellAnalyzer {
         const column = line.indexOf(weakEqualityMatch[2]) + 1;
         const operator = weakEqualityMatch[2];
         const strictOperator = operator === '==' ? '===' : '!==';
-        
+
         findings.push({
           type: 'weak-equality',
           message: `Use strict equality "${strictOperator}" instead of "${operator}"`,
@@ -89,7 +105,7 @@ export class CodeSmellAnalyzer {
           line: index + 1,
           column,
           rule: APP_CONFIG.ESLINT_RULES.EQEQEQ,
-          suggestion: `Replace "${operator}" with "${strictOperator}"`
+          suggestion: `Replace "${operator}" with "${strictOperator}"`,
         });
       }
     });
@@ -99,7 +115,7 @@ export class CodeSmellAnalyzer {
 
   private checkConsoleLog(lines: string[]): CodeSmellFinding[] {
     const findings: CodeSmellFinding[] = [];
-    
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
       if (trimmedLine.startsWith('//') || trimmedLine.startsWith('*')) return;
@@ -114,7 +130,7 @@ export class CodeSmellAnalyzer {
           line: index + 1,
           column,
           rule: 'no-console',
-          suggestion: 'Remove or replace with proper logging'
+          suggestion: 'Remove or replace with proper logging',
         });
       }
     });
@@ -124,14 +140,21 @@ export class CodeSmellAnalyzer {
 
   private checkMagicNumbers(lines: string[]): CodeSmellFinding[] {
     const findings: CodeSmellFinding[] = [];
-    
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
       if (trimmedLine.startsWith('//') || trimmedLine.startsWith('*')) return;
 
       // Look for magic numbers (not 0, 1, -1, or numbers in obvious contexts)
-      const magicNumberMatch = line.match(/(?:[^.\w]|^)([2-9]\d+|\d{3,})(?![.\w])/);
-      if (magicNumberMatch && !line.includes('line') && !line.includes('port') && !line.includes('timeout')) {
+      const magicNumberMatch = line.match(
+        /(?:[^.\w]|^)([2-9]\d+|\d{3,})(?![.\w])/
+      );
+      if (
+        magicNumberMatch &&
+        !line.includes('line') &&
+        !line.includes('port') &&
+        !line.includes('timeout')
+      ) {
         const column = line.indexOf(magicNumberMatch[1]) + 1;
         findings.push({
           type: 'magic-number',
@@ -140,7 +163,7 @@ export class CodeSmellAnalyzer {
           line: index + 1,
           column,
           rule: 'no-magic-numbers',
-          suggestion: 'Extract to a named constant'
+          suggestion: 'Extract to a named constant',
         });
       }
     });
@@ -158,11 +181,14 @@ export class CodeSmellAnalyzer {
         findings.push({
           type: 'complexity',
           message: `Function "${func.name}" has high cyclomatic complexity (${complexity}). Consider breaking it down.`,
-          severity: complexity > APP_CONFIG.QUALITY_THRESHOLDS.COMPLEXITY_WARNING ? 'error' : 'warning',
+          severity:
+            complexity > APP_CONFIG.QUALITY_THRESHOLDS.COMPLEXITY_WARNING
+              ? 'error'
+              : 'warning',
           line: func.line,
           column: func.column,
           rule: 'complexity',
-          suggestion: 'Break down into smaller functions'
+          suggestion: 'Break down into smaller functions',
         });
       }
     });
@@ -184,7 +210,7 @@ export class CodeSmellAnalyzer {
           line: func.line,
           column: func.column,
           rule: 'max-lines-per-function',
-          suggestion: 'Break down into smaller functions'
+          suggestion: 'Break down into smaller functions',
         });
       }
     });
@@ -206,7 +232,7 @@ export class CodeSmellAnalyzer {
           line: func.line,
           column: func.column,
           rule: 'max-params',
-          suggestion: 'Use an options object or break down the function'
+          suggestion: 'Use an options object or break down the function',
         });
       }
     });
@@ -217,7 +243,7 @@ export class CodeSmellAnalyzer {
   private analyzeNestingDepth(content: string): CodeSmellFinding[] {
     const findings: CodeSmellFinding[] = [];
     const lines = content.split('\n');
-    
+
     let currentDepth = 0;
     let maxDepth = 0;
     let maxDepthLine = 0;
@@ -229,9 +255,9 @@ export class CodeSmellAnalyzer {
       // Count opening braces
       const openBraces = (line.match(/\{/g) || []).length;
       const closeBraces = (line.match(/\}/g) || []).length;
-      
+
       currentDepth += openBraces - closeBraces;
-      
+
       if (currentDepth > maxDepth) {
         maxDepth = currentDepth;
         maxDepthLine = index + 1;
@@ -246,7 +272,7 @@ export class CodeSmellAnalyzer {
         line: maxDepthLine,
         column: 1,
         rule: 'max-depth',
-        suggestion: 'Extract nested logic into separate functions'
+        suggestion: 'Extract nested logic into separate functions',
       });
     }
 
@@ -269,10 +295,11 @@ export class CodeSmellAnalyzer {
     }> = [];
 
     const lines = content.split('\n');
-    
+
     // Simple regex-based function extraction
-    const functionRegex = /(?:function\s+(\w+)\s*\(([^)]*)\)|(\w+)\s*[:=]\s*(?:function\s*)?\(([^)]*)\)\s*=>?|(\w+)\s*\(([^)]*)\)\s*\{)/g;
-    
+    const functionRegex =
+      /(?:function\s+(\w+)\s*\(([^)]*)\)|(\w+)\s*[:=]\s*(?:function\s*)?\(([^)]*)\)\s*=>?|(\w+)\s*\(([^)]*)\)\s*\{)/g;
+
     lines.forEach((line, index) => {
       let match;
       while ((match = functionRegex.exec(line)) !== null) {
@@ -284,13 +311,13 @@ export class CodeSmellAnalyzer {
 
         // Extract function body (simplified)
         const functionBody = this.extractFunctionBody(content, index);
-        
+
         functions.push({
           name: functionName,
           body: functionBody,
           line: index + 1,
           column: match.index! + 1,
-          parameters: params
+          parameters: params,
         });
       }
     });
@@ -301,12 +328,12 @@ export class CodeSmellAnalyzer {
   private extractFunctionBody(content: string, startLine: number): string {
     const lines = content.split('\n');
     let braceCount = 0;
-    let bodyLines: string[] = [];
+    const bodyLines: string[] = [];
     let foundStart = false;
 
     for (let i = startLine; i < lines.length; i++) {
       const line = lines[i];
-      
+
       if (!foundStart) {
         if (line.includes('{')) {
           foundStart = true;

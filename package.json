@@ -1,6 +1,6 @@
 {
   "name": "woaru",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {

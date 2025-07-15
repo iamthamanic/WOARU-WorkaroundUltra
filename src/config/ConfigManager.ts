@@ -12,7 +12,7 @@ export class ConfigManager {
   private static instance: ConfigManager;
   private woaruDir: string;
   private envFile: string;
-  
+
   private constructor() {
     this.woaruDir = path.join(os.homedir(), APP_CONFIG.DIRECTORIES.BASE);
     this.envFile = path.join(this.woaruDir, '.env');
@@ -32,20 +32,23 @@ export class ConfigManager {
     try {
       // Ensure .woaru directory exists
       await fs.ensureDir(this.woaruDir);
-      
+
       // Set up security measures
       await this.setupGitIgnoreProtection();
-      
+
       // Ensure .env file exists (create empty if not)
-      if (!await fs.pathExists(this.envFile)) {
+      if (!(await fs.pathExists(this.envFile))) {
         await this.createEmptyEnvFile();
       }
-      
+
       // Set secure permissions
       await this.setSecurePermissions();
-      
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️ Warning: Could not fully initialize config security: ${error instanceof Error ? error.message : error}`));
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not fully initialize config security: ${error instanceof Error ? error.message : error}`
+        )
+      );
     }
   }
 
@@ -55,33 +58,38 @@ export class ConfigManager {
   async storeApiKey(provider: string, apiKey: string): Promise<void> {
     try {
       await this.initialize();
-      
+
       const envVarName = `${provider.toUpperCase()}_API_KEY`;
-      
+
       // Read existing .env content
       let envContent = '';
       if (await fs.pathExists(this.envFile)) {
         envContent = await fs.readFile(this.envFile, 'utf-8');
       }
-      
+
       // Remove existing entry for this provider if it exists
-      const lines = envContent.split('\n').filter(line => 
-        !line.startsWith(`${envVarName}=`)
-      );
-      
+      const lines = envContent
+        .split('\n')
+        .filter(line => !line.startsWith(`${envVarName}=`));
+
       // Add new entry
       lines.push(`${envVarName}="${apiKey}"`);
-      
+
       // Write back to file
       await fs.writeFile(this.envFile, lines.join('\n') + '\n');
-      
+
       // Set secure permissions
       await this.setSecurePermissions();
-      
-      console.log(chalk.green(`✅ API key for ${provider} stored securely in ${this.envFile}`));
-      
+
+      console.log(
+        chalk.green(
+          `✅ API key for ${provider} stored securely in ${this.envFile}`
+        )
+      );
     } catch (error) {
-      throw new Error(`Failed to store API key: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to store API key: ${error instanceof Error ? error.message : error}`
+      );
     }
   }
 
@@ -95,7 +103,11 @@ export class ConfigManager {
         dotenv.config({ path: this.envFile });
       }
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️ Warning: Could not load environment variables: ${error instanceof Error ? error.message : error}`));
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not load environment variables: ${error instanceof Error ? error.message : error}`
+        )
+      );
     }
   }
 
@@ -129,23 +141,27 @@ export class ConfigManager {
    */
   async getConfiguredProviders(): Promise<string[]> {
     try {
-      if (!await fs.pathExists(this.envFile)) {
+      if (!(await fs.pathExists(this.envFile))) {
         return [];
       }
-      
+
       const envContent = await fs.readFile(this.envFile, 'utf-8');
       const providers: string[] = [];
-      
+
       envContent.split('\n').forEach(line => {
         const match = line.match(/^([A-Z_]+)_API_KEY=/);
         if (match) {
           providers.push(match[1].toLowerCase());
         }
       });
-      
+
       return providers;
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️ Warning: Could not read providers: ${error instanceof Error ? error.message : error}`));
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not read providers: ${error instanceof Error ? error.message : error}`
+        )
+      );
       return [];
     }
   }
@@ -155,24 +171,25 @@ export class ConfigManager {
    */
   async removeApiKey(provider: string): Promise<void> {
     try {
-      if (!await fs.pathExists(this.envFile)) {
+      if (!(await fs.pathExists(this.envFile))) {
         return;
       }
-      
+
       const envVarName = `${provider.toUpperCase()}_API_KEY`;
       const envContent = await fs.readFile(this.envFile, 'utf-8');
-      
-      const lines = envContent.split('\n').filter(line => 
-        !line.startsWith(`${envVarName}=`)
-      );
-      
+
+      const lines = envContent
+        .split('\n')
+        .filter(line => !line.startsWith(`${envVarName}=`));
+
       await fs.writeFile(this.envFile, lines.join('\n'));
       await this.setSecurePermissions();
-      
+
       console.log(chalk.green(`✅ API key for ${provider} removed`));
-      
     } catch (error) {
-      throw new Error(`Failed to remove API key: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to remove API key: ${error instanceof Error ? error.message : error}`
+      );
     }
   }
 
@@ -197,7 +214,11 @@ export class ConfigManager {
         await fs.chmod(this.envFile, 0o600);
       }
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️ Warning: Could not set secure permissions: ${error instanceof Error ? error.message : error}`));
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not set secure permissions: ${error instanceof Error ? error.message : error}`
+        )
+      );
     }
   }
 
@@ -208,11 +229,11 @@ export class ConfigManager {
     const gitIgnorePaths = [
       path.join(os.homedir(), '.config', 'git', 'ignore'),
       path.join(os.homedir(), '.gitignore_global'),
-      path.join(os.homedir(), '.gitignore')
+      path.join(os.homedir(), '.gitignore'),
     ];
 
     let foundGitIgnore = false;
-    
+
     for (const gitIgnorePath of gitIgnorePaths) {
       if (await fs.pathExists(gitIgnorePath)) {
         await this.addToGitIgnore(gitIgnorePath);
@@ -222,9 +243,17 @@ export class ConfigManager {
     }
 
     if (!foundGitIgnore) {
-      console.log(chalk.yellow('⚠️  Warning: No global .gitignore found. Consider creating one to prevent accidental commits:'));
+      console.log(
+        chalk.yellow(
+          '⚠️  Warning: No global .gitignore found. Consider creating one to prevent accidental commits:'
+        )
+      );
       console.log(chalk.gray('   echo "~/.woaru/.env" >> ~/.gitignore_global'));
-      console.log(chalk.gray('   git config --global core.excludesfile ~/.gitignore_global'));
+      console.log(
+        chalk.gray(
+          '   git config --global core.excludesfile ~/.gitignore_global'
+        )
+      );
     }
   }
 
@@ -235,15 +264,23 @@ export class ConfigManager {
     try {
       const ignoreEntry = '~/.woaru/.env';
       const content = await fs.readFile(gitIgnorePath, 'utf-8').catch(() => '');
-      
+
       if (!content.includes(ignoreEntry)) {
-        const newContent = content + (content.endsWith('\n') ? '' : '\n') + 
-                          `\n# WOARU API keys protection\n${ignoreEntry}\n`;
+        const newContent =
+          content +
+          (content.endsWith('\n') ? '' : '\n') +
+          `\n# WOARU API keys protection\n${ignoreEntry}\n`;
         await fs.writeFile(gitIgnorePath, newContent);
-        console.log(chalk.green(`✅ Added .env protection to ${gitIgnorePath}`));
+        console.log(
+          chalk.green(`✅ Added .env protection to ${gitIgnorePath}`)
+        );
       }
     } catch (error) {
-      console.warn(chalk.yellow(`⚠️ Warning: Could not update gitignore: ${error instanceof Error ? error.message : error}`));
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not update gitignore: ${error instanceof Error ? error.message : error}`
+        )
+      );
     }
   }
 }

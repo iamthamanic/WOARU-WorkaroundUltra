@@ -44,7 +44,9 @@ export class VersionManager {
    */
   static async getReleaseDate(): Promise<string | undefined> {
     try {
-      const result = execSync('npm view woaru time.modified', { encoding: 'utf8' });
+      const result = execSync('npm view woaru time.modified', {
+        encoding: 'utf8',
+      });
       const dateStr = result.trim();
       return new Date(dateStr).toLocaleDateString('de-DE');
     } catch (error) {
@@ -65,7 +67,7 @@ export class VersionManager {
       current,
       latest,
       isUpToDate: current === latest,
-      releaseDate
+      releaseDate,
     };
   }
 
@@ -82,17 +84,29 @@ export class VersionManager {
    */
   static async displayVersionCheck(): Promise<void> {
     console.log(chalk.blue('🔍 Checking for updates...'));
-    
+
     const versionInfo = await this.checkVersion();
-    
+
     if (versionInfo.isUpToDate) {
-      console.log(chalk.green(`✅ Du verwendest die aktuellste Version (v${versionInfo.current})`));
+      console.log(
+        chalk.green(
+          `✅ Du verwendest die aktuellste Version (v${versionInfo.current})`
+        )
+      );
     } else {
-      console.log(chalk.yellow(`📦 Eine neue Version (v${versionInfo.latest}) ist verfügbar!`));
+      console.log(
+        chalk.yellow(
+          `📦 Eine neue Version (v${versionInfo.latest}) ist verfügbar!`
+        )
+      );
       if (versionInfo.releaseDate) {
-        console.log(chalk.gray(`   Veröffentlicht am: ${versionInfo.releaseDate}`));
+        console.log(
+          chalk.gray(`   Veröffentlicht am: ${versionInfo.releaseDate}`)
+        );
       }
-      console.log(chalk.cyan('   Führe `woaru update` aus, um zu aktualisieren.'));
+      console.log(
+        chalk.cyan('   Führe `woaru update` aus, um zu aktualisieren.')
+      );
     }
   }
 
@@ -101,23 +115,25 @@ export class VersionManager {
    */
   static async updateToLatest(): Promise<void> {
     console.log(chalk.blue('🚀 Updating WOARU to latest version...'));
-    
+
     return new Promise((resolve, reject) => {
       const updateProcess = spawn('npm', ['install', '-g', 'woaru@latest'], {
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
-      updateProcess.on('close', (code) => {
+      updateProcess.on('close', code => {
         if (code === 0) {
           console.log(chalk.green('✅ Update erfolgreich abgeschlossen!'));
           resolve();
         } else {
-          console.error(chalk.red(`❌ Update fehlgeschlagen (Exit Code: ${code})`));
+          console.error(
+            chalk.red(`❌ Update fehlgeschlagen (Exit Code: ${code})`)
+          );
           reject(new Error(`Update failed with exit code ${code}`));
         }
       });
 
-      updateProcess.on('error', (error) => {
+      updateProcess.on('error', error => {
         console.error(chalk.red('❌ Update fehlgeschlagen:'), error);
         reject(error);
       });

@@ -111,22 +111,26 @@ export class CodeAnalyzer {
     );
     if (codeSmellFindings.length > 0) {
       const groupedFindings = this.groupCodeSmellFindings(codeSmellFindings);
-      
+
       // Add WOARU Code Smell Analysis insight
       const topIssues = Object.entries(groupedFindings)
-        .sort(([,a], [,b]) => b.length - a.length)
+        .sort(([, a], [, b]) => b.length - a.length)
         .slice(0, 3)
         .map(([type, findings]) => `${type}: ${findings.length} occurrences`);
 
-      const criticalCount = codeSmellFindings.filter(f => f.severity === 'error').length;
-      const warningCount = codeSmellFindings.filter(f => f.severity === 'warning').length;
+      const criticalCount = codeSmellFindings.filter(
+        f => f.severity === 'error'
+      ).length;
+      const warningCount = codeSmellFindings.filter(
+        f => f.severity === 'warning'
+      ).length;
 
       insights.set('code-smells', {
         reason: `WOARU Internal Analysis found ${codeSmellFindings.length} code quality issues (${criticalCount} critical, ${warningCount} warnings)`,
         evidence: topIssues,
         files: [...new Set(codeSmellFindings.map(f => f.file))],
         severity: criticalCount > 0 ? 'high' : 'medium',
-        patterns: Object.keys(groupedFindings)
+        patterns: Object.keys(groupedFindings),
       });
     }
 
@@ -534,15 +538,20 @@ export class CodeAnalyzer {
       try {
         const filePath = path.join(projectPath, file);
         const ext = path.extname(file).toLowerCase();
-        const language = ['.ts', '.tsx'].includes(ext) ? 'typescript' : 'javascript';
-        
-        const findings = await this.codeSmellAnalyzer.analyzeFile(filePath, language);
-        
+        const language = ['.ts', '.tsx'].includes(ext)
+          ? 'typescript'
+          : 'javascript';
+
+        const findings = await this.codeSmellAnalyzer.analyzeFile(
+          filePath,
+          language
+        );
+
         // Add file path to each finding
         findings.forEach(finding => {
           allFindings.push({
             ...finding,
-            file
+            file,
           });
         });
       } catch (error) {
@@ -559,12 +568,15 @@ export class CodeAnalyzer {
   private groupCodeSmellFindings(
     findings: Array<CodeSmellFinding & { file: string }>
   ): Record<string, Array<CodeSmellFinding & { file: string }>> {
-    return findings.reduce((acc, finding) => {
-      if (!acc[finding.type]) {
-        acc[finding.type] = [];
-      }
-      acc[finding.type].push(finding);
-      return acc;
-    }, {} as Record<string, Array<CodeSmellFinding & { file: string }>>);
+    return findings.reduce(
+      (acc, finding) => {
+        if (!acc[finding.type]) {
+          acc[finding.type] = [];
+        }
+        acc[finding.type].push(finding);
+        return acc;
+      },
+      {} as Record<string, Array<CodeSmellFinding & { file: string }>>
+    );
   }
 }

@@ -1,9 +1,43 @@
-# WOARU 🚀 v4.3.0
+# WOARU 🚀 v4.3.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v4.3.0 - Visual Identity & ANSI Art Splash Screen**
+## 🆕 **Latest Release: v4.3.1 - ANSI Art Splash Screen Bugfix**
+**Release Date:** July 15, 2025
+
+### 🐛 **PATCH: Critical ANSI Logo Display Fix**
+**Problem Solved:** The ANSI art splash screen was displaying raw escape codes instead of colored graphics due to incorrect escape sequence format and console output method.
+
+**Professional Solution:**
+- **🔧 ANSI Escape Sequence Fix**:
+  - Corrected `\e` to `\x1b` for proper JavaScript interpretation
+  - Fixed all 6 lines of ANSI art with proper color codes
+  - Ensures terminal compatibility across all platforms
+- **⚡ Output Method Optimization**:
+  - Replaced `console.log()` with `process.stdout.write()` for ANSI codes
+  - Prevents additional formatting that breaks color sequences
+  - Direct stream writing for pixel-perfect logo display
+- **🛡️ Terminal Compatibility Check**:
+  - Added TTY detection for ANSI support validation
+  - Fallback to compact logo for non-TTY environments
+  - Graceful degradation maintains functionality everywhere
+
+### 🎯 **Technical Implementation**
+```bash
+# Fixed ANSI art display
+woaru                    # Now shows proper colored logo
+woaru --help            # Shows full help as before
+```
+
+### 🔧 **Files Modified**
+- `src/assets/splash_logo.ts` - ANSI sequence correction and output method fix
+- All ANSI escape sequences converted from `\e` to `\x1b` format
+- Terminal compatibility detection added for robust display
+
+---
+
+## 📚 **Previous Release: v4.3.0 - Visual Identity & ANSI Art Splash Screen**
 **Release Date:** July 15, 2025
 
 ### 🎨 **MINOR: Visual Identity & ANSI Art Splash Screen**

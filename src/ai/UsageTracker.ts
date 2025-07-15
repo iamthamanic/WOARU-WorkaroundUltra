@@ -36,11 +36,17 @@ export class UsageTracker {
       try {
         UsageTracker.instance = new UsageTracker();
       } catch (error) {
-        console.warn('⚠️ Failed to initialize UsageTracker, creating fallback instance');
+        console.warn(
+          '⚠️ Failed to initialize UsageTracker, creating fallback instance'
+        );
         // Create a fallback instance with basic functionality
         UsageTracker.instance = Object.create(UsageTracker.prototype);
         UsageTracker.instance.stats = {};
-        UsageTracker.instance.usageFile = path.join(os.homedir(), '.woaru', 'usage.json');
+        UsageTracker.instance.usageFile = path.join(
+          os.homedir(),
+          '.woaru',
+          'usage.json'
+        );
       }
     }
     return UsageTracker.instance;
@@ -55,7 +61,9 @@ export class UsageTracker {
         // Check if file is empty first
         const fileStats = await fs.stat(this.usageFile);
         if (fileStats.size === 0) {
-          console.warn('⚠️ Usage statistics file is empty, initializing with empty stats');
+          console.warn(
+            '⚠️ Usage statistics file is empty, initializing with empty stats'
+          );
           this.stats = {};
           return;
         }
@@ -63,38 +71,50 @@ export class UsageTracker {
         // Try to read the file content manually first
         const fileContent = await fs.readFile(this.usageFile, 'utf-8');
         if (!fileContent.trim()) {
-          console.warn('⚠️ Usage statistics file is empty, initializing with empty stats');
+          console.warn(
+            '⚠️ Usage statistics file is empty, initializing with empty stats'
+          );
           this.stats = {};
           return;
         }
 
         // Now try to parse as JSON
         const data = JSON.parse(fileContent);
-        
+
         // Validate that the data is a valid object
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           this.stats = data;
         } else {
-          console.warn('⚠️ Invalid usage statistics format, initializing with empty stats');
+          console.warn(
+            '⚠️ Invalid usage statistics format, initializing with empty stats'
+          );
           this.stats = {};
         }
       }
     } catch (error) {
       if (error instanceof SyntaxError) {
-        console.warn('⚠️ Usage statistics file contains invalid JSON, recreating with empty stats');
+        console.warn(
+          '⚠️ Usage statistics file contains invalid JSON, recreating with empty stats'
+        );
       } else {
-        console.warn('⚠️ Failed to load usage statistics (file may be corrupted):', error instanceof Error ? error.message : error);
+        console.warn(
+          '⚠️ Failed to load usage statistics (file may be corrupted):',
+          error instanceof Error ? error.message : error
+        );
       }
-      
+
       // Reset stats and recreate file
       this.stats = {};
-      
+
       // Try to recreate the file with valid empty JSON
       try {
         await fs.ensureDir(path.dirname(this.usageFile));
         await fs.writeJson(this.usageFile, {}, { spaces: 2 });
       } catch (writeError) {
-        console.warn('⚠️ Could not recreate usage statistics file:', writeError instanceof Error ? writeError.message : writeError);
+        console.warn(
+          '⚠️ Could not recreate usage statistics file:',
+          writeError instanceof Error ? writeError.message : writeError
+        );
       }
     }
   }
@@ -126,7 +146,7 @@ export class UsageTracker {
         totalCost: 0,
         lastUsed: new Date().toISOString(),
         firstUsed: new Date().toISOString(),
-        errorCount: 0
+        errorCount: 0,
       };
     }
 
@@ -150,7 +170,7 @@ export class UsageTracker {
         totalCost: 0,
         lastUsed: new Date().toISOString(),
         firstUsed: new Date().toISOString(),
-        errorCount: 0
+        errorCount: 0,
       };
     }
 
@@ -200,13 +220,19 @@ export class UsageTracker {
   }> {
     await this.ensureLoaded();
     const allStats = Object.values(this.stats);
-    
+
     return {
-      totalRequests: allStats.reduce((sum, stat) => sum + stat.totalRequests, 0),
-      totalTokensUsed: allStats.reduce((sum, stat) => sum + stat.totalTokensUsed, 0),
+      totalRequests: allStats.reduce(
+        (sum, stat) => sum + stat.totalRequests,
+        0
+      ),
+      totalTokensUsed: allStats.reduce(
+        (sum, stat) => sum + stat.totalTokensUsed,
+        0
+      ),
       totalCost: allStats.reduce((sum, stat) => sum + stat.totalCost, 0),
       totalErrors: allStats.reduce((sum, stat) => sum + stat.errorCount, 0),
-      activeProviders: allStats.filter(stat => stat.totalRequests > 0).length
+      activeProviders: allStats.filter(stat => stat.totalRequests > 0).length,
     };
   }
 
@@ -241,7 +267,7 @@ export class UsageTracker {
     const exportData = {
       exportedAt: new Date().toISOString(),
       totalUsage: this.getTotalUsage(),
-      providerStats: this.stats
+      providerStats: this.stats,
     };
 
     await fs.writeJson(outputFile, exportData, { spaces: 2 });

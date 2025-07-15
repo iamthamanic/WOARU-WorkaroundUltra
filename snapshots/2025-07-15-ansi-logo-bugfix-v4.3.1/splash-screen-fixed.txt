@@ -1,0 +1,18 @@
+[dotenv@17.2.0] injecting env (3) from ../../../.woaru/.env (tip: 🔐 encrypt with dotenvx: https://dotenvx.com)
+
+[36m ╔══════════════════════════════════════════════════════════════╗
+[36m ║  [33m📢[36m [37m●●●[36m [32m✓✓✓[36m   [1m[33mWOARU[0m[36m - Tech Lead in a Box   [33m📦[36m         ║
+[36m ╚══════════════════════════════════════════════════════════════╝
+[0m
+🤖 WOARU - YOUR TECH LEAD IN A BOX
+   Version 4.3.1
+
+Quick Commands:
+  • woaru analyze        - Comprehensive project analysis
+  • woaru watch          - Start continuous monitoring
+  • woaru review         - Code review and analysis
+  • woaru setup          - Setup development tools
+  • woaru commands       - Show all available commands
+
+💡 Run "woaru commands" for detailed help
+

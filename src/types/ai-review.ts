@@ -1,6 +1,11 @@
 export interface LLMProviderConfig {
   id: string; // "openai-gpt4", "anthropic-claude", "google-gemini"
-  providerType: 'openai' | 'anthropic' | 'google' | 'custom-ollama' | 'azure-openai';
+  providerType:
+    | 'openai'
+    | 'anthropic'
+    | 'google'
+    | 'custom-ollama'
+    | 'azure-openai';
   apiKeyEnvVar: string; // "OPENAI_API_KEY", "ANTHROPIC_API_KEY"
   baseUrl: string; // API endpoint URL
   model: string; // "gpt-4o", "claude-3-opus", "gemini-1.5-pro"
@@ -38,7 +43,13 @@ export interface CodeContext {
 export interface AIReviewFinding {
   llmId: string; // Which LLM generated this finding
   severity: 'critical' | 'high' | 'medium' | 'low';
-  category: 'security' | 'performance' | 'maintainability' | 'architecture' | 'code-smell' | 'best-practice';
+  category:
+    | 'security'
+    | 'performance'
+    | 'maintainability'
+    | 'architecture'
+    | 'code-smell'
+    | 'best-practice';
   message: string; // Brief description of the issue
   rationale: string; // Detailed explanation why this is a problem
   suggestion: string; // Concrete improvement suggestion

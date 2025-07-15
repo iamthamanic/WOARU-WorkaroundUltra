@@ -401,7 +401,7 @@ export class QualityRunner {
         // TypeScript/JavaScript files
         if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
           const language = ext.startsWith('.ts') ? 'typescript' : 'javascript';
-          
+
           // Always run internal code smell analysis first
           const codeSmellFindings = await this.codeSmellAnalyzer.analyzeFile(
             filePath,
@@ -410,7 +410,7 @@ export class QualityRunner {
 
           // Try ESLint check
           const eslintResult = await this.runESLintCheckForReview(relativePath);
-          
+
           if (eslintResult) {
             // Add SOLID analysis and code smell findings to ESLint results
             const solidResult = await this.runSOLIDCheckForReview(
@@ -422,14 +422,20 @@ export class QualityRunner {
             results.push(eslintResult);
           } else if (codeSmellFindings.length > 0) {
             // No ESLint but we have code smell findings - create a result
-            const issues = codeSmellFindings.map(finding => 
-              `Line ${finding.line}:${finding.column} - ${finding.message}`
+            const issues = codeSmellFindings.map(
+              finding =>
+                `Line ${finding.line}:${finding.column} - ${finding.message}`
             );
             const fixes = codeSmellFindings
               .filter(finding => finding.suggestion)
               .map(finding => finding.suggestion!);
-            const criticalFindings = codeSmellFindings.filter(f => f.severity === 'error');
-            const severity = criticalFindings.length > 0 ? 'error' as const : 'warning' as const;
+            const criticalFindings = codeSmellFindings.filter(
+              f => f.severity === 'error'
+            );
+            const severity =
+              criticalFindings.length > 0
+                ? ('error' as const)
+                : ('warning' as const);
 
             // Add SOLID analysis
             const solidResult = await this.runSOLIDCheckForReview(
@@ -445,7 +451,7 @@ export class QualityRunner {
               fixes: fixes.length > 0 ? fixes : undefined,
               explanation: `WOARU internal analysis found ${codeSmellFindings.length} code quality issues`,
               codeSmellFindings,
-              solidResult
+              solidResult,
             });
           }
         }
@@ -736,7 +742,9 @@ export class QualityRunner {
   ): Promise<QualityCheckResult | null> {
     try {
       // Run ESLint with detailed formatter
-      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT} "${filePath}"`);
+      await execAsync(
+        `${APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT} "${filePath}"`
+      );
       return null; // No issues found
     } catch (error: any) {
       const output = error.stdout || error.stderr || error.message;
@@ -1637,7 +1645,14 @@ export class QualityRunner {
   ): Promise<void> {
     try {
       // Only analyze JavaScript/TypeScript files for now
-      const supportedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+      const supportedExtensions = [
+        '.js',
+        '.jsx',
+        '.ts',
+        '.tsx',
+        '.mjs',
+        '.cjs',
+      ];
       if (!supportedExtensions.includes(fileExtension)) {
         return;
       }
@@ -1650,33 +1665,46 @@ export class QualityRunner {
 
       if (codeSmellFindings.length > 0) {
         // Convert code smell findings to quality check results
-        const issues = codeSmellFindings.map(finding => 
-          `Line ${finding.line}:${finding.column} - ${finding.message}`
+        const issues = codeSmellFindings.map(
+          finding =>
+            `Line ${finding.line}:${finding.column} - ${finding.message}`
         );
 
         const fixes = codeSmellFindings
           .filter(finding => finding.suggestion)
           .map(finding => finding.suggestion!);
 
-        const criticalFindings = codeSmellFindings.filter(f => f.severity === 'error');
-        const severity = criticalFindings.length > 0 ? 'error' as const : 'warning' as const;
+        const criticalFindings = codeSmellFindings.filter(
+          f => f.severity === 'error'
+        );
+        const severity =
+          criticalFindings.length > 0
+            ? ('error' as const)
+            : ('warning' as const);
 
         // Convert code smell findings to CodeIssue format
         const codeIssues: CodeIssue[] = codeSmellFindings.map(finding => ({
           type: finding.type,
-          severity: finding.severity === 'error' ? 'critical' : 
-                   finding.severity === 'warning' ? 'high' : 'medium',
+          severity:
+            finding.severity === 'error'
+              ? 'critical'
+              : finding.severity === 'warning'
+                ? 'high'
+                : 'medium',
           file: filePath,
           line: finding.line,
           message: finding.message,
           tool: 'WOARU Code Smell Analyzer',
-          autoFixable: false
+          autoFixable: false,
         }));
 
         await this.notificationManager.notifyIssues(codeIssues);
       }
     } catch (error) {
-      console.warn(`Internal code smell analysis failed for ${filePath}:`, error);
+      console.warn(
+        `Internal code smell analysis failed for ${filePath}:`,
+        error
+      );
     }
   }
 
@@ -1690,9 +1718,9 @@ export class QualityRunner {
       '.mjs': 'javascript',
       '.cjs': 'javascript',
       '.ts': 'typescript',
-      '.tsx': 'typescript'
+      '.tsx': 'typescript',
     };
-    
+
     return languageMap[extension] || 'javascript';
   }
 
@@ -1709,7 +1737,7 @@ export class QualityRunner {
         'function-length',
         'parameter-count',
         'nested-depth',
-        'magic-number'
+        'magic-number',
       ];
     }
     return [];

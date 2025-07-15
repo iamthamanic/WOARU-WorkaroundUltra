@@ -8,7 +8,7 @@ export interface CodeSmellFinding {
   suggestion?: string;
 }
 
-export type CodeSmellType = 
+export type CodeSmellType =
   | 'complexity'
   | 'var-keyword'
   | 'weak-equality'

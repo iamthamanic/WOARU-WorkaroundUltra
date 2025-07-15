@@ -54,7 +54,7 @@ export class ActivityLogger {
     const homeDir = require('os').homedir();
     const logsDir = path.join(homeDir, APP_CONFIG.DIRECTORIES.HOME_LOGS);
     this.logFile = path.join(logsDir, APP_CONFIG.FILES.ACTIONS_LOG);
-    
+
     // Ensure logs directory exists
     fs.ensureDirSync(logsDir);
   }
@@ -100,7 +100,7 @@ export class ActivityLogger {
     // Generate unique action ID for tracking
     const actionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const timestamp = new Date().toISOString();
-    
+
     const entry: ActivityLogEntry = {
       timestamp,
       action,
@@ -116,10 +116,12 @@ export class ActivityLogger {
     };
 
     this.activeActions.set(actionId, entry);
-    
+
     // Log action start
-    await this.writeLogEntry(`[START] ${timestamp} | ${action} | ${command} | ${context.projectPath}`);
-    
+    await this.writeLogEntry(
+      `[START] ${timestamp} | ${action} | ${command} | ${context.projectPath}`
+    );
+
     return actionId;
   }
 
@@ -152,7 +154,7 @@ export class ActivityLogger {
 
     const endTime = Date.now();
     const duration = endTime - entry.performance.startTime;
-    
+
     // Update entry
     entry.metadata = { ...entry.metadata, ...metadata, duration };
     entry.performance.endTime = endTime;
@@ -161,8 +163,10 @@ export class ActivityLogger {
     // Log completion
     const status = metadata.success ? 'SUCCESS' : 'ERROR';
     const errorSuffix = metadata.error ? ` | Error: ${metadata.error}` : '';
-    const outputSuffix = metadata.outputFile ? ` | Output: ${metadata.outputFile}` : '';
-    
+    const outputSuffix = metadata.outputFile
+      ? ` | Output: ${metadata.outputFile}`
+      : '';
+
     await this.writeLogEntry(
       `[${status}] ${new Date().toISOString()} | ${entry.action} | Duration: ${duration}ms${errorSuffix}${outputSuffix}`
     );
@@ -197,8 +201,10 @@ export class ActivityLogger {
     const timestamp = new Date().toISOString();
     const status = metadata.success ? 'SUCCESS' : 'ERROR';
     const errorSuffix = metadata.error ? ` | Error: ${metadata.error}` : '';
-    const outputSuffix = metadata.outputFile ? ` | Output: ${metadata.outputFile}` : '';
-    
+    const outputSuffix = metadata.outputFile
+      ? ` | Output: ${metadata.outputFile}`
+      : '';
+
     await this.writeLogEntry(
       `[${status}] ${timestamp} | ${action} | ${command} | ${context.projectPath}${errorSuffix}${outputSuffix}`
     );
@@ -214,14 +220,14 @@ export class ActivityLogger {
     if (typeof limit !== 'number' || limit < 1) {
       throw new Error('Limit must be a positive number');
     }
-    
+
     if (!(await fs.pathExists(this.logFile))) {
       return [];
     }
 
     const content = await fs.readFile(this.logFile, 'utf-8');
     const lines = content.split('\n').filter(line => line.trim());
-    
+
     // Return last N lines
     return lines.slice(-limit);
   }
@@ -240,13 +246,15 @@ export class ActivityLogger {
     if (startDate > endDate) {
       throw new Error('Start date must be before end date');
     }
-    
+
     const logs = await this.getRecentLogs(1000); // Get more logs for filtering
-    
+
     return logs.filter(log => {
-      const timestampMatch = log.match(/\[(?:START|SUCCESS|ERROR)\] (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/);
+      const timestampMatch = log.match(
+        /\[(?:START|SUCCESS|ERROR)\] (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/
+      );
       if (!timestampMatch) return false;
-      
+
       const logDate = new Date(timestampMatch[1]);
       return logDate >= startDate && logDate <= endDate;
     });
@@ -262,9 +270,9 @@ export class ActivityLogger {
     if (!actionType || typeof actionType !== 'string') {
       throw new Error('Action type must be a non-empty string');
     }
-    
+
     const logs = await this.getRecentLogs(1000);
-    
+
     return logs.filter(log => log.includes(`| ${actionType} |`));
   }
 
@@ -278,9 +286,9 @@ export class ActivityLogger {
     if (!projectPath || typeof projectPath !== 'string') {
       throw new Error('Project path must be a non-empty string');
     }
-    
+
     const logs = await this.getRecentLogs(1000);
-    
+
     return logs.filter(log => log.includes(projectPath));
   }
 
@@ -319,7 +327,7 @@ export class ActivityLogger {
     const stats = await fs.stat(this.logFile);
     const content = await fs.readFile(this.logFile, 'utf-8');
     const lines = content.split('\n').filter(line => line.trim());
-    
+
     return {
       fileSize: stats.size,
       totalLines: lines.length,
@@ -359,8 +367,10 @@ export class ActivityLogger {
     action: string;
     details: string;
   } | null {
-    const match = logLine.match(/\[(START|SUCCESS|ERROR)\] (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) \| ([^|]+) \| (.+)/);
-    
+    const match = logLine.match(
+      /\[(START|SUCCESS|ERROR)\] (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z) \| ([^|]+) \| (.+)/
+    );
+
     if (!match) {
       return null;
     }
@@ -378,7 +388,10 @@ export class ActivityLogger {
    * @param format - Export format ('json', 'csv', 'txt')
    * @param outputPath - Path where to save the exported logs
    */
-  async exportLogs(format: 'json' | 'csv' | 'txt', outputPath: string): Promise<void> {
+  async exportLogs(
+    format: 'json' | 'csv' | 'txt',
+    outputPath: string
+  ): Promise<void> {
     // Input validation
     if (!['json', 'csv', 'txt'].includes(format)) {
       throw new Error('Format must be one of: json, csv, txt');
@@ -386,25 +399,34 @@ export class ActivityLogger {
     if (!outputPath || typeof outputPath !== 'string') {
       throw new Error('Output path must be a non-empty string');
     }
-    
+
     const logs = await this.getRecentLogs(1000);
-    
+
     switch (format) {
       case 'json':
-        const jsonLogs = logs.map(log => this.formatLogEntry(log)).filter(Boolean);
-        await fs.writeFile(outputPath, JSON.stringify(jsonLogs, null, 2), 'utf-8');
+        const jsonLogs = logs
+          .map(log => this.formatLogEntry(log))
+          .filter(Boolean);
+        await fs.writeFile(
+          outputPath,
+          JSON.stringify(jsonLogs, null, 2),
+          'utf-8'
+        );
         break;
-        
+
       case 'csv':
         const csvHeader = 'Timestamp,Status,Action,Details\n';
         const csvLines = logs
           .map(log => this.formatLogEntry(log))
           .filter(Boolean)
-          .map(entry => `"${entry!.timestamp}","${entry!.status}","${entry!.action}","${entry!.details}"`)
+          .map(
+            entry =>
+              `"${entry!.timestamp}","${entry!.status}","${entry!.action}","${entry!.details}"`
+          )
           .join('\n');
         await fs.writeFile(outputPath, csvHeader + csvLines, 'utf-8');
         break;
-        
+
       case 'txt':
       default:
         await fs.writeFile(outputPath, logs.join('\n'), 'utf-8');

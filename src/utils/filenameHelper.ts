@@ -19,37 +19,42 @@ export class FilenameHelper {
     if (!commandType || typeof commandType !== 'string') {
       throw new Error('Command type must be a non-empty string');
     }
-    
+
     const now = new Date();
-    
+
     // Get timezone offset in format +0200 or -0500
     const tzOffset = -now.getTimezoneOffset();
-    const tzHours = Math.floor(Math.abs(tzOffset) / 60).toString().padStart(2, '0');
+    const tzHours = Math.floor(Math.abs(tzOffset) / 60)
+      .toString()
+      .padStart(2, '0');
     const tzMinutes = (Math.abs(tzOffset) % 60).toString().padStart(2, '0');
     const tzSign = tzOffset >= 0 ? '+' : '-';
     const timezone = `${tzSign}${tzHours}${tzMinutes}`;
-    
+
     // Format: YYYY-MM-DD_HH-MM-SS
-    const timestamp = [
-      now.getFullYear(),
-      (now.getMonth() + 1).toString().padStart(2, '0'),
-      now.getDate().toString().padStart(2, '0')
-    ].join('-') + '_' + [
-      now.getHours().toString().padStart(2, '0'),
-      now.getMinutes().toString().padStart(2, '0'),
-      now.getSeconds().toString().padStart(2, '0')
-    ].join('-');
-    
+    const timestamp =
+      [
+        now.getFullYear(),
+        (now.getMonth() + 1).toString().padStart(2, '0'),
+        now.getDate().toString().padStart(2, '0'),
+      ].join('-') +
+      '_' +
+      [
+        now.getHours().toString().padStart(2, '0'),
+        now.getMinutes().toString().padStart(2, '0'),
+        now.getSeconds().toString().padStart(2, '0'),
+      ].join('-');
+
     // Clean command type (remove spaces, lowercase, replace special chars)
     // This ensures all command types are safe for filenames and consistent
     const cleanCommandType = commandType
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
-    
+
     return `woaru_${cleanCommandType}_report_${timestamp}_${timezone}.md`;
   }
-  
+
   /**
    * Extracts timestamp from WOARU report filename for sorting purposes
    * @param filename - The filename to extract timestamp from
@@ -63,12 +68,14 @@ export class FilenameHelper {
     if (!filename || typeof filename !== 'string') {
       return null;
     }
-    
+
     // Match pattern: woaru_*_report_YYYY-MM-DD_HH-MM-SS_±HHMM.md
-    const match = filename.match(/woaru_.*_report_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_[+-]\d{4}\.md$/);
+    const match = filename.match(
+      /woaru_.*_report_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_[+-]\d{4}\.md$/
+    );
     return match ? match[1] : null;
   }
-  
+
   /**
    * Sorts WOARU report files by timestamp (newest first)
    * @param filenames - Array of filenames to sort
@@ -79,20 +86,24 @@ export class FilenameHelper {
     if (!Array.isArray(filenames)) {
       throw new Error('Filenames must be an array');
     }
-    
+
     return filenames
-      .filter(filename => filename.startsWith('woaru_') && filename.endsWith('_report_') || filename.includes('_report_'))
+      .filter(
+        filename =>
+          (filename.startsWith('woaru_') && filename.endsWith('_report_')) ||
+          filename.includes('_report_')
+      )
       .sort((a, b) => {
         const timestampA = this.extractTimestampFromFilename(a);
         const timestampB = this.extractTimestampFromFilename(b);
-        
+
         if (!timestampA || !timestampB) return 0;
-        
+
         // Sort newest first
         return timestampB.localeCompare(timestampA);
       });
   }
-  
+
   /**
    * Gets the latest (newest) report filename from a list
    * @param filenames - Array of filenames to search
@@ -102,7 +113,7 @@ export class FilenameHelper {
     const sorted = this.sortReportsByTimestamp(filenames);
     return sorted.length > 0 ? sorted[0] : null;
   }
-  
+
   /**
    * Validates if filename follows WOARU report naming convention
    * @param filename - The filename to validate
@@ -113,11 +124,12 @@ export class FilenameHelper {
     if (!filename || typeof filename !== 'string') {
       return false;
     }
-    
-    const pattern = /^woaru_[a-z0-9-]+_report_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_[+-]\d{4}\.md$/;
+
+    const pattern =
+      /^woaru_[a-z0-9-]+_report_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_[+-]\d{4}\.md$/;
     return pattern.test(filename);
   }
-  
+
   /**
    * Extracts command type from standardized WOARU filename
    * @param filename - The filename to extract command type from
@@ -128,7 +140,7 @@ export class FilenameHelper {
     if (!filename || typeof filename !== 'string') {
       return null;
     }
-    
+
     const match = filename.match(/^woaru_([a-z0-9-]+)_report_/);
     return match ? match[1] : null;
   }

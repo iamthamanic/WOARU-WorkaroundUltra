@@ -8,7 +8,7 @@ import {
   AIReviewFinding,
   MultiLLMReviewResult,
   LLMResponse,
-  PromptTemplate
+  PromptTemplate,
 } from '../types/ai-review';
 import { UsageTracker } from './UsageTracker';
 
@@ -44,20 +44,25 @@ export class AIReviewAgent {
     const errors: { [llmId: string]: string | null } = {};
 
     // Validate code length
-    if (code.length > this.config.tokenLimit * 4) { // Rough estimate: 1 token ≈ 4 chars
-      throw new Error(`Code too long for analysis (${code.length} chars). Max: ${this.config.tokenLimit * 4}`);
+    if (code.length > this.config.tokenLimit * 4) {
+      // Rough estimate: 1 token ≈ 4 chars
+      throw new Error(
+        `Code too long for analysis (${code.length} chars). Max: ${this.config.tokenLimit * 4}`
+      );
     }
 
-    console.log(`🧠 Starting AI Code Review with ${this.enabledProviders.length} LLM providers...`);
+    console.log(
+      `🧠 Starting AI Code Review with ${this.enabledProviders.length} LLM providers...`
+    );
 
     // Run LLM requests (parallel or sequential based on config)
     if (this.config.parallelRequests) {
-      const promises = this.enabledProviders.map(provider => 
+      const promises = this.enabledProviders.map(provider =>
         this.callLLMProvider(provider, code, context)
       );
-      
+
       const responses = await Promise.allSettled(promises);
-      
+
       responses.forEach((result, index) => {
         const provider = this.enabledProviders[index];
         if (result.status === 'fulfilled') {
@@ -87,7 +92,8 @@ export class AIReviewAgent {
           errors[provider.id] = response.error || null;
         } catch (error) {
           results[provider.id] = [];
-          errors[provider.id] = error instanceof Error ? error.message : 'Unknown error';
+          errors[provider.id] =
+            error instanceof Error ? error.message : 'Unknown error';
           responseTimesMs[provider.id] = 0;
           tokensUsed[provider.id] = 0;
           estimatedCosts[provider.id] = 0;
@@ -111,9 +117,12 @@ export class AIReviewAgent {
         llmResponseTimes: responseTimesMs,
         tokensUsed,
         estimatedCost: estimatedCosts,
-        totalEstimatedCost: Object.values(estimatedCosts).reduce((sum, cost) => sum + cost, 0),
-        llmErrors: errors
-      }
+        totalEstimatedCost: Object.values(estimatedCosts).reduce(
+          (sum, cost) => sum + cost,
+          0
+        ),
+        llmErrors: errors,
+      },
     };
   }
 
@@ -136,34 +145,64 @@ export class AIReviewAgent {
       // Get API key from environment
       const apiKey = process.env[provider.apiKeyEnvVar];
       if (!apiKey && provider.apiKeyEnvVar) {
-        throw new Error(`API key not found in environment variable: ${provider.apiKeyEnvVar}`);
+        throw new Error(
+          `API key not found in environment variable: ${provider.apiKeyEnvVar}`
+        );
       }
 
       // Call appropriate method based on provider type
       let response: LLMResponse;
       switch (provider.providerType) {
         case 'anthropic':
-          response = await this._callAnthropic(provider, prompt, code, context, apiKey!);
+          response = await this._callAnthropic(
+            provider,
+            prompt,
+            code,
+            context,
+            apiKey!
+          );
           break;
         case 'openai':
-          response = await this._callOpenAI(provider, prompt, code, context, apiKey!);
+          response = await this._callOpenAI(
+            provider,
+            prompt,
+            code,
+            context,
+            apiKey!
+          );
           break;
         case 'azure-openai':
-          response = await this._callAzureOpenAI(provider, prompt, code, context, apiKey!);
+          response = await this._callAzureOpenAI(
+            provider,
+            prompt,
+            code,
+            context,
+            apiKey!
+          );
           break;
         case 'google':
-          response = await this._callGoogle(provider, prompt, code, context, apiKey!);
+          response = await this._callGoogle(
+            provider,
+            prompt,
+            code,
+            context,
+            apiKey!
+          );
           break;
         case 'custom-ollama':
           response = await this._callOllama(provider, prompt, code, context);
           break;
         default:
-          throw new Error(`Unsupported provider type: ${provider.providerType}`);
+          throw new Error(
+            `Unsupported provider type: ${provider.providerType}`
+          );
       }
 
       response.responseTime = Date.now() - startTime;
-      console.log(`  ✅ ${provider.id} completed (${response.responseTime}ms, ${response.findings.length} findings)`);
-      
+      console.log(
+        `  ✅ ${provider.id} completed (${response.responseTime}ms, ${response.findings.length} findings)`
+      );
+
       // Track successful request
       const usageTracker = UsageTracker.getInstance();
       await usageTracker.trackRequest(
@@ -171,20 +210,23 @@ export class AIReviewAgent {
         response.tokensUsed || 0,
         response.estimatedCost || 0
       );
-      
+
       return response;
     } catch (error) {
-      console.error(`  ❌ ${provider.id} failed:`, error instanceof Error ? error.message : error);
-      
+      console.error(
+        `  ❌ ${provider.id} failed:`,
+        error instanceof Error ? error.message : error
+      );
+
       // Track failed request
       const usageTracker = UsageTracker.getInstance();
       await usageTracker.trackError(provider.id);
-      
+
       return {
         success: false,
         findings: [],
         responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -202,7 +244,7 @@ export class AIReviewAgent {
     const headers = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
-      ...provider.headers
+      ...provider.headers,
     };
 
     const body = this.interpolateTemplate(provider.bodyTemplate, {
@@ -210,13 +252,17 @@ export class AIReviewAgent {
       prompt,
       code,
       language: context.language,
-      systemPrompt: this.promptTemplate.systemPrompt
+      systemPrompt: this.promptTemplate.systemPrompt,
     });
 
-    const response: AxiosResponse = await axios.post(provider.baseUrl, JSON.parse(body), {
-      headers,
-      timeout: provider.timeout || 30000
-    });
+    const response: AxiosResponse = await axios.post(
+      provider.baseUrl,
+      JSON.parse(body),
+      {
+        headers,
+        timeout: provider.timeout || 30000,
+      }
+    );
 
     const content = response.data.content[0].text;
     const findings = this.parseAIResponse(content, provider.id, context);
@@ -225,9 +271,15 @@ export class AIReviewAgent {
       success: true,
       findings,
       rawResponse: content,
-      tokensUsed: response.data.usage?.input_tokens + response.data.usage?.output_tokens || 0,
+      tokensUsed:
+        response.data.usage?.input_tokens +
+          response.data.usage?.output_tokens || 0,
       responseTime: 0, // Will be set by caller
-      estimatedCost: this.estimateCost(provider.id, response.data.usage?.input_tokens || 0, response.data.usage?.output_tokens || 0)
+      estimatedCost: this.estimateCost(
+        provider.id,
+        response.data.usage?.input_tokens || 0,
+        response.data.usage?.output_tokens || 0
+      ),
     };
   }
 
@@ -243,8 +295,8 @@ export class AIReviewAgent {
   ): Promise<LLMResponse> {
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      ...provider.headers
+      Authorization: `Bearer ${apiKey}`,
+      ...provider.headers,
     };
 
     const body = this.interpolateTemplate(provider.bodyTemplate, {
@@ -252,13 +304,17 @@ export class AIReviewAgent {
       prompt,
       code,
       language: context.language,
-      systemPrompt: this.promptTemplate.systemPrompt
+      systemPrompt: this.promptTemplate.systemPrompt,
     });
 
-    const response: AxiosResponse = await axios.post(provider.baseUrl, JSON.parse(body), {
-      headers,
-      timeout: provider.timeout || 30000
-    });
+    const response: AxiosResponse = await axios.post(
+      provider.baseUrl,
+      JSON.parse(body),
+      {
+        headers,
+        timeout: provider.timeout || 30000,
+      }
+    );
 
     const content = response.data.choices[0].message.content;
     const findings = this.parseAIResponse(content, provider.id, context);
@@ -269,7 +325,11 @@ export class AIReviewAgent {
       rawResponse: content,
       tokensUsed: response.data.usage?.total_tokens || 0,
       responseTime: 0,
-      estimatedCost: this.estimateCost(provider.id, response.data.usage?.prompt_tokens || 0, response.data.usage?.completion_tokens || 0)
+      estimatedCost: this.estimateCost(
+        provider.id,
+        response.data.usage?.prompt_tokens || 0,
+        response.data.usage?.completion_tokens || 0
+      ),
     };
   }
 
@@ -286,7 +346,7 @@ export class AIReviewAgent {
     const headers = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
-      ...provider.headers
+      ...provider.headers,
     };
 
     const body = this.interpolateTemplate(provider.bodyTemplate, {
@@ -294,13 +354,17 @@ export class AIReviewAgent {
       prompt,
       code,
       language: context.language,
-      systemPrompt: this.promptTemplate.systemPrompt
+      systemPrompt: this.promptTemplate.systemPrompt,
     });
 
-    const response: AxiosResponse = await axios.post(provider.baseUrl, JSON.parse(body), {
-      headers,
-      timeout: provider.timeout || 30000
-    });
+    const response: AxiosResponse = await axios.post(
+      provider.baseUrl,
+      JSON.parse(body),
+      {
+        headers,
+        timeout: provider.timeout || 30000,
+      }
+    );
 
     const content = response.data.choices[0].message.content;
     const findings = this.parseAIResponse(content, provider.id, context);
@@ -311,7 +375,11 @@ export class AIReviewAgent {
       rawResponse: content,
       tokensUsed: response.data.usage?.total_tokens || 0,
       responseTime: 0,
-      estimatedCost: this.estimateCost(provider.id, response.data.usage?.prompt_tokens || 0, response.data.usage?.completion_tokens || 0)
+      estimatedCost: this.estimateCost(
+        provider.id,
+        response.data.usage?.prompt_tokens || 0,
+        response.data.usage?.completion_tokens || 0
+      ),
     };
   }
 
@@ -325,22 +393,23 @@ export class AIReviewAgent {
     context: CodeContext,
     apiKey: string
   ): Promise<LLMResponse> {
-    const url = provider.baseUrl.replace('{model}', provider.model) + `?key=${apiKey}`;
-    
+    const url =
+      provider.baseUrl.replace('{model}', provider.model) + `?key=${apiKey}`;
+
     const body = this.interpolateTemplate(provider.bodyTemplate, {
       model: provider.model,
       prompt,
       code,
       language: context.language,
-      systemPrompt: this.promptTemplate.systemPrompt
+      systemPrompt: this.promptTemplate.systemPrompt,
     });
 
     const response: AxiosResponse = await axios.post(url, JSON.parse(body), {
       headers: {
         'Content-Type': 'application/json',
-        ...provider.headers
+        ...provider.headers,
       },
-      timeout: provider.timeout || 30000
+      timeout: provider.timeout || 30000,
     });
 
     const content = response.data.candidates[0].content.parts[0].text;
@@ -352,7 +421,11 @@ export class AIReviewAgent {
       rawResponse: content,
       tokensUsed: response.data.usageMetadata?.totalTokenCount || 0,
       responseTime: 0,
-      estimatedCost: this.estimateCost(provider.id, response.data.usageMetadata?.promptTokenCount || 0, response.data.usageMetadata?.candidatesTokenCount || 0)
+      estimatedCost: this.estimateCost(
+        provider.id,
+        response.data.usageMetadata?.promptTokenCount || 0,
+        response.data.usageMetadata?.candidatesTokenCount || 0
+      ),
     };
   }
 
@@ -370,16 +443,20 @@ export class AIReviewAgent {
       prompt,
       code,
       language: context.language,
-      systemPrompt: this.promptTemplate.systemPrompt
+      systemPrompt: this.promptTemplate.systemPrompt,
     });
 
-    const response: AxiosResponse = await axios.post(provider.baseUrl, JSON.parse(body), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...provider.headers
-      },
-      timeout: provider.timeout || 60000
-    });
+    const response: AxiosResponse = await axios.post(
+      provider.baseUrl,
+      JSON.parse(body),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...provider.headers,
+        },
+        timeout: provider.timeout || 60000,
+      }
+    );
 
     const content = response.data.response;
     const findings = this.parseAIResponse(content, provider.id, context);
@@ -390,14 +467,17 @@ export class AIReviewAgent {
       rawResponse: content,
       tokensUsed: 0, // Ollama doesn't always provide token counts
       responseTime: 0,
-      estimatedCost: 0 // Local models are free
+      estimatedCost: 0, // Local models are free
     };
   }
 
   /**
    * Interpolate template placeholders with safe JSON escaping
    */
-  private interpolateTemplate(template: string, variables: Record<string, string>): string {
+  private interpolateTemplate(
+    template: string,
+    variables: Record<string, string>
+  ): string {
     let result = template;
     Object.entries(variables).forEach(([key, value]) => {
       // Use JSON.stringify to safely escape the value, then remove outer quotes
@@ -413,15 +493,19 @@ export class AIReviewAgent {
   /**
    * Build provider-specific prompt using dynamic templates
    */
-  private buildPromptForProvider(provider: LLMProviderConfig, code: string, context: CodeContext): string {
+  private buildPromptForProvider(
+    provider: LLMProviderConfig,
+    code: string,
+    context: CodeContext
+  ): string {
     // Check if we have a custom prompt template for this provider
     const customTemplate = this.promptTemplates[provider.id];
-    
+
     if (customTemplate) {
       // Use custom template with variable interpolation
       const { PromptManager } = require('./PromptManager');
       const promptManager = PromptManager.getInstance();
-      
+
       const variables = {
         file_path: context.filePath,
         language: context.language,
@@ -432,12 +516,15 @@ export class AIReviewAgent {
         expected_load: 'Standard',
         architecture_context: context.projectContext?.type || 'Unknown',
         testing_framework: 'Unknown',
-        coverage_percentage: '0'
+        coverage_percentage: '0',
       };
-      
+
       // Interpolate user prompt with variables
-      const userPrompt = promptManager.interpolatePrompt(customTemplate.user_prompt, variables);
-      
+      const userPrompt = promptManager.interpolatePrompt(
+        customTemplate.user_prompt,
+        variables
+      );
+
       return userPrompt;
     } else {
       // Fall back to default prompt
@@ -461,7 +548,10 @@ export class AIReviewAgent {
       prompt += `\nTotal Lines: ${context.totalLines}`;
     }
 
-    if (this.promptTemplate.contextInjection.includeProjectContext && context.projectContext) {
+    if (
+      this.promptTemplate.contextInjection.includeProjectContext &&
+      context.projectContext
+    ) {
       prompt += `\n\nProject Context:`;
       prompt += `\nProject: ${context.projectContext.name} (${context.projectContext.type})`;
       if (context.projectContext.dependencies.length > 0) {
@@ -469,7 +559,10 @@ export class AIReviewAgent {
       }
     }
 
-    if (this.promptTemplate.contextInjection.includeGitDiff && context.gitDiff) {
+    if (
+      this.promptTemplate.contextInjection.includeGitDiff &&
+      context.gitDiff
+    ) {
       prompt += `\n\nGit Diff:\n${context.gitDiff}`;
     }
 
@@ -479,7 +572,11 @@ export class AIReviewAgent {
   /**
    * Parse AI response into structured findings
    */
-  private parseAIResponse(response: string, llmId: string, context: CodeContext): AIReviewFinding[] {
+  private parseAIResponse(
+    response: string,
+    llmId: string,
+    context: CodeContext
+  ): AIReviewFinding[] {
     try {
       // Try to extract JSON from the response
       const jsonMatch = response.match(/\[[\s\S]*\]/);
@@ -489,13 +586,14 @@ export class AIReviewAgent {
       }
 
       const findings = JSON.parse(jsonMatch[0]);
-      
+
       return findings.map((finding: any) => ({
         llmId,
         severity: finding.severity || 'medium',
         category: finding.category || 'code-smell',
         message: finding.message || 'No message provided',
-        rationale: finding.rationale || finding.reason || 'No rationale provided',
+        rationale:
+          finding.rationale || finding.reason || 'No rationale provided',
         suggestion: finding.suggestion || 'No suggestion provided',
         filePath: context.filePath,
         lineNumber: finding.lineNumber || finding.line,
@@ -504,7 +602,7 @@ export class AIReviewAgent {
         confidence: finding.confidence || 0.8,
         tags: finding.tags || [],
         estimatedFixTime: finding.estimatedFixTime,
-        businessImpact: finding.businessImpact || 'medium'
+        businessImpact: finding.businessImpact || 'medium',
       }));
     } catch (error) {
       console.error(`Failed to parse ${llmId} response:`, error);
@@ -517,25 +615,32 @@ export class AIReviewAgent {
    */
   private aggregateResults(results: { [llmId: string]: AIReviewFinding[] }) {
     const allFindings = Object.values(results).flat();
-    
-    const findingsBySeverity = allFindings.reduce((acc, finding) => {
-      acc[finding.severity] = (acc[finding.severity] || 0) + 1;
-      return acc;
-    }, {} as { [severity: string]: number });
 
-    const findingsByCategory = allFindings.reduce((acc, finding) => {
-      acc[finding.category] = (acc[finding.category] || 0) + 1;
-      return acc;
-    }, {} as { [category: string]: number });
+    const findingsBySeverity = allFindings.reduce(
+      (acc, finding) => {
+        acc[finding.severity] = (acc[finding.severity] || 0) + 1;
+        return acc;
+      },
+      {} as { [severity: string]: number }
+    );
+
+    const findingsByCategory = allFindings.reduce(
+      (acc, finding) => {
+        acc[finding.category] = (acc[finding.category] || 0) + 1;
+        return acc;
+      },
+      {} as { [category: string]: number }
+    );
 
     // Find consensus findings (issues found by multiple LLMs)
     const consensusFindings = this.findConsensusIssues(results);
-    
+
     // Find unique findings per LLM
     const uniqueFindings = this.findUniqueFindings(results, consensusFindings);
 
     // Calculate agreement score
-    const llmAgreementScore = consensusFindings.length / Math.max(allFindings.length, 1);
+    const llmAgreementScore =
+      consensusFindings.length / Math.max(allFindings.length, 1);
 
     return {
       totalFindings: allFindings.length,
@@ -543,17 +648,19 @@ export class AIReviewAgent {
       findingsByCategory,
       consensusFindings,
       uniqueFindings,
-      llmAgreementScore
+      llmAgreementScore,
     };
   }
 
   /**
    * Find issues that multiple LLMs agree on
    */
-  private findConsensusIssues(results: { [llmId: string]: AIReviewFinding[] }): AIReviewFinding[] {
+  private findConsensusIssues(results: {
+    [llmId: string]: AIReviewFinding[];
+  }): AIReviewFinding[] {
     const consensus: AIReviewFinding[] = [];
     const llmIds = Object.keys(results);
-    
+
     // For now, simple consensus based on similar messages
     // TODO: Implement more sophisticated similarity detection
     for (const llmId of llmIds) {
@@ -564,7 +671,7 @@ export class AIReviewAgent {
           .map(id => results[id])
           .flat()
           .filter(f => this.areFindingsSimilar(finding, f));
-        
+
         if (similarFindings.length >= this.config.minConsensusCount - 1) {
           consensus.push(finding);
         }
@@ -582,10 +689,13 @@ export class AIReviewAgent {
     consensusFindings: AIReviewFinding[]
   ): { [llmId: string]: AIReviewFinding[] } {
     const unique: { [llmId: string]: AIReviewFinding[] } = {};
-    
+
     Object.entries(results).forEach(([llmId, findings]) => {
-      unique[llmId] = findings.filter(finding => 
-        !consensusFindings.some(consensus => this.areFindingsSimilar(finding, consensus))
+      unique[llmId] = findings.filter(
+        finding =>
+          !consensusFindings.some(consensus =>
+            this.areFindingsSimilar(finding, consensus)
+          )
       );
     });
 
@@ -595,12 +705,18 @@ export class AIReviewAgent {
   /**
    * Check if two findings are similar (simple implementation)
    */
-  private areFindingsSimilar(finding1: AIReviewFinding, finding2: AIReviewFinding): boolean {
+  private areFindingsSimilar(
+    finding1: AIReviewFinding,
+    finding2: AIReviewFinding
+  ): boolean {
     // Simple similarity check based on message and line number
-    const messageSimilarity = this.calculateStringSimilarity(finding1.message, finding2.message);
+    const messageSimilarity = this.calculateStringSimilarity(
+      finding1.message,
+      finding2.message
+    );
     const sameLine = finding1.lineNumber === finding2.lineNumber;
     const sameCategory = finding1.category === finding2.category;
-    
+
     return messageSimilarity > 0.7 || (sameLine && sameCategory);
   }
 
@@ -610,9 +726,9 @@ export class AIReviewAgent {
   private calculateStringSimilarity(str1: string, str2: string): number {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
-    
+
     if (longer.length === 0) return 1.0;
-    
+
     const editDistance = this.levenshteinDistance(longer, shorter);
     return (longer.length - editDistance) / longer.length;
   }
@@ -622,15 +738,15 @@ export class AIReviewAgent {
    */
   private levenshteinDistance(str1: string, str2: string): number {
     const matrix = [];
-    
+
     for (let i = 0; i <= str2.length; i++) {
       matrix[i] = [i];
     }
-    
+
     for (let j = 0; j <= str1.length; j++) {
       matrix[0][j] = j;
     }
-    
+
     for (let i = 1; i <= str2.length; i++) {
       for (let j = 1; j <= str1.length; j++) {
         if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
@@ -644,25 +760,29 @@ export class AIReviewAgent {
         }
       }
     }
-    
+
     return matrix[str2.length][str1.length];
   }
 
   /**
    * Estimate cost for API calls
    */
-  private estimateCost(llmId: string, inputTokens: number, outputTokens: number): number {
+  private estimateCost(
+    llmId: string,
+    inputTokens: number,
+    outputTokens: number
+  ): number {
     // Rough cost estimates (USD per 1k tokens) - update these with current pricing
     const pricing: { [key: string]: { input: number; output: number } } = {
       'anthropic-claude': { input: 0.003, output: 0.015 },
       'openai-gpt4': { input: 0.03, output: 0.06 },
       'google-gemini': { input: 0.00035, output: 0.00105 },
       'azure-gpt4': { input: 0.03, output: 0.06 },
-      'local-ollama': { input: 0, output: 0 }
+      'local-ollama': { input: 0, output: 0 },
     };
 
     const rates = pricing[llmId] || { input: 0.001, output: 0.002 };
-    return ((inputTokens * rates.input) + (outputTokens * rates.output)) / 1000;
+    return (inputTokens * rates.input + outputTokens * rates.output) / 1000;
   }
 
   /**
@@ -714,8 +834,8 @@ Required JSON format:
         includeFileMetadata: true,
         includeProjectContext: true,
         includeGitDiff: false,
-        maxCodeLength: 8000
-      }
+        maxCodeLength: 8000,
+      },
     };
   }
 }

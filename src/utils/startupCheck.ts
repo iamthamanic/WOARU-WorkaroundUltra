@@ -13,7 +13,11 @@ interface StartupCheckResult {
 }
 
 export class StartupCheck {
-  private static readonly CACHE_FILE = path.join(process.env.HOME || '~', '.woaru', 'startup-cache.json');
+  private static readonly CACHE_FILE = path.join(
+    process.env.HOME || '~',
+    '.woaru',
+    'startup-cache.json'
+  );
   private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
   /**
@@ -47,7 +51,7 @@ export class StartupCheck {
 
       const cache = {
         timestamp: Date.now(),
-        lastCheck: new Date().toISOString()
+        lastCheck: new Date().toISOString(),
       };
 
       fs.writeJsonSync(this.CACHE_FILE, cache);
@@ -59,14 +63,17 @@ export class StartupCheck {
   /**
    * Check if git is available in the system
    */
-  private static checkGitAvailability(): { available: boolean; error?: string } {
+  private static checkGitAvailability(): {
+    available: boolean;
+    error?: string;
+  } {
     try {
       execSync('git --version', { stdio: 'ignore' });
       return { available: true };
     } catch (error) {
-      return { 
-        available: false, 
-        error: 'Git ist nicht in deinem System-PATH verfügbar' 
+      return {
+        available: false,
+        error: 'Git ist nicht in deinem System-PATH verfügbar',
       };
     }
   }
@@ -74,14 +81,17 @@ export class StartupCheck {
   /**
    * Check if docker is available (optional)
    */
-  private static checkDockerAvailability(): { available: boolean; error?: string } {
+  private static checkDockerAvailability(): {
+    available: boolean;
+    error?: string;
+  } {
     try {
       execSync('docker --version', { stdio: 'ignore' });
       return { available: true };
     } catch (error) {
-      return { 
-        available: false, 
-        error: 'Docker ist nicht verfügbar (optional)' 
+      return {
+        available: false,
+        error: 'Docker ist nicht verfügbar (optional)',
       };
     }
   }
@@ -89,14 +99,17 @@ export class StartupCheck {
   /**
    * Check if snyk is available (optional)
    */
-  private static checkSnykAvailability(): { available: boolean; error?: string } {
+  private static checkSnykAvailability(): {
+    available: boolean;
+    error?: string;
+  } {
     try {
       execSync('snyk --version', { stdio: 'ignore' });
       return { available: true };
     } catch (error) {
-      return { 
-        available: false, 
-        error: 'Snyk ist nicht verfügbar (optional für Security-Checks)' 
+      return {
+        available: false,
+        error: 'Snyk ist nicht verfügbar (optional für Security-Checks)',
       };
     }
   }
@@ -104,7 +117,10 @@ export class StartupCheck {
   /**
    * Perform environment checks
    */
-  private static async performEnvironmentCheck(): Promise<{ errors: string[]; warnings: string[] }> {
+  private static async performEnvironmentCheck(): Promise<{
+    errors: string[];
+    warnings: string[];
+  }> {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -112,19 +128,25 @@ export class StartupCheck {
     const gitCheck = this.checkGitAvailability();
     if (!gitCheck.available) {
       errors.push(`⚠️ WARNUNG: ${gitCheck.error}`);
-      warnings.push('Befehle wie \'woaru review git\' werden nicht funktionieren.');
+      warnings.push(
+        "Befehle wie 'woaru review git' werden nicht funktionieren."
+      );
     }
 
     // Check Docker (optional)
     const dockerCheck = this.checkDockerAvailability();
     if (!dockerCheck.available) {
-      warnings.push('💡 TIPP: Docker ist nicht verfügbar. Containerisierung-Checks werden übersprungen.');
+      warnings.push(
+        '💡 TIPP: Docker ist nicht verfügbar. Containerisierung-Checks werden übersprungen.'
+      );
     }
 
     // Check Snyk (optional)
     const snykCheck = this.checkSnykAvailability();
     if (!snykCheck.available) {
-      warnings.push('💡 TIPP: Snyk ist nicht verfügbar. Erweiterte Security-Checks werden übersprungen.');
+      warnings.push(
+        '💡 TIPP: Snyk ist nicht verfügbar. Erweiterte Security-Checks werden übersprungen.'
+      );
     }
 
     return { errors, warnings };
@@ -133,25 +155,34 @@ export class StartupCheck {
   /**
    * Perform version check and prompt for update if needed
    */
-  private static async performVersionCheck(): Promise<{ updated: boolean; errors: string[] }> {
+  private static async performVersionCheck(): Promise<{
+    updated: boolean;
+    errors: string[];
+  }> {
     const errors: string[] = [];
-    
+
     try {
       const versionInfo = await VersionManager.checkVersion();
-      
+
       if (!versionInfo.isUpToDate) {
-        console.log(chalk.yellow(`💡 Eine neue Version von WOARU (v${versionInfo.latest}) ist verfügbar!`));
+        console.log(
+          chalk.yellow(
+            `💡 Eine neue Version von WOARU (v${versionInfo.latest}) ist verfügbar!`
+          )
+        );
         if (versionInfo.releaseDate) {
-          console.log(chalk.gray(`   Veröffentlicht am: ${versionInfo.releaseDate}`));
+          console.log(
+            chalk.gray(`   Veröffentlicht am: ${versionInfo.releaseDate}`)
+          );
         }
-        
+
         const answer = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'update',
             message: 'Möchtest du jetzt updaten?',
-            default: false
-          }
+            default: false,
+          },
         ]);
 
         if (answer.update) {
@@ -164,7 +195,7 @@ export class StartupCheck {
           }
         }
       }
-      
+
       return { updated: false, errors: [] };
     } catch (error) {
       errors.push(`Versions-Check fehlgeschlagen: ${error}`);
@@ -182,7 +213,7 @@ export class StartupCheck {
         versionCheck: true,
         environmentCheck: true,
         errors: [],
-        warnings: []
+        warnings: [],
       };
     }
 
@@ -190,14 +221,14 @@ export class StartupCheck {
       versionCheck: true,
       environmentCheck: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     // Perform environment check
     const envCheck = await this.performEnvironmentCheck();
     result.errors.push(...envCheck.errors);
     result.warnings.push(...envCheck.warnings);
-    
+
     if (envCheck.errors.length > 0) {
       result.environmentCheck = false;
     }
@@ -205,7 +236,7 @@ export class StartupCheck {
     // Perform version check
     const versionCheck = await this.performVersionCheck();
     result.errors.push(...versionCheck.errors);
-    
+
     if (versionCheck.errors.length > 0) {
       result.versionCheck = false;
     }
@@ -242,7 +273,7 @@ export class StartupCheck {
         versionCheck: true,
         environmentCheck: true,
         errors: [],
-        warnings: []
+        warnings: [],
       };
     }
 
@@ -250,14 +281,14 @@ export class StartupCheck {
       versionCheck: true,
       environmentCheck: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     // Perform environment check
     const envCheck = await this.performEnvironmentCheck();
     result.errors.push(...envCheck.errors);
     result.warnings.push(...envCheck.warnings);
-    
+
     if (envCheck.errors.length > 0) {
       result.environmentCheck = false;
     }
@@ -265,9 +296,11 @@ export class StartupCheck {
     // Silent version check (no prompts)
     try {
       const versionInfo = await VersionManager.checkVersion();
-      
+
       if (!versionInfo.isUpToDate) {
-        result.warnings.push(`💡 Eine neue Version von WOARU (v${versionInfo.latest}) ist verfügbar. Führe 'woaru update' aus.`);
+        result.warnings.push(
+          `💡 Eine neue Version von WOARU (v${versionInfo.latest}) ist verfügbar. Führe 'woaru update' aus.`
+        );
       }
     } catch (error) {
       result.errors.push(`Versions-Check fehlgeschlagen: ${error}`);

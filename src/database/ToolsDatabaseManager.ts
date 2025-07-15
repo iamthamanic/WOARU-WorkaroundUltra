@@ -213,12 +213,17 @@ export class ToolsDatabaseManager {
     this.aiModelsCacheFilePath = path.join(this.cacheDir, 'ai-models.json');
     this.defaultSourceUrl =
       'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/tools.json';
-    this.aiModelsSourceUrl = 
+    this.aiModelsSourceUrl =
       'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/ai-models.json';
 
     // Fallback to local files in project root
     this.localFallbackPath = path.join(__dirname, '..', '..', 'tools.json');
-    this.aiModelsLocalFallbackPath = path.join(__dirname, '..', '..', 'ai-models.json');
+    this.aiModelsLocalFallbackPath = path.join(
+      __dirname,
+      '..',
+      '..',
+      'ai-models.json'
+    );
   }
 
   /**
@@ -1096,15 +1101,19 @@ export class ToolsDatabaseManager {
       if (await fs.pathExists(this.aiModelsCacheFilePath)) {
         try {
           const cachedData = await fs.readJson(this.aiModelsCacheFilePath);
-          
+
           // Check if it's a valid AI models database
           if (cachedData.llm_providers && cachedData.version) {
             return cachedData as AIModelsDatabase;
           } else {
-            console.log('🔄 WOARU: Outdated AI models database format, downloading new version...');
+            console.log(
+              '🔄 WOARU: Outdated AI models database format, downloading new version...'
+            );
           }
         } catch (error) {
-          console.warn('🔄 WOARU: Cached AI models database is corrupted, downloading fresh copy...');
+          console.warn(
+            '🔄 WOARU: Cached AI models database is corrupted, downloading fresh copy...'
+          );
         }
       }
 
@@ -1118,7 +1127,9 @@ export class ToolsDatabaseManager {
 
       return freshData;
     } catch (error) {
-      console.warn('⚠️ WOARU: Failed to download AI models database, using local fallback');
+      console.warn(
+        '⚠️ WOARU: Failed to download AI models database, using local fallback'
+      );
       return this.loadAIModelsLocalFallback();
     }
   }
@@ -1128,14 +1139,16 @@ export class ToolsDatabaseManager {
    */
   private async downloadAIModelsDatabase(): Promise<AIModelsDatabase> {
     return new Promise((resolve, reject) => {
-      const request = https.get(this.aiModelsSourceUrl, (response) => {
+      const request = https.get(this.aiModelsSourceUrl, response => {
         if (response.statusCode !== 200) {
-          reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+          reject(
+            new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`)
+          );
           return;
         }
 
         let data = '';
-        response.on('data', (chunk) => {
+        response.on('data', chunk => {
           data += chunk;
         });
 
@@ -1156,7 +1169,7 @@ export class ToolsDatabaseManager {
         });
       });
 
-      request.on('error', (error) => {
+      request.on('error', error => {
         reject(error);
       });
 
@@ -1199,9 +1212,10 @@ export class ToolsDatabaseManager {
           baseUrl: 'https://api.anthropic.com/v1/messages',
           providerType: 'anthropic',
           headers: {
-            'anthropic-version': '2023-06-01'
+            'anthropic-version': '2023-06-01',
           },
-          bodyTemplate: '{"model":"{model}","max_tokens":4000,"temperature":0.1,"messages":[{"role":"user","content":"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```"}]}',
+          bodyTemplate:
+            '{"model":"{model}","max_tokens":4000,"temperature":0.1,"messages":[{"role":"user","content":"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```"}]}',
           timeout: 30000,
           maxTokens: 4000,
           temperature: 0.1,
@@ -1213,11 +1227,11 @@ export class ToolsDatabaseManager {
               isLatest: true,
               category: 'flagship',
               contextWindow: 200000,
-              supportedFeatures: ['code_analysis', 'reasoning', 'writing']
-            }
-          ]
-        }
-      }
+              supportedFeatures: ['code_analysis', 'reasoning', 'writing'],
+            },
+          ],
+        },
+      },
     };
   }
 
@@ -1244,14 +1258,16 @@ export class ToolsDatabaseManager {
     const database = await this.getAIModelsDatabase();
     const allModels: Array<AIModel & { provider: string }> = [];
 
-    Object.entries(database.llm_providers).forEach(([providerName, provider]) => {
-      provider.models.forEach(model => {
-        allModels.push({
-          ...model,
-          provider: providerName
+    Object.entries(database.llm_providers).forEach(
+      ([providerName, provider]) => {
+        provider.models.forEach(model => {
+          allModels.push({
+            ...model,
+            provider: providerName,
+          });
         });
-      });
-    });
+      }
+    );
 
     return allModels;
   }
@@ -1261,13 +1277,17 @@ export class ToolsDatabaseManager {
    */
   async getLatestAIModels(): Promise<Array<AIModel & { provider: string }>> {
     const allModels = await this.getAllAIModels();
-    return allModels.filter(model => model.isLatest || model.category === 'flagship');
+    return allModels.filter(
+      model => model.isLatest || model.category === 'flagship'
+    );
   }
 
   /**
    * Gets models by category (flagship, fast, balanced, etc.)
    */
-  async getModelsByCategory(category: string): Promise<Array<AIModel & { provider: string }>> {
+  async getModelsByCategory(
+    category: string
+  ): Promise<Array<AIModel & { provider: string }>> {
     const allModels = await this.getAllAIModels();
     return allModels.filter(model => model.category === category);
   }
@@ -1275,7 +1295,9 @@ export class ToolsDatabaseManager {
   /**
    * Gets a specific model by ID across all providers
    */
-  async getModelById(modelId: string): Promise<(AIModel & { provider: string }) | null> {
+  async getModelById(
+    modelId: string
+  ): Promise<(AIModel & { provider: string }) | null> {
     const allModels = await this.getAllAIModels();
     return allModels.find(model => model.id === modelId) || null;
   }
@@ -1305,7 +1327,10 @@ export class ToolsDatabaseManager {
 
       return freshData;
     } catch (error) {
-      console.error('❌ WOARU: Failed to force update AI models database:', error);
+      console.error(
+        '❌ WOARU: Failed to force update AI models database:',
+        error
+      );
       throw error;
     }
   }
