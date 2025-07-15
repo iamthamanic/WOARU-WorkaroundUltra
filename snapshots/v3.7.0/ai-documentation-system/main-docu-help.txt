@@ -1,0 +1,14 @@
+Usage: woaru docu [options] [command]
+
+AI-powered code documentation generator
+
+Options:
+  -h, --help       display help for command
+
+Commands:
+  nopro [options]  Generate human-friendly "Explain-for-humans" comments for
+                   non-technical audiences
+  pro [options]    Generate technical TSDoc/JSDoc documentation for developers
+  ai [options]     Generate machine-readable YAML context headers optimized for
+                   AI/LLM comprehension
+  help [command]   display help for command

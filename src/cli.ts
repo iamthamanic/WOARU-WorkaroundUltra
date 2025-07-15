@@ -1182,7 +1182,7 @@ docuCommand
   .description('Generate human-friendly "Explain-for-humans" comments for non-technical audiences')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
-  .option('--git [branch]', 'Document only changes compared to branch', 'main')
+  .option('--git [branch]', 'Document only changes compared to branch')
   .option('--path-only <file_or_directory>', 'Document only specific path')
   .option('--force', 'Skip interactive confirmation')
   .option('--preview', 'Preview changes without writing to files')
@@ -1211,7 +1211,7 @@ docuCommand
   .description('Generate technical TSDoc/JSDoc documentation for developers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
-  .option('--git [branch]', 'Document only changes compared to branch', 'main')
+  .option('--git [branch]', 'Document only changes compared to branch')
   .option('--path-only <file_or_directory>', 'Document only specific path')
   .option('--force', 'Skip interactive confirmation')
   .option('--preview', 'Preview changes without writing to files')
@@ -1228,6 +1228,38 @@ docuCommand
       console.error(
         chalk.red(
           `❌ Documentation generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Documentation ai sub-command (machine-readable context headers)
+docuCommand
+  .command('ai')
+  .description('Generate machine-readable YAML context headers optimized for AI/LLM comprehension')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('--local', 'Document only uncommitted changes')
+  .option('--git [branch]', 'Document only changes compared to branch')
+  .option('--path-only <file_or_directory>', 'Document only specific path')
+  .option('--force', 'Skip interactive confirmation')
+  .option('--preview', 'Preview changes without writing to files')
+  .action(async options => {
+    try {
+      console.log(chalk.blue('🧠 Generating AI-optimized context headers...'));
+      
+      await runDocumentationGeneration(
+        path.resolve(options.path),
+        options,
+        { 
+          type: 'ai', 
+          description: 'Machine-readable YAML context headers for AI/LLM optimization'
+        }
+      );
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI context generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -1262,26 +1294,35 @@ program
     }
   });
 
-// Helper function for Documentation Generation
+/**
+ * Helper function for Documentation Generation
+ * 
+ * @param projectPath - Root path of the project to process
+ * @param options - Command line options object with flags like local, git, pathOnly
+ * @param context - Documentation context with type and description
+ */
 async function runDocumentationGeneration(
   projectPath: string,
   options: any,
-  context: { type: 'nopro' | 'pro'; description: string }
+  context: { type: 'nopro' | 'pro' | 'ai'; description: string }
 ) {
   try {
+    // Debug: Log all options (remove for production)
+    // console.log(chalk.gray('Debug - Options received:', JSON.stringify(options, null, 2)));
+    
     // Determine file list based on options
     let fileList: string[] = [];
     
-    if (options.local) {
+    if (options.pathOnly) {
+      // Get files from specific path (highest priority)
+      fileList = await getPathFiles(projectPath, options.pathOnly);
+    } else if (options.local) {
       // Get uncommitted changes
       fileList = await getUncommittedFiles(projectPath);
-    } else if (options.git) {
-      // Get git diff files
+    } else if (options.git !== undefined) {
+      // Get git diff files (when --git flag is explicitly used)
       const branch = typeof options.git === 'string' ? options.git : 'main';
       fileList = await getGitDiffFiles(projectPath, branch);
-    } else if (options.pathOnly) {
-      // Get files from specific path
-      fileList = await getPathFiles(projectPath, options.pathOnly);
     } else {
       // Get all relevant code files
       fileList = await getAllCodeFiles(projectPath);
@@ -1317,7 +1358,8 @@ async function runDocumentationGeneration(
     }
 
     // Load appropriate prompt template
-    const promptName = context.type === 'nopro' ? 'docu_nopro' : 'docu_pro';
+    const promptName = context.type === 'nopro' ? 'docu_nopro' : 
+                      context.type === 'pro' ? 'docu_pro' : 'docu_ai';
     const { PromptManager } = await import('./ai/PromptManager');
     const promptManager = PromptManager.getInstance();
     
@@ -1436,6 +1478,13 @@ async function getGitDiffFiles(projectPath: string, branch: string): Promise<str
   });
 }
 
+/**
+ * Get files from a specific path (file or directory)
+ * 
+ * @param projectPath - Root project path
+ * @param targetPath - Target file or directory path (relative or absolute)
+ * @returns Array of absolute file paths found
+ */
 async function getPathFiles(projectPath: string, targetPath: string): Promise<string[]> {
   const { glob } = await import('glob');
   const absoluteTargetPath = path.resolve(projectPath, targetPath);

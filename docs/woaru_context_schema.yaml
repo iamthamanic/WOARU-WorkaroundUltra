@@ -1,0 +1,105 @@
+# WOARU Context Header Schema v1.0
+# Maschinenlesbare Kontext-Header für optimale KI/LLM-Verständlichkeit
+
+# Beispiel eines vollständigen woaru_context-Headers:
+woaru_context:
+  # === DATEI-IDENTIFIKATION ===
+  file_purpose: "Core service class that manages user authentication and session handling"
+  file_type: "service_class"  # [service_class, utility_function, api_endpoint, data_model, config_file, test_file, component, middleware, plugin]
+  complexity_level: "medium"  # [low, medium, high, critical]
+  
+  # === FUNKTIONALE VERANTWORTLICHKEITEN ===
+  main_responsibilities:
+    - "User login/logout workflow management"
+    - "JWT token generation and validation"
+    - "Session persistence and cleanup"
+    - "Password hashing and verification"
+  
+  # === TECHNISCHER KONTEXT ===
+  tech_stack:
+    language: "typescript"
+    framework: "express"
+    database: "postgresql"
+    auth_system: "jwt"
+    testing: "jest"
+  
+  # === ABHÄNGIGKEITEN ===
+  key_dependencies:
+    external:
+      - "bcrypt: Password hashing"
+      - "jsonwebtoken: JWT handling"
+      - "express-session: Session management"
+    internal:
+      - "src/models/User.ts: User data model"
+      - "src/utils/crypto.ts: Encryption utilities"
+      - "src/config/database.ts: DB connection"
+  
+  # === ARCHITEKTUR-KONTEXT ===
+  architectural_role: "authentication_layer"  # [presentation_layer, business_logic, data_access, authentication_layer, api_gateway, utility_layer]
+  design_patterns:
+    - "Singleton (for UserService instance)"
+    - "Factory (for token generation)"
+    - "Strategy (for different auth methods)"
+  
+  # === BEZIEHUNGEN ===
+  related_files:
+    controllers:
+      - "src/controllers/AuthController.ts: Uses this service for auth endpoints"
+    middleware:
+      - "src/middleware/authMiddleware.ts: Validates tokens generated here"
+    tests:
+      - "tests/services/UserService.test.ts: Comprehensive test suite"
+    config:
+      - "src/config/auth.config.ts: Authentication configuration"
+  
+  # === GESCHÄFTSLOGIK ===
+  business_impact: "critical"  # [low, medium, high, critical]
+  user_facing: true
+  data_sensitivity: "high"  # [low, medium, high]
+  security_critical: true
+  
+  # === ENTWICKLER-KONTEXT ===
+  modification_frequency: "medium"  # [low, medium, high]
+  testing_coverage: "90%"
+  performance_critical: true
+  
+  # === API/INTERFACE ===
+  public_interface:
+    methods:
+      - "login(email, password): Promise<AuthResult>"
+      - "logout(userId): Promise<void>"
+      - "validateToken(token): Promise<User | null>"
+      - "refreshToken(refreshToken): Promise<TokenPair>"
+    events:
+      - "user:login"
+      - "user:logout"
+      - "token:expired"
+  
+  # === DATENFLUSS ===
+  data_flow:
+    inputs:
+      - "User credentials from AuthController"
+      - "Session data from middleware"
+    outputs:
+      - "JWT tokens to client"
+      - "User session data to cache"
+    side_effects:
+      - "Database writes for login logs"
+      - "Cache updates for session data"
+  
+  # === KONFIGURATION ===
+  environment_variables:
+    - "JWT_SECRET: Token signing key"
+    - "SESSION_TIMEOUT: Session duration"
+    - "BCRYPT_ROUNDS: Password hashing strength"
+  
+  # === BEKANNTE PROBLEME ===
+  known_issues:
+    - "Race condition in concurrent login attempts (Issue #123)"
+    - "Memory leak in session cleanup (scheduled for v2.1)"
+  
+  # === METADATEN ===
+  generated_by: "woaru docu ai"
+  generated_at: "2025-07-14T21:45:00Z"
+  schema_version: "1.0"
+  last_updated: "2025-07-14T21:45:00Z"

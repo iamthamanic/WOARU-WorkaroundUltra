@@ -1,0 +1,294 @@
+# WOARU AI Documentation Template - Machine-Readable Context Headers
+# This prompt generates structured YAML context headers optimized for AI/LLM comprehension
+
+name: "AI-Optimized Context Documentation"
+description: "Generates machine-readable woaru_context headers in YAML format for enhanced AI/LLM code understanding"
+version: "1.0.0"
+author: "WOARU AI Documentation Team"
+tags: ["documentation", "ai-optimized", "machine-readable", "yaml", "context-headers"]
+
+system_prompt: |
+  You are an expert code analyst and technical architect who specializes in creating machine-readable documentation that dramatically improves AI and LLM comprehension of codebases.
+
+  Your task is to analyze code files and generate a comprehensive `woaru_context` header in YAML format that provides structured metadata about the file's purpose, architecture, dependencies, and business context.
+
+  **Your Analysis Must Include:**
+
+  1. **File Identification**
+     - Determine the exact purpose and role of this file
+     - Classify the file type (service_class, utility_function, api_endpoint, data_model, config_file, test_file, component, middleware, plugin)
+     - Assess complexity level (low, medium, high, critical)
+
+  2. **Functional Analysis**
+     - Identify main responsibilities (3-5 key functions)
+     - Determine architectural role (presentation_layer, business_logic, data_access, authentication_layer, api_gateway, utility_layer)
+     - Detect design patterns in use
+
+  3. **Technical Context**
+     - Extract tech stack information (language, framework, database, etc.)
+     - Identify key dependencies (both external packages and internal files)
+     - Analyze public interface (methods, events, exports)
+
+  4. **Business & Security Context**
+     - Assess business impact (low, medium, high, critical)
+     - Determine if user-facing and security-critical
+     - Evaluate data sensitivity level
+
+  5. **Architectural Relationships**
+     - Map related files (controllers, services, tests, config)
+     - Trace data flow (inputs, outputs, side effects)
+     - Identify environment variables and configuration
+
+  **Critical Guidelines:**
+  - Be precise and specific in your analysis
+  - Use only the predefined enum values for categorical fields
+  - Focus on information that helps AI understand the code's role and context
+  - Include actual method names, file paths, and specific dependencies
+  - Prioritize information that aids in code comprehension and maintenance
+
+  **Format:** Always respond with ONLY a valid YAML block in this exact format:
+  ```yaml
+  woaru_context:
+    file_purpose: "Specific description of what this file does"
+    file_type: "one_of_predefined_types"
+    complexity_level: "low|medium|high|critical"
+    main_responsibilities:
+      - "Specific responsibility 1"
+      - "Specific responsibility 2"
+      - "Specific responsibility 3"
+    tech_stack:
+      language: "detected_language"
+      framework: "detected_framework"
+      # other relevant tech
+    key_dependencies:
+      external:
+        - "package_name: Purpose description"
+      internal:
+        - "file_path: Purpose description"
+    architectural_role: "detected_role"
+    design_patterns:
+      - "Pattern name (context)"
+    related_files:
+      # organized by relationship type
+    business_impact: "low|medium|high|critical"
+    user_facing: true|false
+    data_sensitivity: "low|medium|high"
+    security_critical: true|false
+    public_interface:
+      methods:
+        - "method_signature: description"
+      # other interface elements
+    data_flow:
+      inputs:
+        - "Input source description"
+      outputs:
+        - "Output destination description"
+      side_effects:
+        - "Side effect description"
+    generated_by: "woaru docu ai"
+    schema_version: "1.0"
+  ```
+
+user_prompt: |
+  Analyze the following code file and generate a comprehensive `woaru_context` header that will help AI systems understand this code's purpose, architecture, and relationships.
+
+  **File:** {file_path}
+  **Language:** {language}
+  **Project Context:** {project_name}
+  **Framework:** {framework}
+
+  **Code to Analyze:**
+  ```{language}
+  {code_content}
+  ```
+
+  **Analysis Requirements:**
+  - Determine the exact purpose and role of this file in the codebase
+  - Identify all main responsibilities and functions
+  - Extract technical stack and dependency information
+  - Map architectural relationships and data flow
+  - Assess business impact and security considerations
+  - Identify public interfaces and design patterns
+  - Use precise, specific descriptions rather than generic terms
+
+  **File Type Classifications:**
+  - service_class: Business logic services and managers
+  - utility_function: Helper functions and utilities
+  - api_endpoint: REST/GraphQL endpoints and routes
+  - data_model: Database models and schemas
+  - config_file: Configuration and settings
+  - test_file: Unit/integration tests
+  - component: UI components (React, Vue, etc.)
+  - middleware: Express/framework middleware
+  - plugin: Plugins and extensions
+
+  **Architectural Role Classifications:**
+  - presentation_layer: UI components, controllers
+  - business_logic: Services, managers, processors
+  - data_access: Repositories, DAOs, database access
+  - authentication_layer: Auth services, middleware
+  - api_gateway: Routing, API management
+  - utility_layer: Helpers, utilities, tools
+
+  Respond with ONLY the YAML woaru_context block. Be thorough and specific in your analysis.
+
+parameters:
+  max_tokens: 1000
+  temperature: 0.1
+  focus_areas:
+    - architectural_analysis
+    - dependency_mapping
+    - business_context
+    - technical_precision
+    - relationship_identification
+
+output_format:
+  structure: "yaml_block"
+  format: "woaru_context YAML"
+  include_metadata: true
+  use_enums: true
+  be_specific: true
+
+examples:
+  - input: |
+      // Express middleware for JWT authentication
+      import jwt from 'jsonwebtoken';
+      import { Request, Response, NextFunction } from 'express';
+      
+      export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+          return res.sendStatus(401);
+        }
+        
+        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+          if (err) return res.sendStatus(403);
+          req.user = user;
+          next();
+        });
+      };
+    output: |
+      woaru_context:
+        file_purpose: "Express.js middleware for JWT token validation and user authentication"
+        file_type: "middleware"
+        complexity_level: "medium"
+        main_responsibilities:
+          - "JWT token extraction from Authorization header"
+          - "Token validation using JWT_SECRET"
+          - "User context injection into request object"
+          - "HTTP 401/403 error handling for auth failures"
+        tech_stack:
+          language: "typescript"
+          framework: "express"
+          auth_system: "jwt"
+        key_dependencies:
+          external:
+            - "jsonwebtoken: JWT token verification"
+            - "express: HTTP request/response types"
+          internal: []
+        architectural_role: "authentication_layer"
+        design_patterns:
+          - "Middleware (Express.js pattern)"
+        related_files:
+          routes:
+            - "All protected route handlers use this middleware"
+          config:
+            - "Environment variables for JWT_SECRET"
+        business_impact: "critical"
+        user_facing: false
+        data_sensitivity: "high"
+        security_critical: true
+        public_interface:
+          methods:
+            - "authenticateToken(req, res, next): Middleware function"
+        data_flow:
+          inputs:
+            - "HTTP Authorization header with Bearer token"
+            - "JWT_SECRET from environment variables"
+          outputs:
+            - "req.user object with authenticated user data"
+            - "HTTP 401/403 status codes for failures"
+          side_effects:
+            - "Modifies request object with user context"
+        environment_variables:
+          - "JWT_SECRET: Secret key for token verification"
+        generated_by: "woaru docu ai"
+        schema_version: "1.0"
+
+  - input: |
+      // User service for managing user accounts
+      import bcrypt from 'bcrypt';
+      import { User } from '../models/User';
+      import { TokenService } from './TokenService';
+      
+      export class UserService {
+        async createUser(userData: CreateUserDto): Promise<User> {
+          const hashedPassword = await bcrypt.hash(userData.password, 10);
+          return User.create({ ...userData, password: hashedPassword });
+        }
+        
+        async authenticate(email: string, password: string): Promise<AuthResult> {
+          const user = await User.findOne({ email });
+          if (!user || !await bcrypt.compare(password, user.password)) {
+            throw new Error('Invalid credentials');
+          }
+          const token = TokenService.generateToken(user.id);
+          return { user, token };
+        }
+      }
+    output: |
+      woaru_context:
+        file_purpose: "Core service class for user account management and authentication operations"
+        file_type: "service_class"
+        complexity_level: "medium"
+        main_responsibilities:
+          - "User account creation with password hashing"
+          - "User authentication and credential validation"
+          - "Integration with TokenService for JWT generation"
+          - "Database interactions for user data management"
+        tech_stack:
+          language: "typescript"
+          framework: "node.js"
+          database: "orm_based"
+          auth_system: "bcrypt_jwt"
+        key_dependencies:
+          external:
+            - "bcrypt: Password hashing and comparison"
+          internal:
+            - "src/models/User.ts: User data model and database operations"
+            - "src/services/TokenService.ts: JWT token generation"
+            - "src/types/dto.ts: CreateUserDto and AuthResult types"
+        architectural_role: "business_logic"
+        design_patterns:
+          - "Service Layer (business logic encapsulation)"
+          - "Dependency Injection (TokenService usage)"
+        related_files:
+          controllers:
+            - "src/controllers/AuthController.ts: Uses authentication methods"
+            - "src/controllers/UserController.ts: Uses user management methods"
+          models:
+            - "src/models/User.ts: User entity and database schema"
+          services:
+            - "src/services/TokenService.ts: Token generation and validation"
+        business_impact: "critical"
+        user_facing: true
+        data_sensitivity: "high"
+        security_critical: true
+        public_interface:
+          methods:
+            - "createUser(userData): Promise<User>"
+            - "authenticate(email, password): Promise<AuthResult>"
+        data_flow:
+          inputs:
+            - "User registration data from controllers"
+            - "Login credentials for authentication"
+          outputs:
+            - "Created user entities to database"
+            - "Authentication results with tokens"
+          side_effects:
+            - "Database writes for user creation"
+            - "Password hashing operations"
+        generated_by: "woaru docu ai"
+        schema_version: "1.0"

@@ -3,6 +3,7 @@ import * as path from 'path';
 import chalk from 'chalk';
 import { AIReviewConfig, LLMProviderConfig, CodeContext, MultiLLMReviewResult } from '../types/ai-review';
 import { AIReviewAgent } from './AIReviewAgent';
+import { APP_CONFIG } from '../config/constants';
 
 export interface DocumentationResult {
   filePath: string;
@@ -10,7 +11,7 @@ export interface DocumentationResult {
   generatedDoc: string;
   insertionPoint: number;
   functionName: string;
-  documentationType: 'nopro' | 'pro';
+  documentationType: 'nopro' | 'pro' | 'ai';
 }
 
 export interface CodeFunction {
@@ -19,7 +20,7 @@ export interface CodeFunction {
   endLine: number;
   content: string;
   hasExistingDoc: boolean;
-  existingDocType?: 'nopro' | 'pro';
+  existingDocType?: 'nopro' | 'pro' | 'ai';
 }
 
 /**
@@ -54,13 +55,13 @@ export class DocumentationAgent {
    * 
    * @param fileList - Array of file paths to process for documentation
    * @param projectPath - Root path of the project for context
-   * @param documentationType - Type of documentation to generate ('nopro' for human-friendly, 'pro' for technical)
+   * @param documentationType - Type of documentation to generate ('nopro' for human-friendly, 'pro' for technical, 'ai' for machine-readable)
    * @returns Promise resolving to array of documentation results with file modifications
    */
   async generateDocumentation(
     fileList: string[],
     projectPath: string,
-    documentationType: 'nopro' | 'pro'
+    documentationType: 'nopro' | 'pro' | 'ai'
   ): Promise<DocumentationResult[]> {
     const results: DocumentationResult[] = [];
 
@@ -91,7 +92,7 @@ export class DocumentationAgent {
   private async processFile(
     filePath: string,
     projectPath: string,
-    documentationType: 'nopro' | 'pro'
+    documentationType: 'nopro' | 'pro' | 'ai'
   ): Promise<DocumentationResult[]> {
     const content = await fs.readFile(filePath, 'utf-8');
     const language = this.detectLanguage(filePath);
@@ -99,6 +100,11 @@ export class DocumentationAgent {
     // Skip non-code files
     if (!this.isCodeFile(language)) {
       return [];
+    }
+
+    // For AI documentation, we generate file-level context headers
+    if (documentationType === 'ai') {
+      return await this.processFileForAIContext(filePath, projectPath, content, language);
     }
 
     // Extract functions/classes that need documentation
@@ -144,6 +150,151 @@ export class DocumentationAgent {
   }
 
   /**
+   * Process a file for AI context header generation (file-level documentation)
+   * 
+   * @param filePath - Path to the file to process
+   * @param projectPath - Root project path for context
+   * @param content - File content to analyze
+   * @param language - Programming language of the file
+   * @returns Promise resolving to array with single documentation result for file header
+   */
+  private async processFileForAIContext(
+    filePath: string,
+    projectPath: string,
+    content: string,
+    language: string
+  ): Promise<DocumentationResult[]> {
+    try {
+      // Check if file already has woaru_context header
+      const lines = content.split('\n');
+      const hasExistingAIDoc = this.checkExistingAIDocumentation(lines);
+      
+      if (hasExistingAIDoc) {
+        console.log(chalk.gray(`   ⏭️  Skipping ${path.basename(filePath)} (already has ${APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_KEY} header)`));
+        return [];
+      }
+
+      // Prepare context for AI analysis
+      const context: CodeContext = {
+        filePath,
+        language,
+        totalLines: lines.length,
+        projectContext: {
+          name: path.basename(projectPath),
+          type: 'application',
+          dependencies: []
+        }
+      };
+
+      // Use AI to generate file-level context documentation
+      const result = await this.aiReviewAgent.performMultiLLMReview(content, context);
+
+      // Extract the best documentation from results
+      const aiContextHeader = this.extractBestDocumentation(result, 'ai');
+      
+      if (aiContextHeader) {
+        console.log(chalk.gray(`   ✓ Generated AI context header for ${path.basename(filePath)}`));
+        
+        // Format as comment block for the specific language
+        const formattedHeader = this.formatAIContextHeader(aiContextHeader, language);
+        
+        return [{
+          filePath,
+          originalContent: content,
+          generatedDoc: formattedHeader,
+          insertionPoint: 1, // Insert at beginning of file
+          functionName: 'FILE_HEADER',
+          documentationType: 'ai'
+        }];
+      } else {
+        console.warn(chalk.yellow(`⚠️ No AI context generated for ${path.basename(filePath)}`));
+        return [];
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(chalk.yellow(`⚠️ Could not generate AI context for ${path.basename(filePath)}: ${errorMessage}`));
+      return [];
+    }
+  }
+
+  /**
+   * Check if file already has woaru_context header at the beginning
+   * 
+   * @param lines - Array of file lines to check
+   * @returns True if woaru_context header exists, false otherwise
+   */
+  private checkExistingAIDocumentation(lines: string[]): boolean {
+    // Check first N lines for woaru_context header
+    // Why: Headers are typically at the very beginning of files
+    const checkLines = APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_CHECK_LINES;
+    for (let i = 0; i < Math.min(checkLines, lines.length); i++) {
+      if (lines[i].includes(`${APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_KEY}:`)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Format AI context header as appropriate comment block for the language
+   * 
+   * @param aiContext - Raw AI-generated YAML context content
+   * @param language - Programming language for comment syntax selection
+   * @returns Formatted comment block with YAML content
+   */
+  private formatAIContextHeader(aiContext: string, language: string): string {
+    // Clean up the AI response to ensure it's valid YAML
+    let cleanContext = aiContext.trim();
+    
+    // If AI didn't include the woaru_context: wrapper, add it
+    // Why: Some LLMs may return just the content without the root key
+    const contextKey = APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_KEY;
+    if (!cleanContext.includes(`${contextKey}:`)) {
+      cleanContext = `${contextKey}:\n${cleanContext.split('\n').map(line => `  ${line}`).join('\n')}`;
+    }
+
+    // Add timestamp
+    const timestamp = new Date().toISOString();
+    // Only replace if generated_at exists, otherwise add it
+    if (cleanContext.includes('generated_at:')) {
+      cleanContext = cleanContext.replace(
+        /generated_at: .*/,
+        `generated_at: "${timestamp}"`
+      );
+    } else {
+      // Add generated_at if missing
+      const schemaVersion = APP_CONFIG.DOCUMENTATION.SCHEMA_VERSION;
+      cleanContext = cleanContext.replace(
+        new RegExp(`schema_version: "${schemaVersion}"`),
+        `schema_version: "${schemaVersion}"\n  generated_at: "${timestamp}"`
+      );
+    }
+
+    // Format as comment block based on language
+    switch (language) {
+      case 'javascript':
+      case 'typescript':
+      case 'java':
+      case 'c':
+      case 'cpp':
+      case 'csharp':
+        return `/*\n${cleanContext}\n*/\n\n`;
+      
+      case 'python':
+      case 'ruby':
+        return `"""\n${cleanContext}\n"""\n\n`;
+      
+      case 'go':
+      case 'rust':
+        return `/*\n${cleanContext}\n*/\n\n`;
+      
+      default:
+        return `/*\n${cleanContext}\n*/\n\n`;
+    }
+  }
+
+  /**
    * Generate documentation for a specific code element using AI
    * 
    * @param element - Code element (function/class) to document
@@ -158,7 +309,7 @@ export class DocumentationAgent {
     filePath: string,
     projectPath: string,
     language: string,
-    documentationType: 'nopro' | 'pro'
+    documentationType: 'nopro' | 'pro' | 'ai'
   ): Promise<string | null> {
     try {
       // Prepare context for AI analysis
@@ -200,7 +351,7 @@ export class DocumentationAgent {
    * @param documentationType - Type of documentation requested
    * @returns Best documentation string from available results or null if none found
    */
-  private extractBestDocumentation(aiResult: MultiLLMReviewResult, documentationType: 'nopro' | 'pro'): string | null {
+  private extractBestDocumentation(aiResult: MultiLLMReviewResult, documentationType: 'nopro' | 'pro' | 'ai'): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);
     
@@ -362,7 +513,7 @@ export class DocumentationAgent {
   /**
    * Check if a function already has documentation
    */
-  private checkExistingDocumentation(lines: string[], functionLineIndex: number): { hasDoc: boolean; type?: 'nopro' | 'pro' } {
+  private checkExistingDocumentation(lines: string[], functionLineIndex: number): { hasDoc: boolean; type?: 'nopro' | 'pro' | 'ai' } {
     // Look backwards from the function line to find documentation
     for (let i = functionLineIndex - 1; i >= 0; i--) {
       const line = lines[i].trim();
@@ -380,6 +531,11 @@ export class DocumentationAgent {
       // Check for technical documentation (JSDoc/TSDoc)
       if (line.includes('@param') || line.includes('@returns') || line.includes('/**')) {
         return { hasDoc: true, type: 'pro' };
+      }
+      
+      // Check for AI-optimized documentation (woaru_context header)
+      if (line.includes(`${APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_KEY}:`)) {
+        return { hasDoc: true, type: 'ai' };
       }
     }
     

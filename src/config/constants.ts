@@ -189,6 +189,19 @@ export const APP_CONFIG = {
     PNPM: 'pnpm-lock.yaml',
     YARN: 'yarn.lock',
     NPM: 'package-lock.json'
+  },
+  
+  // Documentation system constants
+  DOCUMENTATION: {
+    SCHEMA_VERSION: '1.0',
+    CONTEXT_HEADER_KEY: 'woaru_context',
+    CONTEXT_HEADER_CHECK_LINES: 20,
+    GENERATED_BY: 'woaru docu ai',
+    TYPES: {
+      NOPRO: 'nopro',
+      PRO: 'pro',
+      AI: 'ai'
+    }
   }
 };
 
