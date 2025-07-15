@@ -1589,7 +1589,7 @@ async function runAIReviewAnalysis(
   fileList: string[],
   projectPath: string,
   options: any,
-  context: { type: 'git' | 'local' | 'path'; description: string }
+  context: { type: 'git' | 'local' | 'path' | 'local-git'; description: string }
 ) {
   if (fileList.length === 0) {
     console.log(chalk.green('✅ No files found for analysis.'));
@@ -1834,7 +1834,7 @@ async function runReviewAnalysis(
   fileList: string[],
   projectPath: string,
   options: any,
-  context: { type: 'git' | 'local' | 'path'; description: string }
+  context: { type: 'git' | 'local' | 'path' | 'local-git'; description: string }
 ) {
   if (fileList.length === 0) {
     console.log(chalk.green('✅ No files found for analysis.'));
@@ -1997,8 +1997,10 @@ Examples:
   woaru analyze llm                       # AI analysis of entire project
   woaru review git                        # Analyze changes since main branch
   woaru review git llm                    # AI analysis of git changes
-  woaru review local                      # Analyze uncommitted changes
-  woaru review local llm                  # AI analysis of uncommitted changes
+  woaru review local                      # Analyze current directory (no git required)
+  woaru review local src/components       # Analyze specific directory (no git required)
+  woaru review local git                  # Analyze uncommitted changes (requires git)
+  woaru review local llm                  # AI analysis of current directory
   woaru review path src/components        # Analyze specific directory
   woaru review path src/components llm    # AI analysis of specific directory
 `
@@ -2179,10 +2181,84 @@ gitCommand
     }
   });
 
-// Review local sub-command (uncommitted changes)
+// Review local sub-command (analyze current directory without git)
 const localCommand = reviewCommand
-  .command('local')
-  .description('Analyze uncommitted changes in working directory')
+  .command('local [target_path]')
+  .description('Analyze current directory or specified path without git dependencies')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option(
+    '-o, --output <file>',
+    'Output file for review report',
+    path.join('.woaru', 'woaru-review.md')
+  )
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .action(async (targetPath, options) => {
+    try {
+      const projectPath = path.resolve(options.path);
+      const analysisPath = targetPath ? path.resolve(projectPath, targetPath) : projectPath;
+
+      console.log(chalk.blue(`🔍 Analyzing directory: ${path.relative(process.cwd(), analysisPath) || '.'}`));
+
+      // Check if target path exists
+      if (!(await fs.pathExists(analysisPath))) {
+        console.error(chalk.red(`❌ Path does not exist: ${targetPath || '.'}`));
+        process.exit(1);
+      }
+
+      let fileList: string[] = [];
+      const stat = await fs.stat(analysisPath);
+
+      if (stat.isFile()) {
+        fileList = [analysisPath];
+      } else if (stat.isDirectory()) {
+        // Get all files in directory recursively
+        const { glob } = await import('glob');
+        const globPattern = path.join(analysisPath, '**/*');
+        fileList = await glob(globPattern, {
+          ignore: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/dist/**',
+            '**/build/**',
+            '**/.woaru/**',
+          ],
+        });
+        // Filter to only include files (not directories)
+        fileList = fileList.filter(file => {
+          try {
+            return fs.statSync(file).isFile();
+          } catch {
+            return false;
+          }
+        });
+      }
+
+      // Filter to only include code files
+      const codeFileList = filterCodeFiles(fileList);
+      
+      if (codeFileList.length === 0) {
+        console.log(chalk.green('✅ No code files found in the specified directory.'));
+        return;
+      }
+
+      await runReviewAnalysis(codeFileList, projectPath, options, {
+        type: 'local',
+        description: `Local directory analysis: ${path.relative(process.cwd(), analysisPath) || '.'}`,
+      });
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ Local review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Add git sub-command to local review (analyze uncommitted changes)
+localCommand
+  .command('git')
+  .description('Analyze uncommitted changes in git working directory')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option(
     '-o, --output <file>',
@@ -2197,7 +2273,7 @@ const localCommand = reviewCommand
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
         console.error(
-          chalk.red('❌ Not a git repository. Local review requires git.')
+          chalk.red('❌ Not a git repository. Local git review requires git.')
         );
         process.exit(1);
       }
@@ -2254,29 +2330,26 @@ const localCommand = reviewCommand
           console.log(chalk.green('✅ No uncommitted code file changes found.'));
           return;
         }
-        
-        // Use the filtered list for further processing
-        const filteredFileList = codeFileList;
 
-        await runReviewAnalysis(filteredFileList, projectPath, options, {
-          type: 'local',
+        await runReviewAnalysis(codeFileList, projectPath, options, {
+          type: 'local-git',
           description: 'Uncommitted changes in working directory',
         });
       });
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Local review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Local git review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
     }
   });
 
-// Add LLM sub-command to local review
+// Add LLM sub-command to local review (directory analysis)
 localCommand
   .command('llm')
-  .description('AI-powered analysis of uncommitted changes using multiple LLMs')
+  .description('AI-powered analysis of current directory using multiple LLMs')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option(
     '-o, --output <file>',
@@ -2289,74 +2362,41 @@ localCommand
     try {
       const projectPath = path.resolve(options.path);
 
-      // Check if we're in a git repository
-      if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
-        console.error(
-          chalk.red('❌ Not a git repository. Local review requires git.')
-        );
-        process.exit(1);
+      console.log(chalk.blue('🧠 Running LLM analysis on current directory...'));
+
+      // Get all files in directory recursively (no git dependency)
+      const { glob } = await import('glob');
+      const globPattern = path.join(projectPath, '**/*');
+      let fileList = await glob(globPattern, {
+        ignore: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/dist/**',
+          '**/build/**',
+          '**/.woaru/**',
+        ],
+      });
+
+      // Filter to only include files (not directories)
+      fileList = fileList.filter(file => {
+        try {
+          return fs.statSync(file).isFile();
+        } catch {
+          return false;
+        }
+      });
+
+      // Filter to only include code files
+      const codeFileList = filterCodeFiles(fileList);
+      
+      if (codeFileList.length === 0) {
+        console.log(chalk.green('✅ No code files found in the directory.'));
+        return;
       }
 
-      console.log(chalk.blue('🧠 Running LLM analysis on uncommitted changes...'));
-
-      // Get list of uncommitted files using git status
-      const { spawn } = require('child_process');
-      const gitProcess = spawn('git', ['status', '--porcelain'], {
-        cwd: projectPath,
-        stdio: 'pipe',
-      });
-
-      let statusOutput = '';
-      let gitError = '';
-
-      gitProcess.stdout.on('data', (data: Buffer) => {
-        statusOutput += data.toString();
-      });
-
-      gitProcess.stderr.on('data', (data: Buffer) => {
-        gitError += data.toString();
-      });
-
-      gitProcess.on('close', async (code: number) => {
-        if (code !== 0) {
-          console.error(chalk.red(`❌ Git status failed: ${gitError}`));
-          process.exit(1);
-        }
-
-        // Parse git status --porcelain output
-        const fileList = statusOutput
-          .trim()
-          .split('\n')
-          .filter(line => line.length > 0)
-          .map(line => {
-            // Format: XY filename (where X and Y are status codes)
-            const filename = line.substring(3);
-            return path.join(projectPath, filename);
-          })
-          .filter(filePath => {
-            // Only include files that exist (not deleted)
-            try {
-              return fs.existsSync(filePath);
-            } catch {
-              return false;
-            }
-          });
-
-        // Filter to only include code files
-        const codeFileList = filterCodeFiles(fileList);
-        
-        if (codeFileList.length === 0) {
-          console.log(chalk.green('✅ No uncommitted code file changes found.'));
-          return;
-        }
-        
-        // Use the filtered list for further processing
-        const filteredFileList = codeFileList;
-
-        await runAIReviewAnalysis(filteredFileList, projectPath, options, {
-          type: 'local',
-          description: 'LLM analysis of uncommitted changes in working directory',
-        });
+      await runAIReviewAnalysis(codeFileList, projectPath, options, {
+        type: 'local',
+        description: 'LLM analysis of current directory',
       });
     } catch (error) {
       console.error(
@@ -3097,7 +3137,7 @@ function displayCommandReference() {
       description: 'Code review and analysis tools',
       usage: 'woaru review <git|local|path> [llm] [options]',
       purpose:
-        'Focused analysis tools for code reviews with optional AI-powered analysis. Choose from git diff analysis, uncommitted changes review, or specific file/directory analysis.',
+        'Focused analysis tools for code reviews with optional AI-powered analysis. Choose from git diff analysis, directory analysis, or specific file/directory analysis.',
       subcommands: [
         {
           name: 'woaru review git [llm]',
@@ -3107,11 +3147,18 @@ function displayCommandReference() {
             'Analyzes changes between your current branch and a base branch (default: main). Optional multi-LLM analysis for AI-powered code review insights.',
         },
         {
-          name: 'woaru review local [llm]',
-          description: 'Analyze uncommitted changes with optional AI analysis',
-          usage: 'woaru review local [llm] [-o <file>] [-j]',
+          name: 'woaru review local [target_path] [llm]',
+          description: 'Analyze current directory or specified path (no git required) with optional AI analysis',
+          usage: 'woaru review local [target_path] [llm] [-o <file>] [-j]',
           purpose:
-            'Reviews your uncommitted changes before you commit them. Optional AI analysis provides intelligent suggestions and catches issues early.',
+            'Reviews files in current directory or specified path without requiring git. Works in any directory. Optional AI analysis provides intelligent suggestions.',
+        },
+        {
+          name: 'woaru review local git',
+          description: 'Analyze uncommitted changes in git working directory',
+          usage: 'woaru review local git [-o <file>] [-j]',
+          purpose:
+            'Reviews your uncommitted changes before you commit them. Requires git repository. Analyzes only modified files.',
         },
         {
           name: 'woaru review path <path> [llm]',

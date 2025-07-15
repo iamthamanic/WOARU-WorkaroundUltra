@@ -1,9 +1,56 @@
-# WOARU 🚀 v3.8.0
+# WOARU 🚀 v3.9.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.8.0 - Comprehensive Version & Update Management System**
+## 🆕 **Latest Release: v3.9.0 - Revolutionary Review Commands Refactoring**
+**Release Date:** July 15, 2025
+
+### 🔄 **MAJOR: Universal Code Analysis Without Git Dependencies**
+**Problem Solved:** The previous `woaru review` command structure had inconsistent Git dependencies and unclear hierarchies. Users were confused about when Git was required and the command structure didn't reflect logical relationships between different review modes.
+
+**Revolutionary Solution:**
+- **🔧 Git-Independent Analysis**:
+  - `woaru review local` - Now works in ANY directory without Git requirement
+  - `woaru review local [target_path]` - Analyze specific directories without Git
+  - `woaru review local git` - NEW sub-command for Git-specific analysis
+- **🏗️ Logical Command Hierarchy**:
+  - Clear separation between directory analysis and Git-specific operations
+  - Intuitive sub-command structure: `local git` is sub-command of `local`
+  - Consistent behavior patterns across all review modes
+- **🎯 Enhanced Flexibility**:
+  - Works in Git and non-Git projects equally well
+  - Choose the right analysis mode for your specific needs
+  - Backward compatibility with existing workflows
+- **📚 Comprehensive Documentation**:
+  - Updated help texts with clear examples
+  - Migration guide for existing users
+  - Enhanced command reference with usage scenarios
+
+### 🎯 **New Review Command Structure**
+```bash
+# Git-independent directory analysis (NEW!)
+woaru review local                    # Analyze current directory
+woaru review local src/components     # Analyze specific directory
+woaru review local llm                # AI analysis of current directory
+
+# Git-specific analysis (MOVED to sub-command)
+woaru review local git                # Analyze uncommitted changes
+woaru review local git llm            # AI analysis of uncommitted changes
+
+# Unchanged commands
+woaru review git                      # Git diff analysis
+woaru review path src/file.ts         # Specific file/directory analysis
+```
+
+### 🔄 **Migration Guide**
+- **OLD**: `woaru review local` (required Git) → **NEW**: `woaru review local git`
+- **NEW**: `woaru review local` (no Git required) → Analyze any directory
+- **UNCHANGED**: `woaru review git` and `woaru review path` work as before
+
+---
+
+## 📚 **Previous Release: v3.8.0 - Comprehensive Version & Update Management System**
 **Release Date:** July 15, 2025
 
 ### 🚀 **MAJOR: Professional Version Management**
@@ -642,13 +689,26 @@ WOARU automatically detects your framework and provides **specific recommendatio
 
 ### Core Commands
 ```bash
-woaru analyze        # Deep project analysis with security audit + SOLID analysis (★ NEW!)
+woaru analyze        # Deep project analysis with security audit + SOLID analysis
 woaru setup          # Auto-setup recommended tools
 woaru helpers        # Show active vs missing tools (★ most useful)
 woaru watch          # Start live quality monitoring with security (★ supervisor mode)
-woaru review         # Code review: analyze only changed files with security + SOLID (★ NEW SUB-COMMANDS!)
-woaru docu           # AI-powered code documentation generator (★ NEW v3.6.0!)
-woaru commands       # Show detailed command reference (★ NEW!)
+woaru review         # Code review with universal directory analysis (★ REFACTORED v3.9.0!)
+woaru docu           # AI-powered code documentation generator
+woaru commands       # Show detailed command reference
+```
+
+### 🔄 Review Commands (★ REFACTORED v3.9.0!)
+```bash
+# Git-independent directory analysis
+woaru review local                    # Analyze current directory (no Git required)
+woaru review local src/components     # Analyze specific directory (no Git required)
+woaru review local llm                # AI analysis of current directory
+
+# Git-specific analysis
+woaru review local git                # Analyze uncommitted changes (requires Git)
+woaru review git                      # Analyze changes since main branch
+woaru review path src/file.ts         # Analyze specific files or directories
 ```
 
 ### Version & Update Management (★ NEW v3.8.0!)
