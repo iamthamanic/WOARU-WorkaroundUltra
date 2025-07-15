@@ -11,6 +11,7 @@ import { APP_CONFIG } from './config/constants';
 import { ConfigManager } from './config/ConfigManager';
 import { VersionManager } from './utils/versionManager';
 import { StartupCheck } from './utils/startupCheck';
+import { displaySplashScreen } from './assets/splash_logo';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
@@ -4777,9 +4778,9 @@ program
     }
   });
 
-// Show help if no command provided
+// Show splash screen if no command provided, otherwise parse normally
 if (process.argv.length === 2) {
-  program.help();
+  displaySplashScreen();
+} else {
+  program.parse();
 }
-
-program.parse();
