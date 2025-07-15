@@ -1,56 +1,62 @@
-# WOARU 🚀 v3.9.0
+# WOARU 🚀 v4.0.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.9.0 - Revolutionary Review Commands Refactoring**
+## 🆕 **Latest Release: v4.0.0 - Revolutionary AI Models Database System**
 **Release Date:** July 15, 2025
 
-### 🔄 **MAJOR: Universal Code Analysis Without Git Dependencies**
-**Problem Solved:** The previous `woaru review` command structure had inconsistent Git dependencies and unclear hierarchies. Users were confused about when Git was required and the command structure didn't reflect logical relationships between different review modes.
+### 🚀 **MAJOR: Database-Driven LLM Configuration System**
+**Problem Solved:** WOARU had a critical, recurring problem with outdated LLM model lists hardcoded throughout the codebase. Users constantly faced missing or deprecated model options, limiting WOARU's effectiveness as a flexible LLM analysis platform.
 
 **Revolutionary Solution:**
-- **🔧 Git-Independent Analysis**:
-  - `woaru review local` - Now works in ANY directory without Git requirement
-  - `woaru review local [target_path]` - Analyze specific directories without Git
-  - `woaru review local git` - NEW sub-command for Git-specific analysis
-- **🏗️ Logical Command Hierarchy**:
-  - Clear separation between directory analysis and Git-specific operations
-  - Intuitive sub-command structure: `local git` is sub-command of `local`
-  - Consistent behavior patterns across all review modes
-- **🎯 Enhanced Flexibility**:
-  - Works in Git and non-Git projects equally well
-  - Choose the right analysis mode for your specific needs
-  - Backward compatibility with existing workflows
-- **📚 Comprehensive Documentation**:
-  - Updated help texts with clear examples
-  - Migration guide for existing users
-  - Enhanced command reference with usage scenarios
+- **🔧 Comprehensive AI Models Database**:
+  - Complete `ai-models.json` database with 6 LLM providers
+  - 25+ models across Anthropic, OpenAI, Google, DeepSeek, Azure, and Ollama
+  - Dynamic model loading replaces all hardcoded lists
+  - Future-proof centralized database enables automatic updates
+- **🧠 DeepSeek AI Integration**:
+  - Full DeepSeek AI provider support with 3 specialized models
+  - Cost-effective pricing at $0.00014/$0.00028 per 1k tokens
+  - 32k context window for complex analysis
+  - Chat, Coder, and Reasoner models for different use cases
+- **🏠 Enhanced Local Models Support**:
+  - Latest Llama 3.2 with 128k context window
+  - Qwen2.5 Coder for advanced code analysis
+  - Comprehensive local model selection in setup
+  - Standardized Ollama integration
+- **📚 Dynamic Setup System**:
+  - `woaru setup llm` now uses database-driven model selection
+  - DeepSeek AI provider in interactive setup
+  - Consistent API key management across all providers
+  - Robust fallback system: Remote → Local → Minimal
 
-### 🎯 **New Review Command Structure**
+### 🎯 **New AI Models Database Structure**
 ```bash
-# Git-independent directory analysis (NEW!)
-woaru review local                    # Analyze current directory
-woaru review local src/components     # Analyze specific directory
-woaru review local llm                # AI analysis of current directory
+# Available LLM providers and models
+woaru setup llm                       # Interactive setup with all providers
 
-# Git-specific analysis (MOVED to sub-command)
-woaru review local git                # Analyze uncommitted changes
-woaru review local git llm            # AI analysis of uncommitted changes
+# 6 Providers with 25+ Models:
+- Anthropic: Claude 3.5 Sonnet, Haiku, Opus
+- OpenAI: GPT-4o, GPT-4o Mini, GPT-4 Turbo  
+- Google: Gemini 1.5 Pro, Flash, Pro
+- DeepSeek: Chat, Coder, Reasoner (NEW!)
+- Azure: Enterprise GPT models
+- Ollama: Llama 3.2, Code Llama, DeepSeek Coder, Qwen2.5
 
-# Unchanged commands
-woaru review git                      # Git diff analysis
-woaru review path src/file.ts         # Specific file/directory analysis
+# Database-driven configuration
+ai-models.json                        # Centralized models database
 ```
 
 ### 🔄 **Migration Guide**
-- **OLD**: `woaru review local` (required Git) → **NEW**: `woaru review local git`
-- **NEW**: `woaru review local` (no Git required) → Analyze any directory
-- **UNCHANGED**: `woaru review git` and `woaru review path` work as before
+- **BREAKING**: Hardcoded model lists removed from setup functions
+- **Enhanced**: All model configurations now sourced from ai-models.json
+- **NEW**: DeepSeek AI provider available in `woaru setup llm`
+- **Compatible**: Existing LLM configurations remain functional
 
 ---
 
-## 📚 **Previous Release: v3.8.0 - Comprehensive Version & Update Management System**
+## 📚 **Previous Release: v3.9.0 - Revolutionary Review Commands Refactoring**
 **Release Date:** July 15, 2025
 
 ### 🚀 **MAJOR: Professional Version Management**

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-07-14T10:00:00Z",
+  "lastUpdated": "2025-07-15T10:00:00Z",
   "llm_providers": {
     "anthropic": {
       "name": "Anthropic Claude",
@@ -145,6 +145,47 @@
         }
       ]
     },
+    "deepseek": {
+      "name": "DeepSeek AI",
+      "description": "Powerful reasoning and coding models by DeepSeek",
+      "apiKeyEnvVar": "DEEPSEEK_API_KEY",
+      "baseUrl": "https://api.deepseek.com/v1/chat/completions",
+      "providerType": "openai",
+      "headers": {},
+      "bodyTemplate": "{\"model\":\"{model}\",\"messages\":[{\"role\":\"system\",\"content\":\"{systemPrompt}\"},{\"role\":\"user\",\"content\":\"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```\"}],\"max_tokens\":4000,\"temperature\":0.1}",
+      "timeout": 30000,
+      "maxTokens": 4000,
+      "temperature": 0.1,
+      "models": [
+        {
+          "id": "deepseek-chat",
+          "name": "DeepSeek Chat",
+          "description": "General-purpose conversational model with excellent reasoning",
+          "isLatest": true,
+          "category": "flagship",
+          "contextWindow": 32768,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "math"]
+        },
+        {
+          "id": "deepseek-coder",
+          "name": "DeepSeek Coder",
+          "description": "Specialized model for code generation and analysis",
+          "isLatest": false,
+          "category": "specialized",
+          "contextWindow": 32768,
+          "supportedFeatures": ["code_analysis", "code_generation", "debugging"]
+        },
+        {
+          "id": "deepseek-reasoner",
+          "name": "DeepSeek Reasoner",
+          "description": "Advanced reasoning model for complex logical problems",
+          "isLatest": false,
+          "category": "specialized",
+          "contextWindow": 32768,
+          "supportedFeatures": ["reasoning", "math", "problem_solving"]
+        }
+      ]
+    },
     "azure": {
       "name": "Azure OpenAI",
       "description": "OpenAI models hosted on Microsoft Azure",
@@ -199,10 +240,19 @@
       "temperature": 0.1,
       "models": [
         {
+          "id": "llama3.2:latest",
+          "name": "Llama 3.2 Latest",
+          "description": "Latest Llama 3.2 model with improved capabilities",
+          "isLatest": true,
+          "category": "flagship",
+          "contextWindow": 128000,
+          "supportedFeatures": ["code_analysis", "reasoning", "writing", "local"]
+        },
+        {
           "id": "llama3.1:70b",
           "name": "Llama 3.1 70B",
           "description": "Large, highly capable model for complex tasks",
-          "isLatest": true,
+          "isLatest": false,
           "category": "flagship",
           "contextWindow": 8192,
           "supportedFeatures": ["code_analysis", "reasoning", "writing", "local"]
@@ -232,6 +282,15 @@
           "isLatest": false,
           "category": "specialized",
           "contextWindow": 16384,
+          "supportedFeatures": ["code_analysis", "code_generation", "local"]
+        },
+        {
+          "id": "qwen2.5-coder:latest",
+          "name": "Qwen2.5 Coder",
+          "description": "Alibaba's latest code-specialized model",
+          "isLatest": false,
+          "category": "specialized",
+          "contextWindow": 32768,
           "supportedFeatures": ["code_analysis", "code_generation", "local"]
         }
       ]

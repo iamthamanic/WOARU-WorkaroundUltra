@@ -1068,4 +1068,259 @@ export class ToolsDatabaseManager {
       },
     };
   }
+
+  // ========== AI MODELS DATABASE METHODS ==========
+
+  /**
+   * Gets the AI models database, loading from cache or downloading if needed
+   */
+  async getAIModelsDatabase(): Promise<AIModelsDatabase> {
+    try {
+      // Ensure cache directory exists
+      await fs.ensureDir(this.cacheDir);
+
+      // Check if cached version exists
+      if (await fs.pathExists(this.aiModelsCacheFilePath)) {
+        try {
+          const cachedData = await fs.readJson(this.aiModelsCacheFilePath);
+          
+          // Check if it's a valid AI models database
+          if (cachedData.llm_providers && cachedData.version) {
+            return cachedData as AIModelsDatabase;
+          } else {
+            console.log('🔄 WOARU: Outdated AI models database format, downloading new version...');
+          }
+        } catch (error) {
+          console.warn('🔄 WOARU: Cached AI models database is corrupted, downloading fresh copy...');
+        }
+      }
+
+      // No cache or outdated format - download fresh copy
+      console.log('📥 WOARU: Downloading AI models database...');
+      const freshData = await this.downloadAIModelsDatabase();
+
+      // Save to cache
+      await fs.writeJson(this.aiModelsCacheFilePath, freshData, { spaces: 2 });
+      console.log('✅ WOARU: AI models database cached successfully');
+
+      return freshData;
+    } catch (error) {
+      console.warn('⚠️ WOARU: Failed to download AI models database, using local fallback');
+      return this.loadAIModelsLocalFallback();
+    }
+  }
+
+  /**
+   * Downloads the AI models database from remote source
+   */
+  private async downloadAIModelsDatabase(): Promise<AIModelsDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = https.get(this.aiModelsSourceUrl, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+          return;
+        }
+
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        response.on('end', () => {
+          try {
+            const parsedData = JSON.parse(data) as AIModelsDatabase;
+
+            // Validate AI models database format
+            if (!parsedData.llm_providers || !parsedData.version) {
+              reject(new Error('Invalid AI models database format'));
+              return;
+            }
+
+            resolve(parsedData);
+          } catch (error) {
+            reject(new Error(`Failed to parse AI models JSON: ${error}`));
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        reject(error);
+      });
+
+      request.setTimeout(10000, () => {
+        request.destroy();
+        reject(new Error('Download timeout'));
+      });
+    });
+  }
+
+  /**
+   * Loads the local fallback ai-models.json from project root
+   */
+  private async loadAIModelsLocalFallback(): Promise<AIModelsDatabase> {
+    try {
+      if (await fs.pathExists(this.aiModelsLocalFallbackPath)) {
+        const localData = await fs.readJson(this.aiModelsLocalFallbackPath);
+        return localData as AIModelsDatabase;
+      }
+    } catch (error) {
+      console.warn('⚠️ WOARU: Local AI models fallback also failed');
+    }
+
+    // Ultimate fallback - minimal AI models database
+    return this.getMinimalAIModelsDatabase();
+  }
+
+  /**
+   * Returns a minimal AI models database as last resort
+   */
+  private getMinimalAIModelsDatabase(): AIModelsDatabase {
+    return {
+      version: '1.0.0-minimal',
+      lastUpdated: new Date().toISOString(),
+      llm_providers: {
+        anthropic: {
+          name: 'Anthropic Claude',
+          description: 'Advanced AI assistant models by Anthropic',
+          apiKeyEnvVar: 'ANTHROPIC_API_KEY',
+          baseUrl: 'https://api.anthropic.com/v1/messages',
+          providerType: 'anthropic',
+          headers: {
+            'anthropic-version': '2023-06-01'
+          },
+          bodyTemplate: '{"model":"{model}","max_tokens":4000,"temperature":0.1,"messages":[{"role":"user","content":"{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```"}]}',
+          timeout: 30000,
+          maxTokens: 4000,
+          temperature: 0.1,
+          models: [
+            {
+              id: 'claude-3-5-sonnet-20241022',
+              name: 'Claude 3.5 Sonnet',
+              description: 'Most capable model with superior reasoning',
+              isLatest: true,
+              category: 'flagship',
+              contextWindow: 200000,
+              supportedFeatures: ['code_analysis', 'reasoning', 'writing']
+            }
+          ]
+        }
+      }
+    };
+  }
+
+  /**
+   * Gets all available AI providers
+   */
+  async getAIProviders(): Promise<Record<string, AIProvider>> {
+    const database = await this.getAIModelsDatabase();
+    return database.llm_providers;
+  }
+
+  /**
+   * Gets models for a specific provider
+   */
+  async getModelsForProvider(providerName: string): Promise<AIModel[]> {
+    const database = await this.getAIModelsDatabase();
+    return database.llm_providers[providerName]?.models || [];
+  }
+
+  /**
+   * Gets all available models from all providers
+   */
+  async getAllAIModels(): Promise<Array<AIModel & { provider: string }>> {
+    const database = await this.getAIModelsDatabase();
+    const allModels: Array<AIModel & { provider: string }> = [];
+
+    Object.entries(database.llm_providers).forEach(([providerName, provider]) => {
+      provider.models.forEach(model => {
+        allModels.push({
+          ...model,
+          provider: providerName
+        });
+      });
+    });
+
+    return allModels;
+  }
+
+  /**
+   * Gets latest/flagship models from all providers
+   */
+  async getLatestAIModels(): Promise<Array<AIModel & { provider: string }>> {
+    const allModels = await this.getAllAIModels();
+    return allModels.filter(model => model.isLatest || model.category === 'flagship');
+  }
+
+  /**
+   * Gets models by category (flagship, fast, balanced, etc.)
+   */
+  async getModelsByCategory(category: string): Promise<Array<AIModel & { provider: string }>> {
+    const allModels = await this.getAllAIModels();
+    return allModels.filter(model => model.category === category);
+  }
+
+  /**
+   * Gets a specific model by ID across all providers
+   */
+  async getModelById(modelId: string): Promise<(AIModel & { provider: string }) | null> {
+    const allModels = await this.getAllAIModels();
+    return allModels.find(model => model.id === modelId) || null;
+  }
+
+  /**
+   * Gets provider configuration for a specific provider
+   */
+  async getProviderConfig(providerName: string): Promise<AIProvider | null> {
+    const database = await this.getAIModelsDatabase();
+    return database.llm_providers[providerName] || null;
+  }
+
+  /**
+   * Forces update of AI models database
+   */
+  async forceUpdateAIModels(): Promise<AIModelsDatabase> {
+    try {
+      console.log('🔄 WOARU: Force updating AI models database...');
+      const freshData = await this.downloadAIModelsDatabase();
+
+      // Ensure cache directory exists
+      await fs.ensureDir(this.cacheDir);
+
+      // Save to cache
+      await fs.writeJson(this.aiModelsCacheFilePath, freshData, { spaces: 2 });
+      console.log('✅ WOARU: AI models database updated successfully');
+
+      return freshData;
+    } catch (error) {
+      console.error('❌ WOARU: Failed to force update AI models database:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets AI models database statistics
+   */
+  async getAIModelsStats(): Promise<{
+    version: string;
+    providers: number;
+    totalModels: number;
+    providerNames: string[];
+    lastUpdated: string;
+  }> {
+    const database = await this.getAIModelsDatabase();
+    const providers = Object.keys(database.llm_providers);
+    let totalModels = 0;
+
+    providers.forEach(providerName => {
+      totalModels += database.llm_providers[providerName].models.length;
+    });
+
+    return {
+      version: database.version,
+      providers: providers.length,
+      totalModels,
+      providerNames: providers,
+      lastUpdated: database.lastUpdated,
+    };
+  }
 }

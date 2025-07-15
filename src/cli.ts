@@ -289,6 +289,7 @@ setupCommand
         'Add Anthropic Claude',
         'Add OpenAI GPT-4',
         'Add Google Gemini',
+        'Add DeepSeek AI',
         'Add Azure OpenAI',
         'Add Local Ollama',
         'Done'
@@ -321,6 +322,9 @@ setupCommand
             break;
           case 'Add Google Gemini':
             newProvider = await setupGoogleProvider();
+            break;
+          case 'Add DeepSeek AI':
+            newProvider = await setupDeepSeekProvider();
             break;
           case 'Add Azure OpenAI':
             newProvider = await setupAzureProvider();
@@ -4058,8 +4062,7 @@ async function setupAnthropicProvider(): Promise<any> {
         { name: 'Claude 3.5 Sonnet (Latest)', value: 'claude-3-5-sonnet-20241022' },
         { name: 'Claude 3.5 Haiku', value: 'claude-3-5-haiku-20241022' },
         { name: 'Claude 3 Opus', value: 'claude-3-opus-20240229' },
-        { name: 'Claude 3 Sonnet', value: 'claude-3-sonnet-20240229' },
-        { name: 'Claude 3 Haiku', value: 'claude-3-haiku-20240307' }
+        { name: 'Claude 3 Sonnet', value: 'claude-3-sonnet-20240229' }
       ],
       default: 'claude-3-5-sonnet-20241022'
     },
@@ -4382,6 +4385,84 @@ async function setupAzureProvider(): Promise<any> {
   };
 }
 
+async function setupDeepSeekProvider(): Promise<any> {
+  console.log(chalk.cyan.bold('\n🧠 Setting up DeepSeek AI'));
+  console.log(chalk.gray('──────────────────────────'));
+  
+  const configManager = ConfigManager.getInstance();
+  
+  const answers = await inquirer.prompt([
+    {
+      type: 'password',
+      name: 'apiKey',
+      message: 'Enter your DeepSeek API key:',
+      mask: '*',
+      validate: (input: string) => {
+        const trimmed = input.trim();
+        if (trimmed.length === 0) return 'API key is required';
+        if (trimmed.length < 10) return 'API key seems too short';
+        return true;
+      }
+    },
+    {
+      type: 'list',
+      name: 'model',
+      message: 'Select DeepSeek model:',
+      choices: [
+        { name: 'DeepSeek Chat (General)', value: 'deepseek-chat' },
+        { name: 'DeepSeek Coder (Code)', value: 'deepseek-coder' },
+        { name: 'DeepSeek Reasoner (Reasoning)', value: 'deepseek-reasoner' }
+      ],
+      default: 'deepseek-chat'
+    },
+    {
+      type: 'confirm',
+      name: 'enabled',
+      message: 'Enable this provider?',
+      default: true
+    }
+  ]);
+
+  // Store API key securely
+  try {
+    await configManager.storeApiKey('DEEPSEEK', answers.apiKey);
+    console.log(chalk.green('\n✅ API key stored securely!'));
+    console.log(chalk.gray(`   Stored in: ${configManager.getEnvFilePath()}`));
+    console.log(chalk.cyan('\n💡 Your API key is now available for all WOARU commands.'));
+  } catch (error) {
+    console.error(chalk.red(`❌ Failed to store API key: ${error instanceof Error ? error.message : error}`));
+    throw error;
+  }
+
+  return {
+    id: "deepseek-ai",
+    providerType: "openai",
+    apiKeyEnvVar: 'DEEPSEEK_API_KEY',
+    baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+    model: answers.model,
+    headers: {},
+    bodyTemplate: JSON.stringify({
+      model: "{model}",
+      messages: [
+        {
+          role: "system",
+          content: "{systemPrompt}"
+        },
+        {
+          role: "user", 
+          content: "{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```"
+        }
+      ],
+      max_tokens: 4000,
+      temperature: 0.1
+    }),
+    timeout: 30000,
+    maxTokens: 4000,
+    temperature: 0.1,
+    enabled: answers.enabled
+  };
+}
+
 async function setupOllamaProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n🏠 Setting up Local Ollama'));
   console.log(chalk.gray('───────────────────────────'));
@@ -4398,10 +4479,25 @@ async function setupOllamaProvider(): Promise<any> {
       }
     },
     {
-      type: 'input',
+      type: 'list',
       name: 'model',
-      message: 'Model name (must be pulled in Ollama):',
-      default: 'codellama:7b',
+      message: 'Select Ollama model:',
+      choices: [
+        { name: 'Llama 3.2 (Latest)', value: 'llama3.2:latest' },
+        { name: 'Llama 3.1 70B', value: 'llama3.1:70b' },
+        { name: 'Llama 3.1 8B', value: 'llama3.1:8b' },
+        { name: 'Code Llama 34B', value: 'codellama:34b' },
+        { name: 'DeepSeek Coder 33B', value: 'deepseek-coder:33b' },
+        { name: 'Qwen2.5 Coder', value: 'qwen2.5-coder:latest' },
+        { name: 'Custom model', value: 'custom' }
+      ],
+      default: 'llama3.2:latest'
+    },
+    {
+      type: 'input',
+      name: 'customModel',
+      message: 'Enter custom model name:',
+      when: (answers: any) => answers.model === 'custom',
       validate: (input: string) => input.trim().length > 0 || 'Model name is required'
     },
     {
@@ -4412,20 +4508,28 @@ async function setupOllamaProvider(): Promise<any> {
     }
   ]);
 
+  const finalModel = answers.model === 'custom' ? answers.customModel : answers.model;
+
   return {
     id: "local-ollama",
-    providerType: "custom-ollama",
+    providerType: "ollama",
     apiKeyEnvVar: null,
     baseUrl: answers.baseUrl,
-    model: answers.model,
+    model: finalModel,
     headers: {},
     bodyTemplate: JSON.stringify({
       model: "{model}",
-      prompt: "{systemPrompt}\\n\\n{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```",
-      stream: false,
-      options: {
-        temperature: 0.1
-      }
+      messages: [
+        {
+          role: "system",
+          content: "{systemPrompt}"
+        },
+        {
+          role: "user", 
+          content: "{prompt}\\n\\nCode to analyze:\\n```{language}\\n{code}\\n```"
+        }
+      ],
+      stream: false
     }),
     timeout: 60000,
     maxTokens: 4000,
