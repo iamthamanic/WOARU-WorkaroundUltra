@@ -43,7 +43,8 @@ export class PromptManager {
   private constructor() {
     this.woaruDir = path.join(os.homedir(), '.woaru');
     this.promptsDir = path.join(this.woaruDir, 'config', 'woaru_llm_prompts');
-    this.templatesDir = path.join(process.cwd(), 'templates', 'prompts');
+    // Use __dirname to get the installation directory, not the current working directory
+    this.templatesDir = path.join(__dirname, '..', '..', 'templates', 'prompts');
   }
 
   /**

@@ -342,27 +342,8 @@ module.exports = ${JSON.stringify(config, null, 2)};
       console.log(chalk.cyan(`📄 Configuration saved to: woaru.config.js`));
       console.log(chalk.cyan(`🤖 Configured ${providers.length} LLM provider(s)`));
       
-      // Show next steps
-      console.log(chalk.yellow.bold('\n💡 Next Steps:'));
-      
-      const enabledProviders = providers.filter(p => p.enabled);
-      if (enabledProviders.length > 0) {
-        console.log('1. Set your API keys in environment variables:');
-        enabledProviders.forEach(provider => {
-          if (provider.apiKeyEnvVar) {
-            console.log(chalk.gray(`   export ${provider.apiKeyEnvVar}="your_api_key_here"`));
-          }
-        });
-        console.log();
-        console.log('2. Test your setup:');
-        console.log(chalk.gray('   woaru analyze llm'));
-        console.log();
-        console.log('3. Run AI-powered code reviews:');
-        console.log(chalk.gray('   woaru review git llm'));
-        console.log(chalk.gray('   woaru review local llm'));
-      } else {
-        console.log(chalk.yellow('⚠️ No providers are enabled. Edit woaru.config.js to enable providers.'));
-      }
+      // Show completion message
+      console.log(chalk.green.bold('\n✅ Dein API-Key wurde sicher in ~/.woaru/.env gespeichert. Du musst nichts weiter tun.'));
 
     } catch (error) {
       console.error(
@@ -1295,6 +1276,44 @@ program
   });
 
 /**
+ * Filter files to only include code files for analysis
+ * 
+ * @param fileList - Array of file paths to filter
+ * @returns Array of code file paths
+ */
+function filterCodeFiles(fileList: string[]): string[] {
+  const codeExtensions = ['.js', '.ts', '.tsx', '.jsx', '.py', '.java', '.cpp', '.c', '.cs', '.go', '.rs', '.php', '.rb', '.swift', '.kt', '.scala', '.clj', '.hs', '.ml', '.elm', '.dart', '.vue', '.svelte'];
+  const nonCodeExtensions = ['.yml', '.yaml', '.md', '.txt', '.json', '.xml', '.html', '.css', '.scss', '.sass', '.less', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.doc', '.docx', '.zip', '.tar', '.gz'];
+  
+  return fileList.filter(file => {
+    const ext = path.extname(file).toLowerCase();
+    
+    // Skip non-code extensions
+    if (nonCodeExtensions.includes(ext)) {
+      return false;
+    }
+    
+    // Include known code extensions
+    if (codeExtensions.includes(ext)) {
+      return true;
+    }
+    
+    // Skip files without extensions (likely directories or binaries)
+    if (!ext) {
+      return false;
+    }
+    
+    // For unknown extensions, check if the file exists and is a regular file
+    try {
+      const stats = fs.statSync(file);
+      return stats.isFile();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
  * Helper function for Documentation Generation
  * 
  * @param projectPath - Root path of the project to process
@@ -2007,15 +2026,18 @@ const gitCommand = reviewCommand
           process.exit(1);
         }
 
-        const fileList = changedFiles
+        const allFileList = changedFiles
           .trim()
           .split('\n')
           .filter(file => file.length > 0)
           .map(file => path.join(projectPath, file));
 
+        // Filter to only include code files
+        const fileList = filterCodeFiles(allFileList);
+
         if (fileList.length === 0) {
           console.log(
-            chalk.green('✅ No changes detected since the base branch.')
+            chalk.green('✅ No code file changes detected since the base branch.')
           );
           return;
         }
@@ -2092,15 +2114,18 @@ gitCommand
           process.exit(1);
         }
 
-        const fileList = changedFiles
+        const allFileList = changedFiles
           .trim()
           .split('\n')
           .filter(file => file.length > 0)
           .map(file => path.join(projectPath, file));
 
+        // Filter to only include code files
+        const fileList = filterCodeFiles(allFileList);
+
         if (fileList.length === 0) {
           console.log(
-            chalk.green('✅ No changes detected since the base branch.')
+            chalk.green('✅ No code file changes detected since the base branch.')
           );
           return;
         }
@@ -2188,12 +2213,18 @@ const localCommand = reviewCommand
             }
           });
 
-        if (fileList.length === 0) {
-          console.log(chalk.green('✅ No uncommitted changes found.'));
+        // Filter to only include code files
+        const codeFileList = filterCodeFiles(fileList);
+        
+        if (codeFileList.length === 0) {
+          console.log(chalk.green('✅ No uncommitted code file changes found.'));
           return;
         }
+        
+        // Use the filtered list for further processing
+        const filteredFileList = codeFileList;
 
-        await runReviewAnalysis(fileList, projectPath, options, {
+        await runReviewAnalysis(filteredFileList, projectPath, options, {
           type: 'local',
           description: 'Uncommitted changes in working directory',
         });
@@ -2277,12 +2308,18 @@ localCommand
             }
           });
 
-        if (fileList.length === 0) {
-          console.log(chalk.green('✅ No uncommitted changes found.'));
+        // Filter to only include code files
+        const codeFileList = filterCodeFiles(fileList);
+        
+        if (codeFileList.length === 0) {
+          console.log(chalk.green('✅ No uncommitted code file changes found.'));
           return;
         }
+        
+        // Use the filtered list for further processing
+        const filteredFileList = codeFileList;
 
-        await runAIReviewAnalysis(fileList, projectPath, options, {
+        await runAIReviewAnalysis(filteredFileList, projectPath, options, {
           type: 'local',
           description: 'LLM analysis of uncommitted changes in working directory',
         });
@@ -3106,6 +3143,33 @@ function displayCommandReference() {
       usage: 'woaru wiki',
       purpose:
         'Displays complete WOARU documentation with dynamic content generation. Includes concept explanations, feature details, and live LLM integration status.',
+    },
+    {
+      name: '📚 woaru docu <subcommand>',
+      description: 'AI-powered code documentation generator',
+      usage: 'woaru docu <nopro|pro|ai> [options]',
+      purpose:
+        'Generate comprehensive documentation for your codebase using AI. Choose from human-friendly explanations, technical TSDoc/JSDoc, or machine-readable YAML context headers.',
+      subcommands: [
+        {
+          name: 'woaru docu nopro',
+          description: 'Generate human-friendly "Explain-for-humans" comments for non-technical audiences',
+          usage: 'woaru docu nopro [--path-only <path>] [--preview] [--force]',
+          purpose: 'Creates clear, accessible documentation that explains complex code in simple terms for stakeholders.'
+        },
+        {
+          name: 'woaru docu pro',
+          description: 'Generate technical TSDoc/JSDoc documentation for developers',
+          usage: 'woaru docu pro [--path-only <path>] [--preview] [--force]',
+          purpose: 'Produces comprehensive technical documentation with parameter descriptions, return values, and examples.'
+        },
+        {
+          name: 'woaru docu ai',
+          description: 'Generate machine-readable YAML context headers optimized for AI/LLM comprehension',
+          usage: 'woaru docu ai [--path-only <path>] [--preview] [--force]',
+          purpose: 'Creates structured metadata headers that help AI tools understand code context, architecture, and relationships.'
+        }
+      ]
     },
     {
       name: '📨 woaru message <subcommand>',

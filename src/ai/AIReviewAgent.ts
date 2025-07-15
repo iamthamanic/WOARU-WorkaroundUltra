@@ -395,12 +395,14 @@ export class AIReviewAgent {
   }
 
   /**
-   * Interpolate template placeholders
+   * Interpolate template placeholders with safe JSON escaping
    */
   private interpolateTemplate(template: string, variables: Record<string, string>): string {
     let result = template;
     Object.entries(variables).forEach(([key, value]) => {
-      result = result.replace(new RegExp(`{${key}}`, 'g'), value);
+      // Use JSON.stringify to safely escape the value, then remove outer quotes
+      const escapedValue = JSON.stringify(value).slice(1, -1);
+      result = result.replace(new RegExp(`{${key}}`, 'g'), escapedValue);
     });
     return result;
   }

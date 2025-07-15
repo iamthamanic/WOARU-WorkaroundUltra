@@ -1,9 +1,32 @@
-# WOARU 🚀 v3.7.0
+# WOARU 🚀 v3.7.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v3.7.0 - Revolutionary AI-Optimized Documentation System**
+## 🆕 **Latest Release: v3.7.1 - Critical Bug-Fix Release**
+**Release Date:** July 15, 2025
+
+### 🐛 **CRITICAL BUG FIXES: Production-Ready Stability**
+**Problem Solved:** After extensive testing, we identified and fixed six critical bugs that could impact production usage. This PATCH release ensures WOARU is fully stable and ready for enterprise deployment.
+
+**Critical Fixes:**
+- **🔧 Setup Dialog Fix**: Eliminated user confusion by replacing misleading "environment variable" instructions with clear success message
+- **📁 Prompt Template Resolution**: Fixed template loading from installation directory instead of current working directory
+- **🛡️ JSON Escaping**: Resolved API crashes from control characters in code analysis with proper JSON escaping
+- **📚 Command Documentation**: Added missing `docu` subcommands to comprehensive command reference
+- **🔍 File Filtering**: Implemented smart filtering to analyze only code files (no more .yml, .md, .json in LLM analysis)
+- **💾 Storage Robustness**: Enhanced UsageTracker with bulletproof error handling for corrupted usage files
+
+### 🎯 **Production Impact**
+This release transforms WOARU from "feature-complete" to "production-ready" with:
+- **Zero Setup Confusion**: Clear, actionable user guidance
+- **Bulletproof File Handling**: Robust error recovery and file processing
+- **Optimized LLM Usage**: Smart filtering reduces API costs and improves analysis quality
+- **Enterprise Reliability**: Comprehensive error handling prevents crashes
+
+---
+
+## 📚 **Previous Release: v3.7.0 - Revolutionary AI-Optimized Documentation System**
 **Release Date:** July 15, 2025
 
 ### 🧠 **REVOLUTIONARY: Machine-Readable Documentation for AI/LLM Comprehension**

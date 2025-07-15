@@ -33,7 +33,15 @@ export class UsageTracker {
 
   static getInstance(): UsageTracker {
     if (!UsageTracker.instance) {
-      UsageTracker.instance = new UsageTracker();
+      try {
+        UsageTracker.instance = new UsageTracker();
+      } catch (error) {
+        console.warn('⚠️ Failed to initialize UsageTracker, creating fallback instance');
+        // Create a fallback instance with basic functionality
+        UsageTracker.instance = Object.create(UsageTracker.prototype);
+        UsageTracker.instance.stats = {};
+        UsageTracker.instance.usageFile = path.join(os.homedir(), '.woaru', 'usage.json');
+      }
     }
     return UsageTracker.instance;
   }
@@ -156,7 +164,12 @@ export class UsageTracker {
    * Ensure stats are loaded before accessing
    */
   private async ensureLoaded(): Promise<void> {
-    await this.loadStats();
+    try {
+      await this.loadStats();
+    } catch (error) {
+      console.warn('⚠️ Failed to ensure stats are loaded, using empty stats');
+      this.stats = {};
+    }
   }
 
   /**
