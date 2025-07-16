@@ -347,145 +347,185 @@ setupCommand
  * @throws {Error} If AI configuration cannot be saved
  */
 async function runAiSetup() {
-  console.log(chalk.cyan.bold('🤖 WOARU AI Setup'));
-  console.log(chalk.gray('═'.repeat(40)));
-  console.log('This will guide you through setting up AI providers for code analysis.\n');
+  console.log(chalk.blue('🤖 WOARU AI Setup'));
+  console.log(chalk.blue('════════════════════════════════════════'));
+  console.log('This will guide you through setting up AI providers for code analysis.');
   console.log(chalk.gray('(Press Ctrl+C to exit at any time)\n'));
 
   const configManager = ConfigManager.getInstance();
-  const existingConfig = await configManager.loadAiConfig();
-  const hasExistingConfig = Object.keys(existingConfig).length > 1; // More than just metadata
-  
-  if (hasExistingConfig) {
-    console.log(chalk.yellow('⚠️ AI configuration already exists in global config.'));
-    const { overwrite } = await inquirer.prompt([
+  let currentConfig = await configManager.loadAiConfig();
+
+  const availableProviders = [
+    { name: 'Anthropic Claude', value: 'anthropic' },
+    { name: 'OpenAI GPT', value: 'openai' },
+    { name: 'Google Gemini', value: 'google' },
+    { name: 'DeepSeek AI', value: 'deepseek' },
+    { name: 'Local Ollama', value: 'ollama' },
+  ];
+
+  // Setup Loop
+  while (true) {
+    // Schritt A: Provider-Auswahl mit dynamischen Status-Anzeigen
+    const choices = [];
+    
+    for (const provider of availableProviders) {
+      const isConfigured = currentConfig[provider.value] !== undefined;
+      let displayName;
+      
+      if (isConfigured) {
+        const model = currentConfig[provider.value].model || 'unknown';
+        displayName = `${provider.name} (AKTIV: ${model})`;
+      } else {
+        displayName = `${provider.name} (NICHT KONFIGURIERT)`;
+      }
+      
+      choices.push({
+        name: displayName,
+        value: provider.value,
+      });
+    }
+    
+    // Finale Option hinzufügen
+    choices.push({
+      name: '✅ Fertig & Speichern',
+      value: '_done',
+    });
+
+    const { selectedProvider } = await inquirer.prompt([
       {
-        type: 'confirm',
-        name: 'overwrite',
-        message: 'Do you want to reconfigure AI providers?',
-        default: false,
+        type: 'list',
+        name: 'selectedProvider',
+        message: 'Wähle einen AI-Provider zum Konfigurieren:',
+        choices: choices,
       },
     ]);
-    
-    if (!overwrite) {
-      console.log(chalk.yellow('Setup cancelled.'));
-      return;
-    }
-  }
 
-  // Interactive AI provider selection
-  const { providers } = await inquirer.prompt([
-    {
-      type: 'checkbox',
-      name: 'providers',
-      message: 'Select AI providers to configure:',
-      choices: [
-        { name: 'Anthropic Claude', value: 'anthropic' },
-        { name: 'OpenAI GPT', value: 'openai' },
-        { name: 'Google Gemini', value: 'google' },
-        { name: 'Azure OpenAI', value: 'azure' },
-        { name: 'Local Ollama', value: 'ollama' },
-        { name: 'Cancel', value: '_cancel' },
-      ],
-      validate: (input) => {
-        if (input.includes('_cancel')) {
-          console.log(chalk.yellow('\nSetup cancelled.'));
-          process.exit(0);
-        }
-        return input.length > 0 || 'Please select at least one provider';
+    // Schritt B: Konfiguration
+    if (selectedProvider === '_done') {
+      break; // Beende die Schleife
+    }
+
+    const providerName = availableProviders.find(p => p.value === selectedProvider)?.name || selectedProvider;
+    console.log(chalk.blue(`\n📋 Konfiguriere ${providerName}...`));
+    
+    const providerConfig = await configureProvider(selectedProvider);
+    if (providerConfig) {
+      currentConfig[selectedProvider] = providerConfig;
+      
+      // Store API key if provided
+      if (providerConfig.apiKey) {
+        await configManager.storeApiKey(selectedProvider, providerConfig.apiKey);
+        delete providerConfig.apiKey; // Don't store API key in config file
+      }
+      
+      console.log(chalk.green(`✅ ${providerName} wurde konfiguriert.`));
+    } else {
+      console.log(chalk.yellow(`Konfiguration für ${providerName} abgebrochen.`));
+    }
+
+    // Schritt C: "Weitere einrichten?"-Abfrage
+    const { continueSetup } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'continueSetup',
+        message: 'Möchtest du einen weiteren AI-Provider einrichten?',
+        default: true,
       },
-    },
-  ]);
+    ]);
 
-  const newConfig = { ...existingConfig };
-  
-  // Configure each selected provider
-  for (const providerId of providers) {
-    console.log(chalk.blue(`\n📋 Configuring ${providerId}...`));
-    
-    const providerConfig = await configureProvider(providerId);
-    newConfig[providerId] = providerConfig;
-    
-    // Store API key if provided
-    if (providerConfig.apiKey) {
-      await configManager.storeApiKey(providerId, providerConfig.apiKey);
-      delete providerConfig.apiKey; // Don't store API key in config file
+    if (!continueSetup) {
+      break; // Beende die Schleife
     }
+    
+    console.log(); // Leerzeile für bessere Lesbarkeit
   }
 
-  // Save configuration
-  await configManager.storeAiConfig(newConfig);
-  
-  console.log(chalk.green('\n✅ AI configuration saved successfully!'));
+  // Abschluss: Konfiguration speichern
+  await configManager.storeAiConfig(currentConfig);
+  console.log(chalk.green('\n🎉 AI Setup Complete!'));
+  console.log(chalk.cyan(`📄 Configuration saved to: ${configManager.getAiConfigFilePath()}`));
   console.log(chalk.blue('\n💡 Next steps:'));
   console.log(chalk.gray('  • Run "woaru ai" to view your configuration'));
   console.log(chalk.gray('  • Run "woaru review git ai" to test AI code analysis'));
-  console.log(chalk.gray('  • API keys are stored securely in ~/.woaru/.env'));
 }
 
 // Configure individual provider
 async function configureProvider(providerId: string): Promise<any> {
-  const providerConfigs = {
-    anthropic: {
-      providerType: 'anthropic',
-      baseUrl: 'https://api.anthropic.com/v1/messages',
-      model: 'claude-3-5-sonnet-20241022',
-      headers: { 'anthropic-version': '2023-06-01' },
-    },
-    openai: {
-      providerType: 'openai',
-      baseUrl: 'https://api.openai.com/v1/chat/completions',
-      model: 'gpt-4',
-      headers: {},
-    },
-    google: {
-      providerType: 'google',
-      baseUrl: 'https://generativelanguage.googleapis.com/v1/models',
-      model: 'gemini-pro',
-      headers: {},
-    },
-    azure: {
-      providerType: 'azure',
-      baseUrl: 'https://your-resource.openai.azure.com/openai/deployments',
-      model: 'gpt-4',
-      headers: {},
-    },
-    ollama: {
-      providerType: 'ollama',
-      baseUrl: 'http://localhost:11434/api/generate',
-      model: 'llama2',
-      headers: {},
-    },
-  };
+  try {
+    // Load AI models from ai-models.json
+    const aiModelsPath = path.resolve(__dirname, '../ai-models.json');
+    const aiModelsData = await fs.readJson(aiModelsPath);
+    const providerData = aiModelsData.llm_providers[providerId];
+    
+    if (!providerData) {
+      console.log(chalk.red(`❌ Provider ${providerId} not found in ai-models.json`));
+      return null;
+    }
 
-  const baseConfig = providerConfigs[providerId as keyof typeof providerConfigs];
-  
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'apiKey',
-      message: `Enter API key for ${providerId}:`,
-      when: providerId !== 'ollama',
-    },
-    {
-      type: 'input',
-      name: 'model',
-      message: `Model name (default: ${baseConfig.model}):`,
-      default: baseConfig.model,
-    },
-    {
-      type: 'confirm',
-      name: 'enabled',
-      message: `Enable ${providerId} for code analysis?`,
-      default: true,
-    },
-  ]);
+    // Schritt 1: Modell-Auswahl (dynamisch aus ai-models.json)
+    const modelChoices = providerData.models.map((model: any) => ({
+      name: `${model.name} - ${model.description}`,
+      value: model.id,
+      short: model.name,
+    }));
 
-  return {
-    ...baseConfig,
-    ...answers,
-    apiKeyEnvVar: `${providerId.toUpperCase()}_API_KEY`,
-  };
+    const { selectedModel } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selectedModel',
+        message: `Wähle ein Modell für ${providerData.name}:`,
+        choices: modelChoices,
+        default: providerData.models.find((m: any) => m.isLatest)?.id || providerData.models[0]?.id,
+      },
+    ]);
+
+    // Schritt 2: API-Key eingeben (nur wenn nicht Ollama)
+    const apiKeyPrompts = [];
+    if (providerId !== 'ollama') {
+      apiKeyPrompts.push({
+        type: 'input',
+        name: 'apiKey',
+        message: `Enter API key for ${providerData.name}:`,
+        validate: (input: string) => {
+          if (!input || input.trim().length === 0) {
+            return 'API key is required';
+          }
+          return true;
+        },
+      });
+    }
+
+    const apiKeyAnswers = apiKeyPrompts.length > 0 ? await inquirer.prompt(apiKeyPrompts) : {};
+
+    // Schritt 3: Provider aktivieren
+    const { enabled } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'enabled',
+        message: `Enable ${providerData.name} for code analysis?`,
+        default: true,
+      },
+    ]);
+
+    // Konfiguration zusammenstellen
+    return {
+      id: `${providerId}-${selectedModel}`,
+      providerType: providerData.providerType,
+      baseUrl: providerData.baseUrl,
+      model: selectedModel,
+      headers: providerData.headers || {},
+      bodyTemplate: providerData.bodyTemplate,
+      timeout: providerData.timeout || 30000,
+      maxTokens: providerData.maxTokens || 4000,
+      temperature: providerData.temperature || 0.1,
+      enabled: enabled,
+      apiKeyEnvVar: providerData.apiKeyEnvVar,
+      ...apiKeyAnswers,
+    };
+  } catch (error) {
+    console.log(chalk.red(`❌ Error loading provider configuration: ${error instanceof Error ? error.message : error}`));
+    return null;
+  }
 }
 
 program

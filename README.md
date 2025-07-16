@@ -1,9 +1,51 @@
-# WOARU 🚀 v4.6.0
+# WOARU 🚀 v4.6.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v4.6.0 - AI-First User Experience**
+## 🆕 **Latest Release: v4.6.1 - AI Setup Dialog Bugfixes**
+**Release Date:** July 16, 2025
+
+### 🐛 **PATCH: AI Setup Dialog Bugfixes & UX Improvements**
+**Problem Solved:** v4.6.0 introduced a new AI setup dialog that had critical usability issues: incorrect prompt order (API key before model selection), broken interactive navigation, and configuration migration failures that caused users to lose their existing AI provider settings.
+
+**Professional Solution:**
+- **🔧 Fixed Prompt Order**:
+  - Corrected provider configuration sequence: 1. Model Selection → 2. API Key → 3. Activation
+  - Dynamic model loading from ai-models.json with rich descriptions
+  - Proper default selection for latest/recommended models
+- **🎯 Enhanced Setup Loop**:
+  - Replaced problematic checkbox prompts with robust list/confirm prompts
+  - Added dynamic status indicators: "Anthropic Claude (AKTIV: claude-4-opus)" vs "OpenAI GPT (NICHT KONFIGURIERT)"
+  - Implemented intuitive "Setup Another Provider?" workflow
+- **🔄 Configuration Migration**:
+  - Added automatic llm_config.json → ai_config.json migration logic
+  - Preserves existing user configurations during terminology updates
+  - Clear user notification when migration occurs
+- **⚡ Improved UX Flow**:
+  - Streamlined provider selection with live status updates
+  - Better error handling and validation for API keys
+  - Clearer German/English mixed messaging for better accessibility
+
+### 🔧 **Technical Implementation**
+```bash
+# Fixed setup workflow
+npx woaru ai setup              # New, working interactive setup
+npx woaru setup llm             # Backward compatibility maintained
+
+# Configuration migration
+~/.woaru/config/llm_config.json → ~/.woaru/config/ai_config.json
+```
+
+### 🏗️ **Enhanced System Architecture**
+- **Setup Loop**: `src/cli.ts:349-450` - Complete rewrite with proper prompt sequencing
+- **Configuration Migration**: `src/config/ConfigManager.ts:433-461` - Automatic legacy config migration
+- **Dynamic Model Loading**: Integration with `ai-models.json` for up-to-date provider information
+- **Robust Error Handling**: Graceful fallbacks for missing configurations or network issues
+
+---
+
+## 📚 **Previous Release: v4.6.0 - AI-First User Experience**
 **Release Date:** July 16, 2025
 
 ### 🤖 **MINOR: AI-First User Experience & Terminology Optimization**

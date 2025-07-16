@@ -48,6 +48,9 @@ export class ConfigManager {
         await this.createEmptyEnvFile();
       }
 
+      // Migration: Check for legacy llm_config.json and migrate to ai_config.json
+      await this.migrateLegacyConfiguration();
+
       // Ensure AI config file exists (create empty if not)
       if (!(await fs.pathExists(this.aiConfigFile))) {
         await this.createEmptyAiConfigFile();
@@ -418,6 +421,40 @@ export class ConfigManager {
       console.warn(
         chalk.yellow(
           `⚠️ Warning: Could not update gitignore: ${error instanceof Error ? error.message : error}`
+        )
+      );
+    }
+  }
+
+  /**
+   * Migration function: Automatically migrate legacy llm_config.json to ai_config.json
+   * This ensures existing user configurations are not lost during refactoring
+   */
+  private async migrateLegacyConfiguration(): Promise<void> {
+    try {
+      const legacyConfigFile = path.join(this.configDir, 'llm_config.json');
+      
+      // Check conditions for migration:
+      // a. Legacy llm_config.json exists
+      // b. New ai_config.json does NOT exist
+      const legacyExists = await fs.pathExists(legacyConfigFile);
+      const newExists = await fs.pathExists(this.aiConfigFile);
+      
+      if (legacyExists && !newExists) {
+        // Perform automatic migration
+        await fs.move(legacyConfigFile, this.aiConfigFile);
+        
+        // Inform user about the migration
+        console.log(
+          chalk.cyan('ℹ️ WOARU-Konfiguration wurde automatisch auf das neue \'ai\'-Format migriert.')
+        );
+        console.log(chalk.gray(`   ${legacyConfigFile} → ${this.aiConfigFile}`));
+        console.log(chalk.gray('   Alle bestehenden Einstellungen bleiben erhalten.'));
+      }
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not migrate legacy configuration: ${error instanceof Error ? error.message : error}`
         )
       );
     }
