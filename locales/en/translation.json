@@ -1,0 +1,86 @@
+{
+  "welcome_message": "Welcome to WOARU - Your Universal Development Companion",
+  "language_selection": {
+    "prompt": "Please select your preferred language:",
+    "english": "🇺🇸 English",
+    "german": "🇩🇪 Deutsch"
+  },
+  "errors": {
+    "snyk_not_found": "Snyk not found. Please install Snyk CLI for security analysis.",
+    "config_load_failed": "Failed to load configuration",
+    "api_key_missing": "API key not found for provider {{provider}}",
+    "file_not_found": "File not found: {{file}}",
+    "invalid_command": "Invalid command: {{command}}"
+  },
+  "status": {
+    "title": "WOARU Status",
+    "supervisor_running": "Supervisor is running",
+    "supervisor_stopped": "Supervisor is stopped",
+    "project_health": "Project Health: {{score}}/100",
+    "configured_providers": "{{count}} configured",
+    "enabled_providers": "{{count}} enabled",
+    "monitoring_files": "Monitoring {{count}} files"
+  },
+  "ai_control_center": {
+    "title": "WOARU AI Control Center",
+    "current_status": "Current Status:",
+    "review_configuration": "Review Configuration:",
+    "multi_ai_enabled": "Multi-AI Review activated",
+    "multi_ai_disabled": "Multi-AI Review deactivated",
+    "primary_provider": "Primary Provider: {{provider}}",
+    "api_key_found": "API-Key found",
+    "api_key_missing": "API-Key missing",
+    "menu": {
+      "add_edit_provider": "Add/Edit Provider",
+      "disable_multi_ai": "Disable Multi-AI Review",
+      "enable_multi_ai": "Enable Multi-AI Review",
+      "exit": "Exit"
+    }
+  },
+  "setup": {
+    "title": "WOARU Setup",
+    "ai_setup_title": "WOARU AI Setup",
+    "provider_selection": "Select an AI provider:",
+    "model_selection": "Select a model for {{provider}}:",
+    "api_key_prompt": "Please enter your {{provider}} API key:",
+    "api_key_hint": "(starts with '{{prefix}}')",
+    "success": "Setup completed successfully!",
+    "provider_configured": "{{provider}} configured successfully",
+    "setup_another": "Setup another provider?"
+  },
+  "commands": {
+    "analyze": "Analyze project for code quality and security",
+    "review": "Review code changes and provide feedback",
+    "watch": "Start continuous quality monitoring",
+    "setup": "Configure tools and AI providers",
+    "status": "Show current WOARU status",
+    "version": "Show version information",
+    "help": "Show help information"
+  },
+  "analysis": {
+    "starting": "Starting analysis...",
+    "complete": "Analysis complete",
+    "security_scan": "Running security scan...",
+    "quality_check": "Running quality check...",
+    "recommendations": "Recommendations:",
+    "issues_found": "{{count}} issues found",
+    "no_issues": "No issues found"
+  },
+  "config": {
+    "language_set": "Language set to {{language}}",
+    "language_invalid": "Invalid language: {{language}}. Supported languages: en, de",
+    "current_language": "Current language: {{language}}",
+    "available_languages": "Available languages: {{languages}}"
+  },
+  "language_command": {
+    "title": "Language Selection",
+    "current_language": "Currently selected language: {{language}}",
+    "select_new": "Choose a new language:",
+    "language_changed": "Language successfully changed to {{language}}",
+    "language_unchanged": "Language remains set to {{language}}",
+    "next_usage_note": "The new language will be active in the next WOARU usage."
+  },
+  "ai_prompts": {
+    "language_instruction": "Respond exclusively in English."
+  }
+}
