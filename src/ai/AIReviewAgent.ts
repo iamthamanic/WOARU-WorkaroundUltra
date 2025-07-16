@@ -11,6 +11,7 @@ import {
   PromptTemplate,
 } from '../types/ai-review';
 import { UsageTracker } from './UsageTracker';
+import { getAILanguageInstruction } from '../config/i18n';
 
 export class AIReviewAgent {
   private config: AIReviewConfig;
@@ -537,6 +538,16 @@ export class AIReviewAgent {
    */
   private buildDefaultPrompt(code: string, context: CodeContext): string {
     let prompt = this.promptTemplate.userPromptTemplate;
+    
+    // Add language instruction at the beginning
+    let languageInstruction = '';
+    try {
+      languageInstruction = getAILanguageInstruction();
+      prompt = `${languageInstruction}\n\n${prompt}`;
+    } catch (error) {
+      // If i18n is not initialized, default to English
+      prompt = `Respond exclusively in English.\n\n${prompt}`;
+    }
 
     // Add context information
     if (this.promptTemplate.contextInjection.includeFileMetadata) {
@@ -789,6 +800,15 @@ export class AIReviewAgent {
    * Create default prompt template
    */
   private createDefaultPromptTemplate(): PromptTemplate {
+    // Get language instruction for AI responses
+    let languageInstruction = '';
+    try {
+      languageInstruction = getAILanguageInstruction();
+    } catch (error) {
+      // If i18n is not initialized, default to English
+      languageInstruction = 'Respond exclusively in English.';
+    }
+
     return {
       systemPrompt: `You are an experienced, conservative Senior Staff Engineer with a focus on maintainability, security, and scalable architecture. You are extremely critical but fair and always provide well-reasoned explanations.
 
@@ -799,7 +819,9 @@ Your expertise areas include:
 - Code maintainability and readability
 - Industry best practices and coding standards
 
-You are thorough, detail-oriented, and always explain the business impact of technical issues.`,
+You are thorough, detail-oriented, and always explain the business impact of technical issues.
+
+IMPORTANT LANGUAGE INSTRUCTION: ${languageInstruction}`,
 
       userPromptTemplate: `Analyze the following code for code smells, design principle violations, security risks, and potential performance bottlenecks.
 

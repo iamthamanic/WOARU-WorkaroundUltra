@@ -15,15 +15,23 @@ import { displaySplashScreen } from './assets/splash_logo';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { AIProviderUtils } from './utils/AIProviderUtils';
+import { initializeI18n, t } from './config/i18n';
+import { handleFirstTimeLanguageSetup } from './config/languageSetup';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
 
-// Initialize environment variables from global WOARU .env file
+// Initialize environment variables and i18n from global WOARU config
 async function initializeConfig() {
   try {
     const configManager = ConfigManager.getInstance();
     await configManager.loadEnvironmentVariables();
+    
+    // Initialize i18n system
+    await initializeI18n();
+    
+    // Handle first-time language setup
+    await handleFirstTimeLanguageSetup();
   } catch (error) {
     // Silent fail - environment variables are optional
   }
@@ -1088,6 +1096,8 @@ program
   .description('Show WOARU supervisor status and project health')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async options => {
+    await initializeConfig();
+    
     try {
       const projectPath = path.resolve(options.path);
 
@@ -1098,7 +1108,7 @@ program
           const state = await fs.readJson(stateFile);
           console.log(
             chalk.yellow(
-              '📊 WOARU Status: Not running (previous session found)'
+              `📊 ${t('status.title')}: ${t('status.supervisor_stopped')} (previous session found)`
             )
           );
           console.log(
@@ -1107,13 +1117,13 @@ program
             )
           );
           console.log(chalk.gray(`   Language: ${state.language}`));
-          console.log(chalk.gray(`   Health Score: ${state.healthScore}/100`));
+          console.log(chalk.gray(`   ${t('status.project_health', { score: state.healthScore })}`));
           console.log(
             chalk.gray(`   Detected Tools: ${state.detectedTools.length}`)
           );
           console.log(chalk.cyan('\n💡 Run "woaru watch" to start monitoring'));
         } else {
-          console.log(chalk.red('📊 WOARU Status: Not running'));
+          console.log(chalk.red(`📊 ${t('status.title')}: ${t('status.supervisor_stopped')}`));
           console.log(chalk.cyan('💡 Run "woaru watch" to start monitoring'));
         }
 
@@ -1124,7 +1134,7 @@ program
 
       const status = supervisor.getStatus();
 
-      console.log(chalk.green('📊 WOARU Status: Running'));
+      console.log(chalk.green(`📊 ${t('status.title')}: ${t('status.supervisor_running')}`));
       console.log(
         chalk.gray(`   Project: ${path.basename(status.state.projectPath)}`)
       );
@@ -1135,9 +1145,9 @@ program
         )
       );
       console.log(
-        chalk.gray(`   Health Score: ${status.state.healthScore}/100`)
+        chalk.gray(`   ${t('status.project_health', { score: status.state.healthScore })}`)
       );
-      console.log(chalk.gray(`   Watched Files: ${status.watchedFiles}`));
+      console.log(chalk.gray(`   ${t('status.monitoring_files', { count: status.watchedFiles })}`));
       console.log(
         chalk.gray(
           `   Detected Tools: ${Array.from(status.state.detectedTools).join(', ')}`
@@ -5264,6 +5274,83 @@ program
       await VersionManager.updateToLatest();
     } catch (error) {
       console.error(chalk.red('❌ Update fehlgeschlagen:'), error);
+      process.exit(1);
+    }
+  });
+
+// Config command with language subcommand
+program
+  .command('config')
+  .description('Configure WOARU settings')
+  .argument('<action>', 'Action to perform (set|show)')
+  .argument('[setting]', 'Setting to configure (language)')
+  .argument('[value]', 'Value to set')
+  .action(async (action: string, setting?: string, value?: string) => {
+    await initializeConfig();
+    
+    try {
+      if (action === 'set' && setting === 'language' && value) {
+        const { setUserLanguage, SUPPORTED_LANGUAGES } = await import('./config/i18n');
+        
+        if (!SUPPORTED_LANGUAGES.includes(value as any)) {
+          console.error(chalk.red(t('config.language_invalid', { language: value })));
+          process.exit(1);
+        }
+        
+        await setUserLanguage(value as any);
+        console.log(chalk.green(t('config.language_set', { language: value })));
+      } else if (action === 'show') {
+        const { showLanguageStatus } = await import('./config/languageSetup');
+        await showLanguageStatus();
+      } else {
+        console.error(chalk.red('❌ Usage: woaru config <set|show> [language] [en|de]'));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to configure:'), error);
+      process.exit(1);
+    }
+  });
+
+// Interactive language selection command
+program
+  .command('language')
+  .description('Interactive language selection')
+  .action(async () => {
+    await initializeConfig();
+    
+    try {
+      const { getCurrentLanguage, setUserLanguage, SUPPORTED_LANGUAGES, LANGUAGE_NAMES } = await import('./config/i18n');
+      
+      // Get current language
+      const currentLang = getCurrentLanguage();
+      
+      console.log(chalk.cyan('\n🌍 Language Selection\n'));
+      
+      const { language } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'language',
+          message: `Aktuell ausgewählte Sprache: ${LANGUAGE_NAMES[currentLang]} (${currentLang})\n\nWählen Sie eine neue Sprache:`,
+          choices: SUPPORTED_LANGUAGES.map(lang => ({
+            name: `${LANGUAGE_NAMES[lang]} (${lang})`,
+            value: lang
+          })),
+          default: currentLang
+        }
+      ]);
+      
+      // Check if user selected a different language
+      if (language !== currentLang) {
+        await setUserLanguage(language);
+        console.log(chalk.green(`\n✅ Sprache wurde erfolgreich auf ${LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES]} geändert.`));
+        console.log(chalk.gray(`💡 Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv.\n`));
+      } else {
+        console.log(chalk.blue(`\n📋 Sprache bleibt auf ${LANGUAGE_NAMES[currentLang]} eingestellt.\n`));
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Fehler beim Ändern der Sprache:'), error);
       process.exit(1);
     }
   });

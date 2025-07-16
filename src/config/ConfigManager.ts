@@ -14,12 +14,14 @@ export class ConfigManager {
   private configDir: string;
   private envFile: string;
   private aiConfigFile: string;
+  private userConfigFile: string;
 
   private constructor() {
     this.woaruDir = path.join(os.homedir(), APP_CONFIG.DIRECTORIES.BASE);
     this.configDir = path.join(this.woaruDir, 'config');
     this.envFile = path.join(this.woaruDir, '.env');
     this.aiConfigFile = path.join(this.configDir, 'ai_config.json');
+    this.userConfigFile = path.join(this.configDir, 'user.json');
   }
 
   static getInstance(): ConfigManager {
@@ -539,5 +541,65 @@ export class ConfigManager {
         )
       );
     }
+  }
+
+  /**
+   * Load user configuration from global user config file
+   */
+  async loadUserConfig(): Promise<any> {
+    try {
+      if (!(await fs.pathExists(this.userConfigFile))) {
+        return {};
+      }
+      const content = await fs.readFile(this.userConfigFile, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not load user config: ${error instanceof Error ? error.message : error}`
+        )
+      );
+      return {};
+    }
+  }
+
+  /**
+   * Store user configuration in global user config file
+   */
+  async storeUserConfig(config: any): Promise<void> {
+    try {
+      await this.initialize();
+      await fs.writeFile(this.userConfigFile, JSON.stringify(config, null, 2));
+      await this.setSecurePermissions();
+    } catch (error) {
+      throw new Error(
+        `Failed to store user config: ${error instanceof Error ? error.message : error}`
+      );
+    }
+  }
+
+  /**
+   * Set user's preferred language
+   */
+  async setUserLanguage(language: string): Promise<void> {
+    const config = await this.loadUserConfig();
+    config.language = language;
+    config.lastModified = new Date().toISOString();
+    await this.storeUserConfig(config);
+  }
+
+  /**
+   * Get user's preferred language
+   */
+  async getUserLanguage(): Promise<string | null> {
+    const config = await this.loadUserConfig();
+    return config.language || null;
+  }
+
+  /**
+   * Get user config file path
+   */
+  getUserConfigFilePath(): string {
+    return this.userConfigFile;
   }
 }
