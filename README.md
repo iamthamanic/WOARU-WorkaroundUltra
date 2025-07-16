@@ -1,9 +1,60 @@
-# WOARU 🚀 v4.6.1
+# WOARU 🚀 v4.7.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v4.6.1 - AI Setup Dialog Bugfixes**
+## 🆕 **Latest Release: v4.7.0 - Multi-AI Review Control Center**
+**Release Date:** July 16, 2025
+
+### 🎯 **MINOR: Multi-AI Review Control Center & Single-AI Mode**
+**New Feature:** Advanced AI provider management with granular control over Multi-AI vs Single-AI Review modes. Users can now choose between comprehensive multi-provider analysis or focused single-provider reviews for faster, cost-effective code analysis.
+
+**Key Features:**
+- **🎛️ AI Control Center Dashboard**:
+  - Interactive management of all configured AI providers
+  - Real-time status display with API key validation
+  - Provider enable/disable controls with visual feedback
+  - Comprehensive overview: "3 configured | 2 enabled" with detailed breakdown
+- **🔄 Multi-AI Review Mode**:
+  - Contact all enabled AI providers for comprehensive analysis
+  - Cross-provider consensus detection and comparison
+  - Aggregated findings with LLM agreement scoring
+- **🎯 Single-AI Review Mode**:
+  - Select one primary provider for focused analysis
+  - Significant cost reduction (1/3 of multi-provider cost)
+  - Faster analysis with maintained quality
+  - Configurable primary provider selection
+- **⚙️ Intelligent Configuration Management**:
+  - Automatic fallback logic when primary provider not set
+  - Validation of provider availability and API keys
+  - Dynamic configuration updates with live feedback
+
+### 🔧 **Technical Implementation**
+```bash
+# New AI Control Center
+npx woaru ai                         # Interactive AI provider dashboard
+npx woaru ai setup                   # Enhanced provider setup with onboarding
+
+# Multi-AI Review Configuration
+"multi_ai_review_enabled": true      # Enable multi-provider analysis
+"primary_review_provider_id": "anthropic"  # Set primary for single-AI mode
+```
+
+### 🏗️ **Enhanced System Architecture**
+- **AI Control Center**: `src/cli.ts:300-450` - Interactive dashboard with context-sensitive menus
+- **Multi-AI Review Config**: `src/config/ConfigManager.ts:315-366` - Global review mode management
+- **Smart Provider Filtering**: `src/ai/ConfigLoader.ts:105-155` - Dynamic provider selection logic
+- **Configuration Validation**: Automatic primary provider validation with fallback handling
+
+### 📊 **User Experience Improvements**
+- **Status Display**: Clear visual indicators for provider configuration state
+- **Mode Selection**: Intuitive toggle between Multi-AI and Single-AI modes
+- **Cost Transparency**: Clear messaging about analysis costs and provider contact
+- **Onboarding Flow**: Smooth introduction to Multi-AI Review features during setup
+
+---
+
+## 📚 **Previous Release: v4.6.1 - AI Setup Dialog Bugfixes**
 **Release Date:** July 16, 2025
 
 ### 🐛 **PATCH: AI Setup Dialog Bugfixes & UX Improvements**

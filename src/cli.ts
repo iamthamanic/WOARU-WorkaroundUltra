@@ -14,6 +14,7 @@ import { StartupCheck } from './utils/startupCheck';
 import { displaySplashScreen } from './assets/splash_logo';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { AIProviderUtils } from './utils/AIProviderUtils';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
@@ -234,41 +235,11 @@ const aiCommand = program
   .command('ai')
   .description('Manage AI providers for code analysis');
 
-// Main ai command - shows overview of configured AI providers
+// Main ai command - Interactive AI Control Center
 aiCommand
   .action(async () => {
     try {
-      const configManager = ConfigManager.getInstance();
-      const aiConfig = await configManager.loadAiConfig();
-      const providers = await configManager.getConfiguredAiProviders();
-      
-      console.log(chalk.cyan.bold('🤖 WOARU AI Configuration'));
-      console.log(chalk.gray('═'.repeat(40)));
-      
-      if (providers.length === 0) {
-        console.log(chalk.yellow('No AI providers configured.'));
-        console.log(chalk.gray('Run "woaru ai setup" to configure AI providers.'));
-      } else {
-        console.log(chalk.green(`Found ${providers.length} configured AI provider(s):`));
-        console.log();
-        
-        for (const providerId of providers) {
-          const provider = aiConfig[providerId];
-          const hasApiKey = await configManager.hasApiKey(providerId);
-          
-          console.log(chalk.blue(`📋 ${providerId}`));
-          console.log(chalk.gray(`   Model: ${provider.model || 'Not specified'}`));
-          console.log(chalk.gray(`   Type: ${provider.providerType || 'Not specified'}`));
-          console.log(chalk.gray(`   API Key: ${hasApiKey ? '✅ Configured' : '❌ Missing'}`));
-          console.log(chalk.gray(`   Enabled: ${provider.enabled !== false ? '✅ Yes' : '❌ No'}`));
-          console.log();
-        }
-      }
-      
-      console.log(chalk.blue('Available commands:'));
-      console.log(chalk.gray('  • woaru ai setup    - Configure AI providers'));
-      console.log(chalk.gray('  • woaru ai --help   - Show all AI commands'));
-      console.log();
+      await runAiControlCenter();
     } catch (error) {
       console.error(
         chalk.red(
@@ -340,6 +311,152 @@ setupCommand
   });
 
 /**
+ * AI Control Center - Interactive dashboard for managing AI providers
+ * @throws {Error} If AI configuration cannot be loaded
+ */
+async function runAiControlCenter() {
+  const configManager = ConfigManager.getInstance();
+  
+  while (true) {
+    console.clear();
+    console.log(chalk.cyan.bold('🤖 WOARU AI Control Center'));
+    console.log(chalk.gray('════════════════════════════════════════════════════════════════'));
+    
+    // Load current configuration
+    const aiConfig = await configManager.loadAiConfig();
+    const providers = await configManager.getConfiguredAiProviders();
+    const multiAiConfig = await configManager.getMultiAiReviewConfig();
+    const enabledProviders = await configManager.getEnabledAiProviders();
+    
+    // Display current status
+    console.log(chalk.blue('\n📊 Current Status:'));
+    
+    if (providers.length === 0) {
+      console.log(chalk.yellow('   No AI providers configured'));
+    } else {
+      console.log(chalk.green(`   ${providers.length} configured | ${enabledProviders.length} enabled`));
+      
+      // Show provider status with API key info
+      for (const providerId of providers) {
+        const provider = aiConfig[providerId];
+        const hasApiKey = await configManager.hasApiKey(providerId);
+        const status = provider.enabled ? '✅ enabled' : '❌ disabled';
+        const keyStatus = hasApiKey ? '🔑 API-Key gefunden' : '❌ API-Key fehlt!';
+        
+        console.log(chalk.gray(`   • ${providerId} (${provider.model || 'unknown'}) - ${status} | ${keyStatus}`));
+      }
+    }
+    
+    // Show Multi-AI Review status
+    const multiAiStatus = multiAiConfig.enabled ? 
+      chalk.green('✅ Multi-AI Review aktiviert') : 
+      chalk.yellow('❌ Multi-AI Review deaktiviert');
+    
+    console.log(chalk.blue('\n🔄 Review Configuration:'));
+    console.log(chalk.gray(`   ${multiAiStatus}`));
+    
+    if (!multiAiConfig.enabled && multiAiConfig.primaryProvider) {
+      console.log(chalk.gray(`   Primary Provider: ${multiAiConfig.primaryProvider}`));
+    } else if (!multiAiConfig.enabled && !multiAiConfig.primaryProvider && enabledProviders.length > 0) {
+      console.log(chalk.red('   ⚠️  Kein primärer Provider ausgewählt!'));
+    }
+    
+    // Build menu options
+    const menuChoices = [
+      { name: '🔧 Provider hinzufügen/bearbeiten', value: 'setup' },
+      { name: multiAiConfig.enabled ? '❌ Multi-AI Review deaktivieren' : '✅ Multi-AI Review aktivieren', value: 'toggle_multi_ai' },
+    ];
+    
+    // Only show primary provider selection if multi-AI is disabled
+    if (!multiAiConfig.enabled && enabledProviders.length > 0) {
+      menuChoices.push({ name: '🎯 Primäres Review-Modell auswählen', value: 'select_primary' });
+    }
+    
+    menuChoices.push(
+      new inquirer.Separator() as any,
+      { name: '🚪 Beenden', value: 'exit' }
+    );
+    
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'Was möchtest du tun?',
+        choices: menuChoices,
+      },
+    ]);
+    
+    switch (action) {
+      case 'setup':
+        await runAiSetup();
+        break;
+        
+      case 'toggle_multi_ai':
+        const newMultiAiState = !multiAiConfig.enabled;
+        await configManager.updateMultiAiReviewConfig(newMultiAiState);
+        
+        if (newMultiAiState) {
+          console.log(chalk.green('\n✅ Multi-AI Review wurde aktiviert!'));
+          console.log(chalk.gray('   Alle aktivierten Provider werden nun für Reviews verwendet.'));
+        } else {
+          console.log(chalk.yellow('\n❌ Multi-AI Review wurde deaktiviert.'));
+          console.log(chalk.gray('   Du solltest einen primären Provider auswählen.'));
+        }
+        
+        await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+        break;
+        
+      case 'select_primary':
+        await selectPrimaryProvider();
+        break;
+        
+      case 'exit':
+        console.log(chalk.blue('\n👋 Bis bald!'));
+        return;
+    }
+  }
+}
+
+/**
+ * Select primary provider for single-AI review mode
+ */
+async function selectPrimaryProvider() {
+  const configManager = ConfigManager.getInstance();
+  const enabledProviders = await configManager.getEnabledAiProviders();
+  const aiConfig = await configManager.loadAiConfig();
+  
+  if (enabledProviders.length === 0) {
+    console.log(chalk.red('\n❌ Keine aktivierten Provider gefunden!'));
+    console.log(chalk.gray('   Bitte erst Provider konfigurieren und aktivieren.'));
+    await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+    return;
+  }
+  
+  const providerChoices = await Promise.all(enabledProviders.map(async providerId => {
+    const provider = aiConfig[providerId];
+    const hasApiKey = await configManager.hasApiKey(providerId);
+    return {
+      name: `${providerId} (${provider.model || 'unknown'}) ${hasApiKey ? '🔑' : '❌'}`,
+      value: providerId,
+    };
+  }));
+  
+  const { selectedProvider } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'selectedProvider',
+      message: 'Wähle den primären Provider für Reviews:',
+      choices: providerChoices,
+    },
+  ]);
+  
+  await configManager.updateMultiAiReviewConfig(false, selectedProvider);
+  console.log(chalk.green(`\n✅ ${selectedProvider} wurde als primärer Provider ausgewählt!`));
+  
+  await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+}
+
+/**
  * Shared AI setup function
  * Guides users through interactive configuration of AI providers
  * Stores configuration globally in ~/.woaru/config/ai_config.json
@@ -349,7 +466,7 @@ setupCommand
 async function runAiSetup() {
   console.log(chalk.blue('🤖 WOARU AI Setup'));
   console.log(chalk.blue('════════════════════════════════════════'));
-  console.log('This will guide you through setting up AI providers for code analysis.');
+  console.log('Intelligent AI provider configuration with live model detection');
   console.log(chalk.gray('(Press Ctrl+C to exit at any time)\n'));
 
   const configManager = ConfigManager.getInstance();
@@ -363,9 +480,9 @@ async function runAiSetup() {
     { name: 'Local Ollama', value: 'ollama' },
   ];
 
-  // Setup Loop
+  // Main Setup Loop
   while (true) {
-    // Schritt A: Provider-Auswahl mit dynamischen Status-Anzeigen
+    // Build dynamic menu choices
     const choices = [];
     
     for (const provider of availableProviders) {
@@ -374,7 +491,8 @@ async function runAiSetup() {
       
       if (isConfigured) {
         const model = currentConfig[provider.value].model || 'unknown';
-        displayName = `${provider.name} (AKTIV: ${model})`;
+        const status = currentConfig[provider.value].enabled ? 'AKTIV' : 'DEAKTIVIERT';
+        displayName = `${provider.name} (${status}: ${model})`;
       } else {
         displayName = `${provider.name} (NICHT KONFIGURIERT)`;
       }
@@ -385,62 +503,244 @@ async function runAiSetup() {
       });
     }
     
-    // Finale Option hinzufügen
-    choices.push({
-      name: '✅ Fertig & Speichern',
-      value: '_done',
-    });
+    // Add final options
+    choices.push(
+      new inquirer.Separator(),
+      { name: '✅ Fertig & Speichern', value: '_done' }
+    );
 
     const { selectedProvider } = await inquirer.prompt([
       {
         type: 'list',
         name: 'selectedProvider',
-        message: 'Wähle einen AI-Provider zum Konfigurieren:',
+        message: 'Wähle einen AI-Provider:',
         choices: choices,
       },
     ]);
 
-    // Schritt B: Konfiguration
     if (selectedProvider === '_done') {
-      break; // Beende die Schleife
+      break;
     }
 
     const providerName = availableProviders.find(p => p.value === selectedProvider)?.name || selectedProvider;
-    console.log(chalk.blue(`\n📋 Konfiguriere ${providerName}...`));
-    
-    const providerConfig = await configureProvider(selectedProvider);
-    if (providerConfig) {
-      currentConfig[selectedProvider] = providerConfig;
+    const isConfigured = currentConfig[selectedProvider] !== undefined;
+
+    // Context-sensitive logic: New vs Edit
+    if (isConfigured) {
+      // EDIT MODE - Show submenu
+      console.log(chalk.blue(`\n📝 Bearbeite ${providerName}`));
       
-      // Store API key if provided
-      if (providerConfig.apiKey) {
-        await configManager.storeApiKey(selectedProvider, providerConfig.apiKey);
-        delete providerConfig.apiKey; // Don't store API key in config file
+      const { action } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'action',
+          message: `Was möchtest du mit ${providerName} machen?`,
+          choices: [
+            { name: '🔄 Modell ändern', value: 'change_model' },
+            { name: '🔑 API-Key aktualisieren', value: 'update_key' },
+            { name: currentConfig[selectedProvider].enabled ? '❌ Provider deaktivieren' : '✅ Provider aktivieren', value: 'toggle_status' },
+            { name: '🗑️  Provider entfernen', value: 'remove' },
+            new inquirer.Separator(),
+            { name: '← Zurück zum Hauptmenü', value: 'back' },
+          ],
+        },
+      ]);
+
+      switch (action) {
+        case 'change_model':
+          const existingApiKey = await configManager.getApiKey(selectedProvider);
+          if (existingApiKey) {
+            const models = await AIProviderUtils.fetchModelsForProvider(selectedProvider, existingApiKey);
+            const modelChoices = models.map(model => ({
+              name: `${model.name} - ${model.description}`,
+              value: model.id,
+              short: model.name,
+            }));
+
+            const { selectedModel } = await inquirer.prompt([
+              {
+                type: 'list',
+                name: 'selectedModel',
+                message: `Wähle ein neues Modell für ${providerName}:`,
+                choices: modelChoices,
+                default: currentConfig[selectedProvider].model,
+              },
+            ]);
+
+            currentConfig[selectedProvider].model = selectedModel;
+            console.log(chalk.green(`✅ Modell geändert zu: ${selectedModel}`));
+          } else {
+            console.log(chalk.red('❌ Kein API-Key gefunden. Bitte erst API-Key aktualisieren.'));
+          }
+          break;
+
+        case 'update_key':
+          const { newApiKey } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'newApiKey',
+              message: `Neuer API-Key für ${providerName}:`,
+              validate: (input: string) => input.trim().length > 0 || 'API key is required',
+            },
+          ]);
+          await configManager.storeApiKey(selectedProvider, newApiKey);
+          console.log(chalk.green('✅ API-Key aktualisiert'));
+          break;
+
+        case 'toggle_status':
+          currentConfig[selectedProvider].enabled = !currentConfig[selectedProvider].enabled;
+          const newStatus = currentConfig[selectedProvider].enabled ? 'aktiviert' : 'deaktiviert';
+          console.log(chalk.green(`✅ ${providerName} wurde ${newStatus}`));
+          break;
+
+        case 'remove':
+          const { confirmRemove } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'confirmRemove',
+              message: `Bist du sicher, dass du ${providerName} entfernen möchtest?`,
+              default: false,
+            },
+          ]);
+          if (confirmRemove) {
+            delete currentConfig[selectedProvider];
+            await configManager.removeApiKey(selectedProvider);
+            console.log(chalk.green(`✅ ${providerName} wurde entfernt`));
+          }
+          break;
+
+        case 'back':
+          continue;
       }
-      
-      console.log(chalk.green(`✅ ${providerName} wurde konfiguriert.`));
     } else {
-      console.log(chalk.yellow(`Konfiguration für ${providerName} abgebrochen.`));
+      // NEW MODE - Configure from scratch
+      console.log(chalk.blue(`\n🆕 Konfiguriere ${providerName} neu`));
+      
+      // Step 1: API Key FIRST
+      let apiKey = '';
+      if (selectedProvider !== 'ollama') {
+        const { inputApiKey } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'inputApiKey',
+            message: `API-Key für ${providerName} eingeben:`,
+            validate: (input: string) => {
+              if (!input || input.trim().length === 0) {
+                return 'API key is required';
+              }
+              return true;
+            },
+          },
+        ]);
+        apiKey = inputApiKey;
+      }
+
+      // Step 2: Live Model Fetch
+      console.log(chalk.gray('🔄 Lade verfügbare Modelle...'));
+      const models = await AIProviderUtils.fetchModelsForProvider(selectedProvider, apiKey);
+      
+      if (models.length === 0) {
+        console.log(chalk.red('❌ Keine Modelle gefunden. Konfiguration abgebrochen.'));
+        continue;
+      }
+
+      // Step 3: Model Selection
+      const modelChoices = models.map(model => ({
+        name: `${model.name} - ${model.description}`,
+        value: model.id,
+        short: model.name,
+      }));
+
+      const defaultModel = models.find(m => m.isLatest)?.id || models[0].id;
+      
+      const { selectedModel } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'selectedModel',
+          message: `Wähle ein Modell für ${providerName}:`,
+          choices: modelChoices,
+          default: defaultModel,
+        },
+      ]);
+
+      // Step 4: Activation
+      const { enabled } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'enabled',
+          message: `${providerName} für Code-Analyse aktivieren?`,
+          default: true,
+        },
+      ]);
+
+      // Save configuration
+      const aiModelsData = await fs.readJson(path.resolve(__dirname, '../ai-models.json'));
+      const providerData = aiModelsData.llm_providers[selectedProvider];
+      
+      currentConfig[selectedProvider] = {
+        id: `${selectedProvider}-${selectedModel}`,
+        providerType: providerData?.providerType || selectedProvider,
+        baseUrl: providerData?.baseUrl || '',
+        model: selectedModel,
+        headers: providerData?.headers || {},
+        bodyTemplate: providerData?.bodyTemplate || '',
+        timeout: providerData?.timeout || 30000,
+        maxTokens: providerData?.maxTokens || 4000,
+        temperature: providerData?.temperature || 0.1,
+        enabled: enabled,
+        apiKeyEnvVar: providerData?.apiKeyEnvVar || `${selectedProvider.toUpperCase()}_API_KEY`,
+      };
+
+      // Store API key securely
+      if (apiKey) {
+        await configManager.storeApiKey(selectedProvider, apiKey);
+      }
+
+      console.log(chalk.green(`✅ ${providerName} wurde erfolgreich konfiguriert`));
+      
+      // Check for Multi-AI Review onboarding
+      const configuredCount = await configManager.getConfiguredProviderCount();
+      const multiAiConfig = await configManager.getMultiAiReviewConfig();
+      
+      if (configuredCount === 2 && !multiAiConfig.enabled) {
+        console.log(chalk.cyan('\n💡 Du hast jetzt mehrere AI-Provider konfiguriert!'));
+        
+        const { enableMultiAi } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'enableMultiAi',
+            message: 'Möchtest du die "Multi-AI Review"-Funktion aktivieren, bei der alle aktivierten Provider gleichzeitig für eine umfassendere Analyse verwendet werden?',
+            default: true,
+          },
+        ]);
+        
+        if (enableMultiAi) {
+          await configManager.updateMultiAiReviewConfig(true);
+          console.log(chalk.green('✅ Multi-AI Review wurde aktiviert! Alle aktivierten Provider werden nun für Reviews verwendet.'));
+        } else {
+          console.log(chalk.yellow('📋 Multi-AI Review bleibt deaktiviert. Du kannst dies später über "woaru ai" ändern.'));
+        }
+      }
     }
 
-    // Schritt C: "Weitere einrichten?"-Abfrage
+    // Ask to continue
     const { continueSetup } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'continueSetup',
-        message: 'Möchtest du einen weiteren AI-Provider einrichten?',
+        message: 'Möchtest du weitere Änderungen vornehmen?',
         default: true,
       },
     ]);
 
     if (!continueSetup) {
-      break; // Beende die Schleife
+      break;
     }
     
-    console.log(); // Leerzeile für bessere Lesbarkeit
+    console.log(); // Empty line for readability
   }
 
-  // Abschluss: Konfiguration speichern
+  // Save final configuration
   await configManager.storeAiConfig(currentConfig);
   console.log(chalk.green('\n🎉 AI Setup Complete!'));
   console.log(chalk.cyan(`📄 Configuration saved to: ${configManager.getAiConfigFilePath()}`));

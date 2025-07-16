@@ -313,6 +313,59 @@ export class ConfigManager {
   }
 
   /**
+   * Get Multi-AI Review configuration
+   */
+  async getMultiAiReviewConfig(): Promise<{ enabled: boolean; primaryProvider: string | null }> {
+    const config = await this.loadAiConfig();
+    return {
+      enabled: config.multi_ai_review_enabled || false,
+      primaryProvider: config.primary_review_provider_id || null
+    };
+  }
+
+  /**
+   * Update Multi-AI Review configuration
+   */
+  async updateMultiAiReviewConfig(enabled: boolean, primaryProvider: string | null = null): Promise<void> {
+    const config = await this.loadAiConfig();
+    config.multi_ai_review_enabled = enabled;
+    config.primary_review_provider_id = primaryProvider;
+    await this.storeAiConfig(config);
+  }
+
+  /**
+   * Get all enabled AI providers
+   */
+  async getEnabledAiProviders(): Promise<string[]> {
+    const config = await this.loadAiConfig();
+    const enabledProviders = [];
+    
+    for (const [providerId, providerConfig] of Object.entries(config)) {
+      if (providerId.startsWith('_') || !providerConfig || typeof providerConfig !== 'object') continue;
+      if ((providerConfig as any).enabled) {
+        enabledProviders.push(providerId);
+      }
+    }
+    
+    return enabledProviders;
+  }
+
+  /**
+   * Count configured AI providers
+   */
+  async getConfiguredProviderCount(): Promise<number> {
+    const config = await this.loadAiConfig();
+    let count = 0;
+    
+    for (const [providerId, providerConfig] of Object.entries(config)) {
+      if (providerId.startsWith('_') || !providerConfig || typeof providerConfig !== 'object') continue;
+      count++;
+    }
+    
+    return count;
+  }
+
+  /**
    * Create an empty .env file with header
    */
   private async createEmptyEnvFile(): Promise<void> {
@@ -332,7 +385,9 @@ export class ConfigManager {
       "_metadata": {
         "created": new Date().toISOString(),
         "description": "WOARU Global AI Configuration - Managed by ConfigManager"
-      }
+      },
+      "multi_ai_review_enabled": false,
+      "primary_review_provider_id": null
     };
     await fs.writeFile(this.aiConfigFile, JSON.stringify(defaultConfig, null, 2));
   }
