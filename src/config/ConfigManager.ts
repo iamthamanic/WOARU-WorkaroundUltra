@@ -11,11 +11,15 @@ import chalk from 'chalk';
 export class ConfigManager {
   private static instance: ConfigManager;
   private woaruDir: string;
+  private configDir: string;
   private envFile: string;
+  private aiConfigFile: string;
 
   private constructor() {
     this.woaruDir = path.join(os.homedir(), APP_CONFIG.DIRECTORIES.BASE);
+    this.configDir = path.join(this.woaruDir, 'config');
     this.envFile = path.join(this.woaruDir, '.env');
+    this.aiConfigFile = path.join(this.configDir, 'ai_config.json');
   }
 
   static getInstance(): ConfigManager {
@@ -32,6 +36,9 @@ export class ConfigManager {
     try {
       // Ensure .woaru directory exists
       await fs.ensureDir(this.woaruDir);
+      
+      // Ensure config subdirectory exists
+      await fs.ensureDir(this.configDir);
 
       // Set up security measures
       await this.setupGitIgnoreProtection();
@@ -39,6 +46,11 @@ export class ConfigManager {
       // Ensure .env file exists (create empty if not)
       if (!(await fs.pathExists(this.envFile))) {
         await this.createEmptyEnvFile();
+      }
+
+      // Ensure AI config file exists (create empty if not)
+      if (!(await fs.pathExists(this.aiConfigFile))) {
+        await this.createEmptyAiConfigFile();
       }
 
       // Set secure permissions
@@ -100,7 +112,11 @@ export class ConfigManager {
     try {
       if (await fs.pathExists(this.envFile)) {
         const dotenv = await import('dotenv');
+        // Suppress dotenv console output
+        const originalLog = console.log;
+        console.log = () => {};
         dotenv.config({ path: this.envFile });
+        console.log = originalLog;
       }
     } catch (error) {
       console.warn(
@@ -194,6 +210,106 @@ export class ConfigManager {
   }
 
   /**
+   * Store AI configuration in global config file
+   */
+  async storeAiConfig(config: any): Promise<void> {
+    try {
+      await this.initialize();
+      await fs.writeFile(this.aiConfigFile, JSON.stringify(config, null, 2));
+      await this.setSecurePermissions();
+      console.log(chalk.green(`✅ AI configuration stored in ${this.aiConfigFile}`));
+    } catch (error) {
+      throw new Error(
+        `Failed to store AI config: ${error instanceof Error ? error.message : error}`
+      );
+    }
+  }
+
+  /**
+   * Load AI configuration from global config file
+   */
+  async loadAiConfig(): Promise<any> {
+    try {
+      if (!(await fs.pathExists(this.aiConfigFile))) {
+        return {};
+      }
+      const content = await fs.readFile(this.aiConfigFile, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not load AI config: ${error instanceof Error ? error.message : error}`
+        )
+      );
+      return {};
+    }
+  }
+
+  /**
+   * Get all configured AI providers
+   */
+  async getConfiguredAiProviders(): Promise<string[]> {
+    try {
+      const config = await this.loadAiConfig();
+      return Object.keys(config);
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not get AI providers: ${error instanceof Error ? error.message : error}`
+        )
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Get AI config file path
+   */
+  getAiConfigFilePath(): string {
+    return this.aiConfigFile;
+  }
+
+  // Backward compatibility aliases
+  /**
+   * @deprecated Use storeAiConfig() instead
+   * Backward compatibility alias for storing AI configuration
+   */
+  async storeLlmConfig(config: any): Promise<void> {
+    return this.storeAiConfig(config);
+  }
+
+  /**
+   * @deprecated Use loadAiConfig() instead
+   * Backward compatibility alias for loading AI configuration
+   */
+  async loadLlmConfig(): Promise<any> {
+    return this.loadAiConfig();
+  }
+
+  /**
+   * @deprecated Use getConfiguredAiProviders() instead
+   * Backward compatibility alias for getting configured providers
+   */
+  async getConfiguredLlmProviders(): Promise<string[]> {
+    return this.getConfiguredAiProviders();
+  }
+
+  /**
+   * @deprecated Use getAiConfigFilePath() instead
+   * Backward compatibility alias for getting config file path
+   */
+  getLlmConfigFilePath(): string {
+    return this.getAiConfigFilePath();
+  }
+
+  /**
+   * Get config directory path
+   */
+  getConfigDirPath(): string {
+    return this.configDir;
+  }
+
+  /**
    * Create an empty .env file with header
    */
   private async createEmptyEnvFile(): Promise<void> {
@@ -206,12 +322,28 @@ export class ConfigManager {
   }
 
   /**
+   * Create an empty AI config file
+   */
+  private async createEmptyAiConfigFile(): Promise<void> {
+    const defaultConfig = {
+      "_metadata": {
+        "created": new Date().toISOString(),
+        "description": "WOARU Global AI Configuration - Managed by ConfigManager"
+      }
+    };
+    await fs.writeFile(this.aiConfigFile, JSON.stringify(defaultConfig, null, 2));
+  }
+
+  /**
    * Set secure file permissions (600 - owner read/write only)
    */
   private async setSecurePermissions(): Promise<void> {
     try {
       if (process.platform !== 'win32') {
         await fs.chmod(this.envFile, 0o600);
+        if (await fs.pathExists(this.aiConfigFile)) {
+          await fs.chmod(this.aiConfigFile, 0o600);
+        }
       }
     } catch (error) {
       console.warn(
@@ -262,17 +394,24 @@ export class ConfigManager {
    */
   private async addToGitIgnore(gitIgnorePath: string): Promise<void> {
     try {
-      const ignoreEntry = '~/.woaru/.env';
+      const ignoreEntries = ['~/.woaru/.env', '~/.woaru/config/'];
       const content = await fs.readFile(gitIgnorePath, 'utf-8').catch(() => '');
 
-      if (!content.includes(ignoreEntry)) {
-        const newContent =
-          content +
-          (content.endsWith('\n') ? '' : '\n') +
-          `\n# WOARU API keys protection\n${ignoreEntry}\n`;
+      let newContent = content;
+      let hasChanges = false;
+
+      for (const entry of ignoreEntries) {
+        if (!content.includes(entry)) {
+          newContent += (newContent.endsWith('\n') ? '' : '\n') + 
+            `\n# WOARU configuration protection\n${entry}\n`;
+          hasChanges = true;
+        }
+      }
+
+      if (hasChanges) {
         await fs.writeFile(gitIgnorePath, newContent);
         console.log(
-          chalk.green(`✅ Added .env protection to ${gitIgnorePath}`)
+          chalk.green(`✅ Added WOARU config protection to ${gitIgnorePath}`)
         );
       }
     } catch (error) {

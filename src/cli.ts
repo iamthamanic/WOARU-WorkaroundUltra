@@ -160,7 +160,7 @@ program
 // Setup command with sub-commands
 const setupCommand = program
   .command('setup')
-  .description('Setup tools and LLM integrations');
+  .description('Setup tools and AI integrations');
 
 // Setup tools sub-command (original setup functionality)
 setupCommand
@@ -227,172 +227,266 @@ setupCommand
     }
   });
 
-// Setup LLM sub-command
-setupCommand
-  .command('llm')
-  .description('Setup and configure LLM providers for AI code analysis')
-  .option('-p, --path <path>', 'Project path', process.cwd())
-  .action(async options => {
+// Setup AI sub-command is now handled by the new woaru ai command structure above
+
+// New woaru ai command with sub-commands
+const aiCommand = program
+  .command('ai')
+  .description('Manage AI providers for code analysis');
+
+// Main ai command - shows overview of configured AI providers
+aiCommand
+  .action(async () => {
     try {
-      const projectPath = path.resolve(options.path);
+      const configManager = ConfigManager.getInstance();
+      const aiConfig = await configManager.loadAiConfig();
+      const providers = await configManager.getConfiguredAiProviders();
       
-      console.log(chalk.cyan.bold('🤖 WOARU LLM Setup'));
+      console.log(chalk.cyan.bold('🤖 WOARU AI Configuration'));
       console.log(chalk.gray('═'.repeat(40)));
-      console.log('This will guide you through setting up LLM providers for AI code analysis.\n');
-
-      // Check if configuration already exists
-      const configPath = path.join(projectPath, 'woaru.config.js');
-      const hasConfig = await fs.pathExists(configPath);
       
-      if (hasConfig) {
-        console.log(chalk.yellow('⚠️ Configuration file already exists: woaru.config.js'));
-        const { overwrite } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'overwrite',
-            message: 'Do you want to reconfigure LLM providers?',
-            default: false,
-          },
-        ]);
-        
-        if (!overwrite) {
-          console.log(chalk.yellow('Setup cancelled.'));
-          return;
-        }
-      }
-
-      // Show current integrated LLMs (if any)
-      let currentConfig: any = null;
-      if (hasConfig) {
-        try {
-          const { ConfigLoader } = await import('./ai/ConfigLoader');
-          const configLoader = ConfigLoader.getInstance();
-          currentConfig = await configLoader.loadConfig(projectPath);
-          
-          if (currentConfig && currentConfig.providers.length > 0) {
-            console.log(chalk.cyan('📋 Currently configured LLMs:'));
-            currentConfig.providers.forEach((provider: any) => {
-              const status = provider.enabled ? '✅ enabled' : '❌ disabled';
-              console.log(`  • ${provider.id} (${provider.model}) - ${status}`);
-            });
-            console.log();
-          }
-        } catch (error) {
-          console.log(chalk.yellow('⚠️ Could not read existing configuration.'));
-        }
+      if (providers.length === 0) {
+        console.log(chalk.yellow('No AI providers configured.'));
+        console.log(chalk.gray('Run "woaru ai setup" to configure AI providers.'));
       } else {
-        console.log(chalk.blue('📋 No LLMs are currently integrated.'));
+        console.log(chalk.green(`Found ${providers.length} configured AI provider(s):`));
         console.log();
-      }
-
-      // Interactive LLM setup
-      const setupChoices = [
-        'Add Anthropic Claude',
-        'Add OpenAI GPT-4',
-        'Add Google Gemini',
-        'Add DeepSeek AI',
-        'Add Azure OpenAI',
-        'Add Local Ollama',
-        'Done'
-      ];
-
-      const providers: any[] = currentConfig?.providers || [];
-      
-      while (true) {
-        const { action } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'action',
-            message: 'What would you like to do?',
-            choices: setupChoices,
-          },
-        ]);
-
-        if (action === 'Done') {
-          break;
-        }
-
-        let newProvider: any = null;
-
-        switch (action) {
-          case 'Add Anthropic Claude':
-            newProvider = await setupAnthropicProvider();
-            break;
-          case 'Add OpenAI GPT-4':
-            newProvider = await setupOpenAIProvider();
-            break;
-          case 'Add Google Gemini':
-            newProvider = await setupGoogleProvider();
-            break;
-          case 'Add DeepSeek AI':
-            newProvider = await setupDeepSeekProvider();
-            break;
-          case 'Add Azure OpenAI':
-            newProvider = await setupAzureProvider();
-            break;
-          case 'Add Local Ollama':
-            newProvider = await setupOllamaProvider();
-            break;
-        }
-
-        if (newProvider) {
-          // Remove existing provider with same ID
-          const existingIndex = providers.findIndex(p => p.id === newProvider.id);
-          if (existingIndex >= 0) {
-            providers[existingIndex] = newProvider;
-            console.log(chalk.green(`✅ Updated ${newProvider.id} configuration`));
-          } else {
-            providers.push(newProvider);
-            console.log(chalk.green(`✅ Added ${newProvider.id} configuration`));
-          }
+        
+        for (const providerId of providers) {
+          const provider = aiConfig[providerId];
+          const hasApiKey = await configManager.hasApiKey(providerId);
+          
+          console.log(chalk.blue(`📋 ${providerId}`));
+          console.log(chalk.gray(`   Model: ${provider.model || 'Not specified'}`));
+          console.log(chalk.gray(`   Type: ${provider.providerType || 'Not specified'}`));
+          console.log(chalk.gray(`   API Key: ${hasApiKey ? '✅ Configured' : '❌ Missing'}`));
+          console.log(chalk.gray(`   Enabled: ${provider.enabled !== false ? '✅ Yes' : '❌ No'}`));
           console.log();
         }
       }
-
-      if (providers.length === 0) {
-        console.log(chalk.yellow('⚠️ No LLM providers configured. Setup cancelled.'));
-        return;
-      }
-
-      // Create configuration object
-      const config = {
-        ai: {
-          providers,
-          parallelRequests: true,
-          consensusMode: false,
-          minConsensusCount: 2,
-          tokenLimit: 8000,
-          costThreshold: 0.50
-        }
-      };
-
-      // Save configuration
-      const configContent = `/**
- * WOARU Multi-LLM AI Code Review Configuration
- * Generated by woaru setup llm
- */
-
-module.exports = ${JSON.stringify(config, null, 2)};
-`;
-
-      await fs.writeFile(configPath, configContent, 'utf8');
       
-      console.log(chalk.green.bold('\n🎉 LLM Setup Complete!'));
-      console.log(chalk.cyan(`📄 Configuration saved to: woaru.config.js`));
-      console.log(chalk.cyan(`🤖 Configured ${providers.length} LLM provider(s)`));
-      
-      // Show completion message
-      console.log(chalk.green.bold('\n✅ Dein API-Key wurde sicher in ~/.woaru/.env gespeichert. Du musst nichts weiter tun.'));
-
+      console.log(chalk.blue('Available commands:'));
+      console.log(chalk.gray('  • woaru ai setup    - Configure AI providers'));
+      console.log(chalk.gray('  • woaru ai --help   - Show all AI commands'));
+      console.log();
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ LLM setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Failed to load AI configuration: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
     }
   });
+
+// AI setup sub-command
+aiCommand
+  .command('setup')
+  .description('Setup and configure AI providers for code analysis')
+  .action(async () => {
+    try {
+      await runAiSetup();
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Create alias for woaru setup ai -> woaru ai setup
+setupCommand
+  .command('ai')
+  .description('Setup and configure AI providers for code analysis (alias for "woaru ai setup")')
+  .option('-p, --path <path>', 'Project path (deprecated - now uses global config)', process.cwd())
+  .action(async (options) => {
+    if (options.path && options.path !== process.cwd()) {
+      console.log(chalk.yellow('⚠️ Note: Project path option is deprecated. AI configuration is now global.'));
+    }
+    try {
+      await runAiSetup();
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Backward compatibility alias for setup llm
+setupCommand
+  .command('llm')
+  .description('Setup and configure AI providers for code analysis (legacy alias for "woaru ai setup")')
+  .option('-p, --path <path>', 'Project path (deprecated - now uses global config)', process.cwd())
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️ Note: "woaru setup llm" is deprecated. Use "woaru ai setup" instead.'));
+    if (options.path && options.path !== process.cwd()) {
+      console.log(chalk.yellow('⚠️ Note: Project path option is deprecated. AI configuration is now global.'));
+    }
+    try {
+      await runAiSetup();
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+/**
+ * Shared AI setup function
+ * Guides users through interactive configuration of AI providers
+ * Stores configuration globally in ~/.woaru/config/ai_config.json
+ * 
+ * @throws {Error} If AI configuration cannot be saved
+ */
+async function runAiSetup() {
+  console.log(chalk.cyan.bold('🤖 WOARU AI Setup'));
+  console.log(chalk.gray('═'.repeat(40)));
+  console.log('This will guide you through setting up AI providers for code analysis.\n');
+  console.log(chalk.gray('(Press Ctrl+C to exit at any time)\n'));
+
+  const configManager = ConfigManager.getInstance();
+  const existingConfig = await configManager.loadAiConfig();
+  const hasExistingConfig = Object.keys(existingConfig).length > 1; // More than just metadata
+  
+  if (hasExistingConfig) {
+    console.log(chalk.yellow('⚠️ AI configuration already exists in global config.'));
+    const { overwrite } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'overwrite',
+        message: 'Do you want to reconfigure AI providers?',
+        default: false,
+      },
+    ]);
+    
+    if (!overwrite) {
+      console.log(chalk.yellow('Setup cancelled.'));
+      return;
+    }
+  }
+
+  // Interactive AI provider selection
+  const { providers } = await inquirer.prompt([
+    {
+      type: 'checkbox',
+      name: 'providers',
+      message: 'Select AI providers to configure:',
+      choices: [
+        { name: 'Anthropic Claude', value: 'anthropic' },
+        { name: 'OpenAI GPT', value: 'openai' },
+        { name: 'Google Gemini', value: 'google' },
+        { name: 'Azure OpenAI', value: 'azure' },
+        { name: 'Local Ollama', value: 'ollama' },
+        { name: 'Cancel', value: '_cancel' },
+      ],
+      validate: (input) => {
+        if (input.includes('_cancel')) {
+          console.log(chalk.yellow('\nSetup cancelled.'));
+          process.exit(0);
+        }
+        return input.length > 0 || 'Please select at least one provider';
+      },
+    },
+  ]);
+
+  const newConfig = { ...existingConfig };
+  
+  // Configure each selected provider
+  for (const providerId of providers) {
+    console.log(chalk.blue(`\n📋 Configuring ${providerId}...`));
+    
+    const providerConfig = await configureProvider(providerId);
+    newConfig[providerId] = providerConfig;
+    
+    // Store API key if provided
+    if (providerConfig.apiKey) {
+      await configManager.storeApiKey(providerId, providerConfig.apiKey);
+      delete providerConfig.apiKey; // Don't store API key in config file
+    }
+  }
+
+  // Save configuration
+  await configManager.storeAiConfig(newConfig);
+  
+  console.log(chalk.green('\n✅ AI configuration saved successfully!'));
+  console.log(chalk.blue('\n💡 Next steps:'));
+  console.log(chalk.gray('  • Run "woaru ai" to view your configuration'));
+  console.log(chalk.gray('  • Run "woaru review git ai" to test AI code analysis'));
+  console.log(chalk.gray('  • API keys are stored securely in ~/.woaru/.env'));
+}
+
+// Configure individual provider
+async function configureProvider(providerId: string): Promise<any> {
+  const providerConfigs = {
+    anthropic: {
+      providerType: 'anthropic',
+      baseUrl: 'https://api.anthropic.com/v1/messages',
+      model: 'claude-3-5-sonnet-20241022',
+      headers: { 'anthropic-version': '2023-06-01' },
+    },
+    openai: {
+      providerType: 'openai',
+      baseUrl: 'https://api.openai.com/v1/chat/completions',
+      model: 'gpt-4',
+      headers: {},
+    },
+    google: {
+      providerType: 'google',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1/models',
+      model: 'gemini-pro',
+      headers: {},
+    },
+    azure: {
+      providerType: 'azure',
+      baseUrl: 'https://your-resource.openai.azure.com/openai/deployments',
+      model: 'gpt-4',
+      headers: {},
+    },
+    ollama: {
+      providerType: 'ollama',
+      baseUrl: 'http://localhost:11434/api/generate',
+      model: 'llama2',
+      headers: {},
+    },
+  };
+
+  const baseConfig = providerConfigs[providerId as keyof typeof providerConfigs];
+  
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'apiKey',
+      message: `Enter API key for ${providerId}:`,
+      when: providerId !== 'ollama',
+    },
+    {
+      type: 'input',
+      name: 'model',
+      message: `Model name (default: ${baseConfig.model}):`,
+      default: baseConfig.model,
+    },
+    {
+      type: 'confirm',
+      name: 'enabled',
+      message: `Enable ${providerId} for code analysis?`,
+      default: true,
+    },
+  ]);
+
+  return {
+    ...baseConfig,
+    ...answers,
+    apiKeyEnvVar: `${providerId.toUpperCase()}_API_KEY`,
+  };
+}
 
 program
   .command('update-db')
@@ -678,8 +772,8 @@ program
           console.log(chalk.cyan('💡 Run "woaru watch" to start monitoring'));
         }
 
-        // Show LLM Information even when not running
-        await showLLMStatus(projectPath);
+        // Show AI Information even when not running
+        await showAIStatus(projectPath);
         return;
       }
 
@@ -713,8 +807,8 @@ program
         );
       }
 
-      // Show LLM Information
-      await showLLMStatus(projectPath);
+      // Show AI Information
+      await showAIStatus(projectPath);
 
     } catch (error) {
       console.error(
@@ -1257,7 +1351,7 @@ docuCommand
 // Documentation ai sub-command (machine-readable context headers)
 docuCommand
   .command('ai')
-  .description('Generate machine-readable YAML context headers optimized for AI/LLM comprehension')
+  .description('Generate machine-readable YAML context headers optimized for AI comprehension')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
   .option('--git [branch]', 'Document only changes compared to branch')
@@ -1266,14 +1360,43 @@ docuCommand
   .option('--preview', 'Preview changes without writing to files')
   .action(async options => {
     try {
-      console.log(chalk.blue('🧠 Generating AI-optimized context headers...'));
+      // Show proactive explanation for 'woaru docu ai'
+      // This helps users understand what AI documentation headers are and why they're useful
+      console.log(chalk.cyan.bold('🧠 WOARU AI Documentation Generator'));
+      console.log(chalk.gray('═'.repeat(50)));
+      console.log();
+      
+      console.log(chalk.yellow('💡 Was macht "woaru docu ai"?'));
+      console.log(chalk.gray('   Dieses Tool generiert spezielle YAML-Header in deinen Code-Dateien,'));
+      console.log(chalk.gray('   die KI-Assistenten wie Claude, ChatGPT oder Copilot dabei helfen,'));
+      console.log(chalk.gray('   deinen Code besser zu verstehen und präzisere Antworten zu geben.'));
+      console.log();
+      
+      console.log(chalk.yellow('🎯 Konkrete Vorteile:'));
+      console.log(chalk.gray('   • KI versteht Funktionszweck und Kontext sofort'));
+      console.log(chalk.gray('   • Bessere Code-Vorschläge und Refactoring-Ideen'));
+      console.log(chalk.gray('   • Präzisere Debugging-Hilfe'));
+      console.log(chalk.gray('   • Automatische Abhängigkeits- und Architektur-Erkennung'));
+      console.log();
+      
+      console.log(chalk.yellow('📝 Beispiel eines generierten Headers:'));
+      console.log(chalk.gray('   ```yaml'));
+      console.log(chalk.gray('   # AI-Context:'));
+      console.log(chalk.gray('   #   purpose: "User authentication service"'));
+      console.log(chalk.gray('   #   dependencies: ["express", "jwt", "bcrypt"]'));
+      console.log(chalk.gray('   #   architecture: "REST API with JWT tokens"'));
+      console.log(chalk.gray('   #   related_files: ["./models/User.ts", "./middleware/auth.ts"]'));
+      console.log(chalk.gray('   ```'));
+      console.log();
+      
+      console.log(chalk.blue('🧠 Generiere AI-optimierte Kontext-Header...'));
       
       await runDocumentationGeneration(
         path.resolve(options.path),
         options,
         { 
           type: 'ai', 
-          description: 'Machine-readable YAML context headers for AI/LLM optimization'
+          description: 'Machine-readable YAML context headers for AI optimization'
         }
       );
     } catch (error) {
@@ -1410,7 +1533,7 @@ async function runDocumentationGeneration(
 
     const enabledProviders = aiConfig.providers.filter(p => p.enabled);
     if (enabledProviders.length === 0) {
-      console.log(chalk.red('❌ No LLM providers enabled.'));
+      console.log(chalk.red('❌ No AI providers enabled.'));
       console.log(chalk.yellow('💡 Enable providers in woaru.config.js.'));
       process.exit(1);
     }
@@ -1433,7 +1556,7 @@ async function runDocumentationGeneration(
     }
 
     // Show transparent output
-    console.log(chalk.cyan(`🧠 Generating ${context.description} using ${enabledProviders.length} LLM provider(s)`));
+    console.log(chalk.cyan(`🧠 Generating ${context.description} using ${enabledProviders.length} AI provider(s)`));
 
     // Create documentation agent
     const { DocumentationAgent } = await import('./ai/DocumentationAgent');
@@ -1452,12 +1575,33 @@ async function runDocumentationGeneration(
     } else {
       // Interactive confirmation unless --force is used
       if (!options.force) {
+        let confirmMessage = `Apply documentation changes to ${results.length} files?`;
+        let additionalWarning = '';
+        
+        // Special handling for 'ai' type documentation
+        // Why: AI documentation headers are a new concept that users might not understand,
+        // so we provide extra context and confirmation to ensure they know what will happen
+        if (context.type === 'ai') {
+          confirmMessage = `Generiere AI-Context-Header für ${results.length} Dateien?`;
+          additionalWarning = `
+${chalk.yellow('⚠️ Wichtiger Hinweis:')}
+${chalk.gray('   • Dies fügt YAML-Header zu deinen Code-Dateien hinzu')}
+${chalk.gray('   • Die Header helfen KI-Tools, deinen Code besser zu verstehen')}
+${chalk.gray('   • Änderungen können mit Git rückgängig gemacht werden')}
+${chalk.gray('   • Verwende --preview um Änderungen vorher zu sehen')}`;
+        }
+        
+        if (additionalWarning) {
+          console.log(additionalWarning);
+          console.log();
+        }
+        
         const { confirm } = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'confirm',
-            message: `Apply documentation changes to ${results.length} files?`,
-            default: false
+            message: confirmMessage,
+            default: context.type === 'ai' ? false : false
           }
         ]);
         
@@ -1601,7 +1745,7 @@ async function runAIReviewAnalysis(
     return;
   }
 
-  console.log(chalk.cyan(`📋 Found ${fileList.length} files for LLM analysis:`));
+  console.log(chalk.cyan(`📋 Found ${fileList.length} files for AI analysis:`));
   fileList.forEach(file => {
     console.log(chalk.gray(`   • ${path.relative(projectPath, file)}`));
   });
@@ -1649,9 +1793,9 @@ async function runAIReviewAnalysis(
     }
   }
 
-  // Show transparent output about which LLMs will be contacted
-  const llmNames = enabledProviders.map(p => `${p.id} (${p.model})`).join(', ');
-  console.log(chalk.cyan(`🧠 Kontaktiere ${enabledProviders.length} LLMs für Analyse: ${llmNames}`));
+  // Show transparent output about which AI providers will be contacted
+  const aiNames = enabledProviders.map(p => `${p.id} (${p.model})`).join(', ');
+  console.log(chalk.cyan(`🧠 Kontaktiere ${enabledProviders.length} AI-Provider für Analyse: ${aiNames}`));
 
   const aiAgent = new AIReviewAgent(aiConfig, promptTemplates);
   const aiReviewResults = await runAIReviewOnFiles(aiAgent, fileList, projectPath);
@@ -1668,9 +1812,9 @@ async function runAIReviewAnalysis(
       baseBranch: options.branch || (context.type === 'git' ? 'main' : ''),
       totalChanges: fileList.length,
     },
-    qualityResults: [], // Empty for LLM-only analysis
-    securityResults: [], // Empty for LLM-only analysis  
-    productionAudits: [], // Empty for LLM-only analysis
+    qualityResults: [], // Empty for AI-only analysis
+    securityResults: [], // Empty for AI-only analysis  
+    productionAudits: [], // Empty for AI-only analysis
     aiReviewResults, // AI review results
     currentBranch: '',
     commits: [],
@@ -1682,12 +1826,12 @@ async function runAIReviewAnalysis(
   } else {
     const woaruDir = path.join(projectPath, '.woaru');
     await fs.ensureDir(woaruDir);
-    const defaultOutput = path.join(woaruDir, 'woaru-llm-review.md');
+    const defaultOutput = path.join(woaruDir, 'woaru-ai-review.md');
     const outputPath = options.output ? path.resolve(projectPath, options.output) : defaultOutput;
     await reportGenerator.generateMarkdownReport(reportData, outputPath);
 
     console.log(
-      chalk.green(`\n✅ LLM Review report generated: ${path.basename(outputPath)}`)
+      chalk.green(`\n✅ AI Review report generated: ${path.basename(outputPath)}`)
     );
     
     // Show summary
@@ -1699,7 +1843,7 @@ async function runAIReviewAnalysis(
 
     console.log(
       chalk.yellow(
-        `\n💡 Open ${path.basename(outputPath)} to see detailed LLM findings`
+        `\n💡 Open ${path.basename(outputPath)} to see detailed AI findings`
       )
     );
   }
@@ -1783,7 +1927,7 @@ async function runAIReviewOnFiles(aiAgent: any, fileList: string[], projectPath:
         };
         
         // Run AI review
-        const result = await aiAgent.performMultiLLMReview(content, codeContext);
+        const result = await aiAgent.performMultiAIReview(content, codeContext);
         allResults.push(result);
         
         // Show immediate summary
@@ -1999,15 +2143,15 @@ const reviewCommand = program
     'after',
     `
 Examples:
-  woaru analyze llm                       # AI analysis of entire project
+  woaru analyze ai                       # AI analysis of entire project
   woaru review git                        # Analyze changes since main branch
-  woaru review git llm                    # AI analysis of git changes
+  woaru review git ai                    # AI analysis of git changes
   woaru review local                      # Analyze current directory (no git required)
   woaru review local src/components       # Analyze specific directory (no git required)
   woaru review local git                  # Analyze uncommitted changes (requires git)
-  woaru review local llm                  # AI analysis of current directory
+  woaru review local ai                  # AI analysis of current directory
   woaru review path src/components        # Analyze specific directory
-  woaru review path src/components llm    # AI analysis of specific directory
+  woaru review path src/components ai    # AI analysis of specific directory
 `
   );
 
@@ -2098,16 +2242,16 @@ const gitCommand = reviewCommand
     }
   });
 
-// Add LLM sub-command to git review
+// Add AI sub-command to git review
 gitCommand
-  .command('llm')
-  .description('AI-powered analysis of git changes using multiple LLMs')
+  .command('ai')
+  .description('AI-powered analysis of git changes using multiple AI providers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-b, --branch <branch>', 'Base branch to compare against', 'main')
   .option(
     '-o, --output <file>',
-    'Output file for LLM review report',
-    path.join('.woaru', 'woaru-llm-review.md')
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
@@ -2351,15 +2495,15 @@ localCommand
     }
   });
 
-// Add LLM sub-command to local review (directory analysis)
+// Add AI sub-command to local review (directory analysis)
 localCommand
-  .command('llm')
-  .description('AI-powered analysis of current directory using multiple LLMs')
+  .command('ai')
+  .description('AI-powered analysis of current directory using multiple AI providers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option(
     '-o, --output <file>',
-    'Output file for LLM review report',
-    path.join('.woaru', 'woaru-llm-review.md')
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
@@ -2483,15 +2627,15 @@ const pathCommand = reviewCommand
     }
   });
 
-// Add LLM sub-command to path review
+// Add AI sub-command to path review
 pathCommand
-  .command('llm')
-  .description('AI-powered analysis of specific files or directories using multiple LLMs')
+  .command('ai')
+  .description('AI-powered analysis of specific files or directories using multiple AI providers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option(
     '-o, --output <file>',
-    'Output file for LLM review report',
-    path.join('.woaru', 'woaru-llm-review.md')
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
@@ -2898,10 +3042,10 @@ analyzeCommand
     }
   });
 
-// Analyze LLM sub-command
+// Analyze AI sub-command
 analyzeCommand
-  .command('llm')
-  .description('AI-powered comprehensive code analysis using multiple LLMs')
+  .command('ai')
+  .description('AI-powered comprehensive code analysis using multiple AI providers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-j, --json', 'Output as JSON')
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
@@ -2927,7 +3071,7 @@ analyzeCommand
 
       const enabledProviders = aiConfig.providers.filter(p => p.enabled);
       if (enabledProviders.length === 0) {
-        console.log(chalk.red('❌ No LLM providers enabled.'));
+        console.log(chalk.red('❌ No AI providers enabled.'));
         console.log(chalk.yellow('💡 Enable providers in woaru.config.js.'));
         process.exit(1);
       }
@@ -3085,11 +3229,11 @@ function displayCommandReference() {
         'Performs a full analysis of your project including code quality, security vulnerabilities, production readiness, and tool recommendations. Optional AI-powered analysis with multiple LLMs.',
       subcommands: [
         {
-          name: 'woaru analyze llm',
-          description: 'AI-powered comprehensive code analysis using multiple LLMs',
-          usage: 'woaru analyze llm [-p <path>] [-j]',
+          name: 'woaru analyze ai',
+          description: 'AI-powered comprehensive code analysis using multiple AI providers',
+          usage: 'woaru analyze ai [-p <path>] [-j]',
           purpose:
-            'Uses multiple LLM providers to analyze code quality, security, and best practices. Provides AI-powered insights and recommendations for code improvement.',
+            'Uses multiple AI providers to analyze code quality, security, and best practices. Provides AI-powered insights and recommendations for code improvement.',
         },
       ],
     },
@@ -3145,7 +3289,7 @@ function displayCommandReference() {
         'Focused analysis tools for code reviews with optional AI-powered analysis. Choose from git diff analysis, directory analysis, or specific file/directory analysis.',
       subcommands: [
         {
-          name: 'woaru review git [llm]',
+          name: 'woaru review git [ai]',
           description: 'Analyze changes since a specific branch (git diff) with optional AI analysis',
           usage: 'woaru review git [llm] [-b <branch>] [-o <file>] [-j]',
           purpose:
@@ -3358,7 +3502,7 @@ function generateDynamicCommandDocumentation(): string {
           name: 'woaru analyze llm',
           description: 'AI-powered comprehensive code analysis using multiple LLMs',
           usage: 'woaru analyze llm [-p <path>] [-j]',
-          purpose: 'Uses multiple LLM providers to analyze code quality, security, and best practices'
+          purpose: 'Uses multiple AI providers to analyze code quality, security, and best practices'
         }
       ]
     },
@@ -3375,7 +3519,7 @@ function generateDynamicCommandDocumentation(): string {
       purpose: 'Performs various types of code reviews with optional AI analysis',
       subcommands: [
         {
-          name: 'woaru review git [llm]',
+          name: 'woaru review git [ai]',
           description: 'Review git changes with optional AI analysis',
           usage: 'woaru review git [llm] [-b <branch>] [-o <file>] [-j]',
           purpose: 'Analyzes changes between branches using traditional tools and optionally multiple LLMs'
@@ -3407,10 +3551,10 @@ function generateDynamicCommandDocumentation(): string {
           purpose: 'Guides through installation and configuration of development tools'
         },
         {
-          name: 'woaru setup llm',
-          description: 'Setup and configure LLM providers for AI code analysis',
-          usage: 'woaru setup llm [-p <path>]',
-          purpose: 'Interactive configuration of multiple LLM providers for AI-powered code review'
+          name: 'woaru setup ai',
+          description: 'Setup and configure AI providers for code analysis',
+          usage: 'woaru setup ai [-p <path>]',
+          purpose: 'Interactive configuration of multiple AI providers for AI-powered code review'
         }
       ]
     },
@@ -3480,31 +3624,31 @@ function generateDynamicCommandDocumentation(): string {
   return output;
 }
 
-async function displayCurrentLLMStatus(): Promise<void> {
+async function displayCurrentAIStatus(): Promise<void> {
   try {
     const projectPath = process.cwd();
     const configPath = path.join(projectPath, 'woaru.config.js');
     const hasConfig = await fs.pathExists(configPath);
 
     if (!hasConfig) {
-      console.log(chalk.yellow('⚠️ No LLM configuration found'));
-      console.log(chalk.gray('   Run "woaru setup llm" to configure LLM providers'));
+      console.log(chalk.yellow('⚠️ No AI configuration found'));
+      console.log(chalk.gray('   Run "woaru setup ai" to configure AI providers'));
       console.log();
       return;
     }
 
-    // Load LLM configuration
+    // Load AI configuration
     const { ConfigLoader } = await import('./ai/ConfigLoader');
     const configLoader = ConfigLoader.getInstance();
     const config = await configLoader.loadConfig(projectPath);
 
     if (!config || !config.providers || config.providers.length === 0) {
-      console.log(chalk.yellow('⚠️ No LLM providers configured'));
-      console.log(chalk.gray('   Run "woaru setup llm" to add LLM providers'));
+      console.log(chalk.yellow('⚠️ No AI providers configured'));
+      console.log(chalk.gray('   Run "woaru setup ai" to add AI providers'));
       return;
     }
 
-    console.log(chalk.cyan('🤖 LLM Integration Summary:'));
+    console.log(chalk.cyan('🤖 AI Integration Summary:'));
     console.log(chalk.gray(`   Total Providers: ${config.providers.length}`));
     console.log(chalk.gray(`   Parallel Processing: ${config.parallelRequests ? 'Enabled' : 'Disabled'}`));
     console.log(chalk.gray(`   Token Limit: ${config.tokenLimit}`));
@@ -3539,7 +3683,7 @@ async function displayCurrentLLMStatus(): Promise<void> {
     }
 
   } catch (error) {
-    console.log(chalk.red('❌ Failed to load LLM status'));
+    console.log(chalk.red('❌ Failed to load AI status'));
     console.log(chalk.gray(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`));
   }
 }
@@ -3580,7 +3724,7 @@ async function displayWikiContent(): Promise<void> {
     console.log(chalk.yellow('1. 📖 WOARU Concept & Philosophy'));
     console.log(chalk.yellow('2. 🔧 Commands & Usage'));
     console.log(chalk.yellow('3. ⚡ Features & Capabilities'));
-    console.log(chalk.yellow('4. 🤖 LLM Integration Status'));
+    console.log(chalk.yellow('4. 🤖 AI Integration Status'));
     console.log();
 
     // Section 1: Concept
@@ -3601,10 +3745,10 @@ async function displayWikiContent(): Promise<void> {
     displayMarkdownContent(featuresContent);
     console.log();
 
-    // Section 4: Current LLM Status (Dynamic)
-    console.log(chalk.cyan.bold('🤖 SECTION 4: CURRENT LLM INTEGRATION STATUS'));
+    // Section 4: Current AI Status (Dynamic)
+    console.log(chalk.cyan.bold('🤖 SECTION 4: CURRENT AI INTEGRATION STATUS'));
     console.log(chalk.gray('═'.repeat(60)));
-    await displayCurrentLLMStatus();
+    await displayCurrentAIStatus();
     console.log();
 
     // Footer
@@ -3728,7 +3872,7 @@ program.on('command:*', () => {
   process.exit(1);
 });
 
-// LLM Usage Statistics Display Function
+// AI Usage Statistics Display Function
 async function showUsageStatistics(providers: any[]): Promise<void> {
   try {
     const { UsageTracker } = await import('./ai/UsageTracker');
@@ -3737,7 +3881,7 @@ async function showUsageStatistics(providers: any[]): Promise<void> {
 
     if (totalUsage.totalRequests === 0) {
       console.log(chalk.cyan('\n   📈 Usage Statistics: No usage recorded yet'));
-      console.log(chalk.gray('     Run LLM analysis commands to see usage statistics'));
+      console.log(chalk.gray('     Run AI analysis commands to see usage statistics'));
       return;
     }
 
@@ -3791,10 +3935,10 @@ async function showUsageStatistics(providers: any[]): Promise<void> {
   }
 }
 
-// LLM Status Display Function
-async function showLLMStatus(projectPath: string): Promise<void> {
+// AI Status Display Function
+async function showAIStatus(projectPath: string): Promise<void> {
   try {
-    console.log(chalk.cyan.bold('\n🤖 LLM Integration Status'));
+    console.log(chalk.cyan.bold('\n🤖 AI Integration Status'));
     console.log(chalk.gray('─'.repeat(30)));
 
     // Check if configuration exists
@@ -3804,22 +3948,22 @@ async function showLLMStatus(projectPath: string): Promise<void> {
     if (!hasConfig) {
       console.log(chalk.gray('   Status: Not configured'));
       console.log(chalk.yellow('   📄 No woaru.config.js found'));
-      console.log(chalk.cyan('   💡 Run "woaru setup llm" to configure LLM providers'));
+      console.log(chalk.cyan('   💡 Run "woaru setup ai" to configure AI providers'));
       
       // Show usage statistics even without config
       await showUsageStatistics([]);
       return;
     }
 
-    // Load and display LLM configuration
+    // Load and display AI configuration
     try {
       const { ConfigLoader } = await import('./ai/ConfigLoader');
       const configLoader = ConfigLoader.getInstance();
       const config = await configLoader.loadConfig(projectPath);
 
       if (!config || !config.providers || config.providers.length === 0) {
-        console.log(chalk.gray('   Status: No LLM providers configured'));
-        console.log(chalk.cyan('   💡 Run "woaru setup llm" to add LLM providers'));
+        console.log(chalk.gray('   Status: No AI providers configured'));
+        console.log(chalk.cyan('   💡 Run "woaru setup ai" to add AI providers'));
         return;
       }
 
@@ -3853,7 +3997,7 @@ async function showLLMStatus(projectPath: string): Promise<void> {
       
       if (readyProviders.length > 0) {
         console.log(chalk.green('   🚀 AI Code Review available!'));
-        console.log(chalk.cyan('   💡 Use "woaru analyze llm" or "woaru review <type> llm" for AI analysis'));
+        console.log(chalk.cyan('   💡 Use "woaru analyze ai" or "woaru review <type> ai" for AI analysis'));
       } else if (enabledProviders.length > 0) {
         console.log(chalk.yellow('   ⚠️  Set API keys to enable AI Code Review'));
       }
@@ -3864,11 +4008,11 @@ async function showLLMStatus(projectPath: string): Promise<void> {
     } catch (error) {
       console.log(chalk.red('   Status: Configuration error'));
       console.log(chalk.gray(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`));
-      console.log(chalk.cyan('   💡 Run "woaru setup llm" to reconfigure'));
+      console.log(chalk.cyan('   💡 Run "woaru setup ai" to reconfigure'));
     }
 
   } catch (error) {
-    console.log(chalk.red('   Status: Error loading LLM configuration'));
+    console.log(chalk.red('   Status: Error loading AI configuration'));
     console.log(chalk.gray(`   Error: ${error instanceof Error ? error.message : 'Unknown error'}`));
   }
 }
@@ -4034,7 +4178,7 @@ async function sendReportToChannels(content: string, fileName: string, projectPa
   return sentChannels;
 }
 
-// LLM Provider Setup Functions
+// AI Provider Setup Functions
 async function setupAnthropicProvider(): Promise<any> {
   console.log(chalk.cyan.bold('\n🤖 Setting up Anthropic Claude'));
   console.log(chalk.gray('───────────────────────────'));
@@ -4052,13 +4196,14 @@ async function setupAnthropicProvider(): Promise<any> {
     const anthropicProvider = aiModelsDb.llm_providers.anthropic;
     
     if (anthropicProvider && anthropicProvider.models) {
-      modelChoices = anthropicProvider.models.map(model => ({
+      // Note: 'any' type is used here because aiModelsDb comes from external JSON without TypeScript definitions
+      modelChoices = anthropicProvider.models.map((model: any) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
       
       // Find the latest model for default
-      const latestModel = anthropicProvider.models.find(model => model.isLatest);
+      const latestModel = anthropicProvider.models.find((model: any) => model.isLatest);
       if (latestModel) {
         defaultModel = latestModel.id;
       }
@@ -4164,13 +4309,13 @@ async function setupOpenAIProvider(): Promise<any> {
     const openaiProvider = aiModelsDb.llm_providers.openai;
     
     if (openaiProvider && openaiProvider.models) {
-      modelChoices = openaiProvider.models.map(model => ({
+      modelChoices = openaiProvider.models.map((model: any) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
       
       // Find the latest model for default
-      const latestModel = openaiProvider.models.find(model => model.isLatest);
+      const latestModel = openaiProvider.models.find((model: any) => model.isLatest);
       if (latestModel) {
         defaultModel = latestModel.id;
       }
@@ -4278,13 +4423,13 @@ async function setupGoogleProvider(): Promise<any> {
     const googleProvider = aiModelsDb.llm_providers.google;
     
     if (googleProvider && googleProvider.models) {
-      modelChoices = googleProvider.models.map(model => ({
+      modelChoices = googleProvider.models.map((model: any) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
       
       // Find the latest model for default
-      const latestModel = googleProvider.models.find(model => model.isLatest);
+      const latestModel = googleProvider.models.find((model: any) => model.isLatest);
       if (latestModel) {
         defaultModel = latestModel.id;
       }

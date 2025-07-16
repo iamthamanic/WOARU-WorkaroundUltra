@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { AIReviewConfig } from '../types/ai-review';
+import { ConfigManager } from '../config/ConfigManager';
 
 export class ConfigLoader {
   private static instance: ConfigLoader;
@@ -16,53 +17,44 @@ export class ConfigLoader {
   }
 
   /**
-   * Load AI review configuration from woaru.config.js
+   * Load AI review configuration from global ~/.woaru/config/ai_config.json
    */
   async loadConfig(projectPath?: string): Promise<AIReviewConfig | null> {
     if (this.config) {
       return this.config;
     }
 
-    const searchPaths = [
-      projectPath ? path.join(projectPath, 'woaru.config.js') : null,
-      path.join(process.cwd(), 'woaru.config.js'),
-      path.join(process.cwd(), '.woaru', 'config.js'),
-      path.join(process.env.HOME || '~', '.woaru', 'config.js'),
-    ].filter(Boolean) as string[];
+    try {
+      const configManager = ConfigManager.getInstance();
+      const aiConfig = await configManager.loadAiConfig();
 
-    for (const configPath of searchPaths) {
-      try {
-        if (await fs.pathExists(configPath)) {
-          console.log(`📄 Loading AI config from: ${configPath}`);
+      if (aiConfig && Object.keys(aiConfig).length > 1) { // More than just metadata
+        console.log(`📄 Loading AI config from: ${configManager.getAiConfigFilePath()}`);
 
-          // Clear require cache to allow hot reloading
-          delete require.cache[require.resolve(configPath)];
+        // Convert from global AI config to AIReviewConfig format
+        const reviewConfig = this.convertAiConfigToAIConfig(aiConfig);
 
-          const configModule = require(configPath);
-          const config =
-            configModule.ai || configModule.default?.ai || configModule;
-
-          if (this.validateConfig(config)) {
-            this.config = config;
-            return this.config;
-          } else {
-            console.warn(`⚠️ Invalid AI config in ${configPath}`);
-          }
+        if (this.validateConfig(reviewConfig)) {
+          this.config = reviewConfig;
+          return this.config;
+        } else {
+          console.warn(`⚠️ Invalid AI config in global configuration`);
         }
-      } catch (error) {
-        console.warn(
-          `⚠️ Failed to load config from ${configPath}:`,
-          error instanceof Error ? error.message : error
-        );
       }
+
+      console.log('🤖 No AI review configuration found. AI features disabled.');
+      console.log(
+        '💡 Run "woaru ai setup" to configure AI providers for code review.'
+      );
+
+      return null;
+    } catch (error) {
+      console.warn(
+        `⚠️ Failed to load global AI config:`,
+        error instanceof Error ? error.message : error
+      );
+      return null;
     }
-
-    console.log('🤖 No AI review configuration found. AI features disabled.');
-    console.log(
-      '💡 Create woaru.config.js to enable AI code review. See woaru.config.example.js for template.'
-    );
-
-    return null;
   }
 
   /**
@@ -98,6 +90,47 @@ export class ConfigLoader {
           enabled: true,
         },
       ],
+      parallelRequests: true,
+      consensusMode: false,
+      minConsensusCount: 2,
+      tokenLimit: 8000,
+      costThreshold: 0.5,
+    };
+  }
+
+  /**
+   * Convert global AI config to AIReviewConfig format
+   */
+  private convertAiConfigToAIConfig(aiConfig: any): AIReviewConfig {
+    const providers = [];
+    
+    // Convert each configured AI provider to AI review format
+    for (const [providerId, providerConfig] of Object.entries(aiConfig)) {
+      if (providerId === '_metadata') continue;
+      
+      const config = providerConfig as any;
+      providers.push({
+        id: providerId,
+        providerType: config.providerType || 'openai',
+        apiKeyEnvVar: config.apiKeyEnvVar || `${providerId.toUpperCase()}_API_KEY`,
+        baseUrl: config.baseUrl || 'https://api.openai.com/v1/chat/completions',
+        model: config.model || 'gpt-4',
+        headers: config.headers || {},
+        bodyTemplate: config.bodyTemplate || JSON.stringify({
+          model: '{model}',
+          messages: [{ role: 'user', content: '{prompt}\n\nCode to analyze:\n```{language}\n{code}\n```' }],
+          max_tokens: 4000,
+          temperature: 0.1,
+        }),
+        timeout: config.timeout || 30000,
+        maxTokens: config.maxTokens || 4000,
+        temperature: config.temperature || 0.1,
+        enabled: config.enabled !== false,
+      });
+    }
+
+    return {
+      providers,
       parallelRequests: true,
       consensusMode: false,
       minConsensusCount: 2,
