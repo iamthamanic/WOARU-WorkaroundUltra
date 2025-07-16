@@ -339,6 +339,11 @@ async function runAiControlCenter() {
       // Show provider status with API key info
       for (const providerId of providers) {
         const provider = aiConfig[providerId];
+        // Skip if this is not a provider object (e.g., _metadata, multi_ai_review_enabled, primary_review_provider_id)
+        if (!provider || typeof provider !== 'object' || !provider.hasOwnProperty('enabled')) {
+          continue;
+        }
+        
         const hasApiKey = await configManager.hasApiKey(providerId);
         const status = provider.enabled ? '✅ enabled' : '❌ disabled';
         const keyStatus = hasApiKey ? '🔑 API-Key gefunden' : '❌ API-Key fehlt!';
@@ -2106,7 +2111,7 @@ async function runAIReviewAnalysis(
 
   const enabledProviders = aiConfig.providers.filter(p => p.enabled);
   if (enabledProviders.length === 0) {
-    console.log(chalk.red('❌ No LLM providers enabled.'));
+    console.log(chalk.red('❌ No AI providers enabled.'));
     console.log(chalk.yellow('💡 Enable providers in woaru.config.js.'));
     process.exit(1);
   }
@@ -2608,7 +2613,7 @@ gitCommand
       }
 
       console.log(
-        chalk.blue(`🧠 Running LLM analysis on changes since branch: ${options.branch}`)
+        chalk.blue(`🧠 Running AI analysis on changes since branch: ${options.branch}`)
       );
 
       // Get list of changed files using git diff
@@ -2657,13 +2662,13 @@ gitCommand
 
         await runAIReviewAnalysis(fileList, projectPath, options, {
           type: 'git',
-          description: `LLM analysis of changes since branch: ${options.branch}`,
+          description: `AI analysis of changes since branch: ${options.branch}`,
         });
       });
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Git LLM review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Git AI review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -2851,7 +2856,7 @@ localCommand
     try {
       const projectPath = path.resolve(options.path);
 
-      console.log(chalk.blue('🧠 Running LLM analysis on current directory...'));
+      console.log(chalk.blue('🧠 Running AI analysis on current directory...'));
 
       // Get all files in directory recursively (no git dependency)
       const { glob } = await import('glob');
@@ -2885,12 +2890,12 @@ localCommand
 
       await runAIReviewAnalysis(codeFileList, projectPath, options, {
         type: 'local',
-        description: 'LLM analysis of current directory',
+        description: 'AI analysis of current directory',
       });
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Local LLM review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Local AI review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -2984,7 +2989,7 @@ pathCommand
       const projectPath = path.resolve(options.path);
       const absoluteTargetPath = path.resolve(projectPath, targetPath);
 
-      console.log(chalk.blue(`🧠 Running LLM analysis on path: ${targetPath}`));
+      console.log(chalk.blue(`🧠 Running AI analysis on path: ${targetPath}`));
 
       // Check if target path exists
       if (!(await fs.pathExists(absoluteTargetPath))) {
@@ -3026,12 +3031,12 @@ pathCommand
 
       await runAIReviewAnalysis(fileList, projectPath, options, {
         type: 'path',
-        description: `LLM analysis of path: ${targetPath}`,
+        description: `AI analysis of path: ${targetPath}`,
       });
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Path LLM review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ Path AI review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -3393,7 +3398,7 @@ analyzeCommand
     try {
       const projectPath = path.resolve(options.path);
 
-      console.log(chalk.blue('🧠 Running Multi-LLM Code Analysis...'));
+      console.log(chalk.blue('🧠 Running Multi-AI Code Analysis...'));
 
       // Load AI configuration
       const { ConfigLoader } = await import('./ai/ConfigLoader');
@@ -3416,9 +3421,9 @@ analyzeCommand
         process.exit(1);
       }
 
-      // Show transparent output about which LLMs will be contacted
-      const llmNames = enabledProviders.map(p => `${p.id} (${p.model})`).join(', ');
-      console.log(chalk.cyan(`🧠 Kontaktiere ${enabledProviders.length} LLMs für Analyse: ${llmNames}`));
+      // Show transparent output about which AI providers will be contacted
+      const aiNames = enabledProviders.map(p => `${p.id} (${p.model})`).join(', ');
+      console.log(chalk.cyan(`🧠 Kontaktiere ${enabledProviders.length} AI-Provider für Analyse: ${aiNames}`));
 
       // Get relevant code files from the project
       const { glob } = await import('glob');
@@ -3461,7 +3466,7 @@ analyzeCommand
 
       // Display AI Analysis Results
       const aiSummary = aiAnalysisResults.summary;
-      console.log(chalk.cyan.bold('\n📊 Multi-LLM Analysis Results'));
+      console.log(chalk.cyan.bold('\n📊 Multi-AI Analysis Results'));
       console.log(chalk.gray('═'.repeat(50)));
       
       console.log(chalk.blue(`📁 Analyzed: ${aiSummary.filesAnalyzed} files`));
@@ -3502,12 +3507,12 @@ analyzeCommand
         console.log(chalk.green('\n✅ No issues found by AI analysis!'));
       }
 
-      console.log(chalk.blue('\n💡 Run "woaru review git llm" or "woaru review local llm" for detailed analysis with reports.'));
+      console.log(chalk.blue('\n💡 Run "woaru review git ai" or "woaru review local ai" for detailed analysis with reports.'));
 
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ LLM Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          `❌ AI Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -3564,9 +3569,9 @@ function displayCommandReference() {
     {
       name: '🔍 woaru analyze [subcommand]',
       description: 'Comprehensive project analysis including security audit',
-      usage: 'woaru analyze [llm] [options]',
+      usage: 'woaru analyze [ai] [options]',
       purpose:
-        'Performs a full analysis of your project including code quality, security vulnerabilities, production readiness, and tool recommendations. Optional AI-powered analysis with multiple LLMs.',
+        'Performs a full analysis of your project including code quality, security vulnerabilities, production readiness, and tool recommendations. Optional AI-powered analysis with multiple AI providers.',
       subcommands: [
         {
           name: 'woaru analyze ai',
@@ -3587,9 +3592,9 @@ function displayCommandReference() {
     {
       name: '⚙️ woaru setup <subcommand>',
       description: 'Setup and configuration tools',
-      usage: 'woaru setup <tools|llm> [options]',
+      usage: 'woaru setup <tools|ai> [options]',
       purpose:
-        'Configures WOARU and integrates development tools or LLM providers. Choose from tool installation/configuration or AI-powered code review setup.',
+        'Configures WOARU and integrates development tools or AI providers. Choose from tool installation/configuration or AI-powered code review setup.',
       subcommands: [
         {
           name: 'woaru setup tools',
@@ -3599,11 +3604,11 @@ function displayCommandReference() {
             'Automatically installs and configures development tools based on your project analysis. Saves time by setting up linters, formatters, git hooks, and other productivity tools.',
         },
         {
-          name: 'woaru setup llm',
-          description: 'Setup and configure LLM providers for AI code analysis',
-          usage: 'woaru setup llm [-p <path>]',
+          name: 'woaru setup ai',
+          description: 'Setup and configure AI providers for AI code analysis',
+          usage: 'woaru setup ai [-p <path>]',
           purpose:
-            'Interactive configuration of multiple LLM providers (Anthropic Claude, OpenAI GPT, Google Gemini, Azure OpenAI, Local Ollama) for AI-powered code review.',
+            'Interactive configuration of multiple AI providers (Anthropic Claude, OpenAI GPT, Google Gemini, Azure OpenAI, Local Ollama) for AI-powered code review.',
         },
       ],
     },
@@ -3624,21 +3629,21 @@ function displayCommandReference() {
     {
       name: '🔄 woaru review <subcommand>',
       description: 'Code review and analysis tools',
-      usage: 'woaru review <git|local|path> [llm] [options]',
+      usage: 'woaru review <git|local|path> [ai] [options]',
       purpose:
         'Focused analysis tools for code reviews with optional AI-powered analysis. Choose from git diff analysis, directory analysis, or specific file/directory analysis.',
       subcommands: [
         {
           name: 'woaru review git [ai]',
           description: 'Analyze changes since a specific branch (git diff) with optional AI analysis',
-          usage: 'woaru review git [llm] [-b <branch>] [-o <file>] [-j]',
+          usage: 'woaru review git [ai] [-b <branch>] [-o <file>] [-j]',
           purpose:
-            'Analyzes changes between your current branch and a base branch (default: main). Optional multi-LLM analysis for AI-powered code review insights.',
+            'Analyzes changes between your current branch and a base branch (default: main). Optional multi-AI analysis for AI-powered code review insights.',
         },
         {
-          name: 'woaru review local [target_path] [llm]',
+          name: 'woaru review local [target_path] [ai]',
           description: 'Analyze current directory or specified path (no git required) with optional AI analysis',
-          usage: 'woaru review local [target_path] [llm] [-o <file>] [-j]',
+          usage: 'woaru review local [target_path] [ai] [-o <file>] [-j]',
           purpose:
             'Reviews files in current directory or specified path without requiring git. Works in any directory. Optional AI analysis provides intelligent suggestions.',
         },
@@ -3650,11 +3655,11 @@ function displayCommandReference() {
             'Reviews your uncommitted changes before you commit them. Requires git repository. Analyzes only modified files.',
         },
         {
-          name: 'woaru review path <path> [llm]',
+          name: 'woaru review path <path> [ai]',
           description: 'Analyze specific files or directories with optional AI analysis',
-          usage: 'woaru review path <file_or_directory> [llm] [-o <file>] [-j]',
+          usage: 'woaru review path <file_or_directory> [ai] [-o <file>] [-j]',
           purpose:
-            'Focused analysis of specific files or directories. Optional multi-LLM analysis provides deep insights into code quality and best practices.',
+            'Focused analysis of specific files or directories. Optional multi-AI analysis provides deep insights into code quality and best practices.',
         },
       ],
     },
@@ -3712,7 +3717,7 @@ function displayCommandReference() {
       description: 'Show comprehensive WOARU documentation and concept guide',
       usage: 'woaru wiki',
       purpose:
-        'Displays complete WOARU documentation with dynamic content generation. Includes concept explanations, feature details, and live LLM integration status.',
+        'Displays complete WOARU documentation with dynamic content generation. Includes concept explanations, feature details, and live AI integration status.',
     },
     {
       name: '📚 woaru docu <subcommand>',
@@ -3735,7 +3740,7 @@ function displayCommandReference() {
         },
         {
           name: 'woaru docu ai',
-          description: 'Generate machine-readable YAML context headers optimized for AI/LLM comprehension',
+          description: 'Generate machine-readable YAML context headers optimized for AI comprehension',
           usage: 'woaru docu ai [--path-only <path>] [--preview] [--force]',
           purpose: 'Creates structured metadata headers that help AI tools understand code context, architecture, and relationships.'
         }
@@ -3835,13 +3840,13 @@ function generateDynamicCommandDocumentation(): string {
     {
       name: '🚀 woaru analyze',
       description: 'Comprehensive project analysis including security audit',
-      usage: 'woaru analyze [llm]',
+      usage: 'woaru analyze [ai]',
       purpose: 'Performs deep project analysis with optional AI-powered insights',
       subcommands: [
         {
-          name: 'woaru analyze llm',
-          description: 'AI-powered comprehensive code analysis using multiple LLMs',
-          usage: 'woaru analyze llm [-p <path>] [-j]',
+          name: 'woaru analyze ai',
+          description: 'AI-powered comprehensive code analysis using multiple AI providers',
+          usage: 'woaru analyze ai [-p <path>] [-j]',
           purpose: 'Uses multiple AI providers to analyze code quality, security, and best practices'
         }
       ]
@@ -3855,25 +3860,25 @@ function generateDynamicCommandDocumentation(): string {
     {
       name: '🔍 woaru review',
       description: 'Code review and analysis tools',
-      usage: 'woaru review <type> [llm]',
+      usage: 'woaru review <type> [ai]',
       purpose: 'Performs various types of code reviews with optional AI analysis',
       subcommands: [
         {
           name: 'woaru review git [ai]',
           description: 'Review git changes with optional AI analysis',
-          usage: 'woaru review git [llm] [-b <branch>] [-o <file>] [-j]',
-          purpose: 'Analyzes changes between branches using traditional tools and optionally multiple LLMs'
+          usage: 'woaru review git [ai] [-b <branch>] [-o <file>] [-j]',
+          purpose: 'Analyzes changes between branches using traditional tools and optionally multiple AI providers'
         },
         {
-          name: 'woaru review local [llm]',
+          name: 'woaru review local [ai]',
           description: 'Review uncommitted changes with optional AI analysis',
-          usage: 'woaru review local [llm] [-o <file>] [-j]',
+          usage: 'woaru review local [ai] [-o <file>] [-j]',
           purpose: 'Analyzes uncommitted local changes for quality and security issues'
         },
         {
-          name: 'woaru review path <path> [llm]',
+          name: 'woaru review path <path> [ai]',
           description: 'Review specific files/directories with optional AI analysis',
-          usage: 'woaru review path <path> [llm] [-o <file>] [-j]',
+          usage: 'woaru review path <path> [ai] [-o <file>] [-j]',
           purpose: 'Focused analysis of specific code areas with comprehensive reporting'
         }
       ]
@@ -3902,7 +3907,7 @@ function generateDynamicCommandDocumentation(): string {
       name: '📊 woaru status',
       description: 'Show WOARU supervisor status and project health',
       usage: 'woaru status [-p <path>]',
-      purpose: 'Displays comprehensive status including LLM integration and usage statistics'
+      purpose: 'Displays comprehensive status including AI integration and usage statistics'
     },
     {
       name: '📚 woaru commands',

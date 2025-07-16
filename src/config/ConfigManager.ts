@@ -254,7 +254,21 @@ export class ConfigManager {
   async getConfiguredAiProviders(): Promise<string[]> {
     try {
       const config = await this.loadAiConfig();
-      return Object.keys(config);
+      const providers = [];
+      
+      for (const [key, value] of Object.entries(config)) {
+        // Skip metadata and configuration entries
+        if (key === '_metadata' || key === 'multi_ai_review_enabled' || key === 'primary_review_provider_id') {
+          continue;
+        }
+        
+        // Only include actual provider objects
+        if (value && typeof value === 'object' && value.hasOwnProperty('enabled')) {
+          providers.push(key);
+        }
+      }
+      
+      return providers;
     } catch (error) {
       console.warn(
         chalk.yellow(
@@ -341,8 +355,13 @@ export class ConfigManager {
     const enabledProviders = [];
     
     for (const [providerId, providerConfig] of Object.entries(config)) {
-      if (providerId.startsWith('_') || !providerConfig || typeof providerConfig !== 'object') continue;
-      if ((providerConfig as any).enabled) {
+      // Skip metadata and configuration entries
+      if (providerId === '_metadata' || providerId === 'multi_ai_review_enabled' || providerId === 'primary_review_provider_id') {
+        continue;
+      }
+      
+      // Only include actual provider objects that are enabled
+      if (providerConfig && typeof providerConfig === 'object' && providerConfig.hasOwnProperty('enabled') && (providerConfig as any).enabled) {
         enabledProviders.push(providerId);
       }
     }
@@ -358,8 +377,15 @@ export class ConfigManager {
     let count = 0;
     
     for (const [providerId, providerConfig] of Object.entries(config)) {
-      if (providerId.startsWith('_') || !providerConfig || typeof providerConfig !== 'object') continue;
-      count++;
+      // Skip metadata and configuration entries
+      if (providerId === '_metadata' || providerId === 'multi_ai_review_enabled' || providerId === 'primary_review_provider_id') {
+        continue;
+      }
+      
+      // Only count actual provider objects
+      if (providerConfig && typeof providerConfig === 'object' && providerConfig.hasOwnProperty('enabled')) {
+        count++;
+      }
     }
     
     return count;

@@ -1,9 +1,66 @@
-# WOARU 🚀 v4.7.0
+# WOARU 🚀 v4.7.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v4.7.0 - Multi-AI Review Control Center**
+## 🆕 **Latest Release: v4.7.1 - AI Control Center Bug Fixes**
+**Release Date:** July 16, 2025
+
+### 🐛 **PATCH: Critical AI Control Center Bug Fixes**
+**Problem Solved:** v4.7.0 introduced a revolutionary AI Control Center, but contained critical bugs that caused crashes and inconsistent behavior. Users experienced `Cannot read properties of null (reading 'enabled')` errors and inconsistent CLI documentation.
+
+**Professional Solution:**
+- **🔧 Fixed Status Display Crash**:
+  - Resolved `Cannot read properties of null (reading 'enabled')` error in AI Control Center
+  - Fixed ConfigManager methods to properly filter provider objects vs configuration entries
+  - Added validation to prevent processing of `multi_ai_review_enabled` and `primary_review_provider_id` as providers
+- **🎯 Enhanced Provider Management**:
+  - `getConfiguredAiProviders()` now correctly filters only actual provider objects
+  - `getEnabledAiProviders()` properly ignores metadata and configuration entries
+  - `getConfiguredProviderCount()` accurately counts only valid provider configurations
+- **📊 Improved Status Accuracy**:
+  - AI Control Center now correctly displays "X configured | Y enabled" without crashes
+  - Provider list shows accurate enabled/disabled status and API key validation
+  - Multi-AI Review status displays correctly with proper primary provider selection
+- **🔄 CLI Consistency**:
+  - All `woaru commands` documentation now consistently uses `ai` instead of `llm`
+  - Fixed remaining inconsistencies in usage strings and descriptions
+  - Maintained backward compatibility with deprecation warnings for legacy commands
+
+### 🔧 **Technical Implementation**
+```typescript
+// Fixed ConfigManager provider filtering
+async getConfiguredAiProviders(): Promise<string[]> {
+  const providers = [];
+  for (const [key, value] of Object.entries(config)) {
+    // Skip metadata and configuration entries
+    if (key === '_metadata' || key === 'multi_ai_review_enabled' || key === 'primary_review_provider_id') {
+      continue;
+    }
+    // Only include actual provider objects
+    if (value && typeof value === 'object' && value.hasOwnProperty('enabled')) {
+      providers.push(key);
+    }
+  }
+  return providers;
+}
+```
+
+### 🏗️ **Enhanced System Architecture**
+- **Provider Validation**: Robust filtering of provider objects vs configuration entries
+- **Status Display**: Safe rendering of AI Control Center status without crashes
+- **Configuration Management**: Proper separation of provider data and global settings
+- **Error Handling**: Comprehensive validation to prevent null reference errors
+
+### 📊 **User Experience Improvements**
+- **Crash-Free Operation**: AI Control Center now runs without `Cannot read properties of null` errors
+- **Accurate Status**: Provider counts and status display correctly reflect actual configuration
+- **Consistent CLI**: All commands use unified `ai` terminology throughout documentation
+- **Reliable Navigation**: AI Control Center menus work correctly with proper provider filtering
+
+---
+
+## 📚 **Previous Release: v4.7.0 - Multi-AI Review Control Center**
 **Release Date:** July 16, 2025
 
 ### 🎯 **MINOR: Multi-AI Review Control Center & Single-AI Mode**
