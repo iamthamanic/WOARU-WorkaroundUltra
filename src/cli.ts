@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { WOARUEngine } from './core/WOARUEngine';
-import { WOARUSupervisor } from './supervisor/WAUSupervisor';
+import { WOARUSupervisor } from './supervisor/WOARUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import { APP_CONFIG } from './config/constants';
 import { ConfigManager } from './config/ConfigManager';
@@ -17,6 +17,7 @@ import * as fs from 'fs-extra';
 import { AIProviderUtils } from './utils/AIProviderUtils';
 import { initializeI18n, t } from './config/i18n';
 import { handleFirstTimeLanguageSetup } from './config/languageSetup';
+import { generateTranslatedCommandsOutput, getTranslatedDescription, getTranslatedPurpose } from './utils/commandHelpers';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
@@ -4126,8 +4127,21 @@ async function displayWikiContent(): Promise<void> {
 program
   .command('commands')
   .description('Show detailed command reference documentation')
-  .action(() => {
-    displayCommandReference();
+  .action(async () => {
+    // Ensure i18n is initialized
+    await initializeI18n();
+    
+    console.log(chalk.cyan.bold(`📚 ${t('commands.commands.description')}`));
+    console.log(chalk.gray('═'.repeat(50)));
+    console.log();
+    
+    // Generate the translated commands output
+    const translatedOutput = generateTranslatedCommandsOutput(program);
+    console.log(translatedOutput);
+    
+    console.log(chalk.gray('═'.repeat(50)));
+    console.log(chalk.green(`💡 ${t('ui.help_tip')}`));
+    console.log(chalk.blue(`📖 ${t('ui.documentation_tip')}`));
   });
 
 program

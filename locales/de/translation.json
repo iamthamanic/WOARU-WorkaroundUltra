@@ -82,5 +82,192 @@
   },
   "ai_prompts": {
     "language_instruction": "Antworte ausschließlich in deutscher Sprache."
+  },
+  "commands": {
+    "main": {
+      "description": "Universeller Projekt-Setup-Autopilot - Analysiert und konfiguriert automatisch Entwicklungstools für JEDE Programmiersprache",
+      "purpose": "Optimiert Ihren Entwicklungsworkflow mit intelligenten Tool-Empfehlungen"
+    },
+    "quick_analyze": {
+      "description": "Schnellanalyse für Projekt-Setup-Empfehlungen",
+      "purpose": "Erhalten Sie sofortige Empfehlungen zur Verbesserung Ihres Projekt-Setups"
+    },
+    "setup": {
+      "description": "Einrichtung von Tools und AI-Integrationen",
+      "purpose": "Konfiguriert Entwicklungstools und AI-Provider für optimalen Workflow"
+    },
+    "setup_tools": {
+      "description": "Automatische Einrichtung empfohlener Entwicklungstools",
+      "purpose": "Installiert und konfiguriert empfohlene Tools basierend auf Ihrem Projekttyp"
+    },
+    "ai": {
+      "description": "Verwaltung von AI-Providern für Code-Analyse",
+      "purpose": "Konfiguriert und verwaltet AI-gestützte Code-Analyse-Funktionen"
+    },
+    "ai_setup": {
+      "description": "Einrichtung und Konfiguration von AI-Providern für Code-Analyse",
+      "purpose": "Fügt neue AI-Provider hinzu und konfiguriert deren Einstellungen"
+    },
+    "ai_legacy": {
+      "description": "Einrichtung und Konfiguration von AI-Providern für Code-Analyse (Alias für \"woaru ai setup\")",
+      "purpose": "Legacy-Befehl für AI-Provider-Konfiguration"
+    },
+    "llm": {
+      "description": "Einrichtung und Konfiguration von AI-Providern für Code-Analyse (Legacy-Alias für \"woaru ai setup\")",
+      "purpose": "Legacy-LLM-Konfigurationsbefehl"
+    },
+    "update_db": {
+      "description": "Aktualisierung der Tools-Datenbank von Remote-Quelle",
+      "purpose": "Aktualisiert die Datenbank verfügbarer Entwicklungstools und Konfigurationen"
+    },
+    "watch": {
+      "description": "Startet WOARU Supervisor zur kontinuierlichen Projektüberwachung",
+      "purpose": "Aktiviert Echtzeit-Monitoring und automatische Projektverbesserungen"
+    },
+    "status": {
+      "description": "Zeigt WOARU Supervisor-Status und Projekt-Gesundheit",
+      "purpose": "Zeigt aktuellen Monitoring-Status und Projekt-Gesundheitsmetriken"
+    },
+    "update": {
+      "description": "Aktualisiert WOARU auf die neueste Version von npm",
+      "purpose": "Hält WOARU mit den neuesten Features und Verbesserungen aktuell"
+    },
+    "stop": {
+      "description": "Stoppt den WOARU Supervisor",
+      "purpose": "Deaktiviert Projektüberwachung und Hintergrundprozesse"
+    },
+    "logs": {
+      "description": "Zeigt Supervisor-Logs",
+      "purpose": "Zeigt detaillierte Logs vom WOARU Supervisor"
+    },
+    "recommendations": {
+      "description": "Zeigt aktuelle Tool-Empfehlungen",
+      "purpose": "Zeigt personalisierte Tool-Vorschläge für Ihr Projekt"
+    },
+    "helpers": {
+      "description": "Zeigt alle erkannten/aktivierten Entwicklungstools und Helfer",
+      "purpose": "Zeigt alle aktuell aktiven Entwicklungstools und Konfigurationen"
+    },
+    "docu": {
+      "description": "AI-gestützter Code-Dokumentationsgenerator",
+      "purpose": "Generiert umfassende Dokumentation für Ihre Codebasis"
+    },
+    "docu_nopro": {
+      "description": "Generiert benutzerfreundliche \"Erkläre-für-Menschen\" Kommentare für nicht-technische Zielgruppen",
+      "purpose": "Erstellt zugängliche Dokumentation für Stakeholder und Nicht-Entwickler"
+    },
+    "docu_pro": {
+      "description": "Generiert technische TSDoc/JSDoc-Dokumentation für Entwickler",
+      "purpose": "Erstellt detaillierte technische Dokumentation nach Industriestandards"
+    },
+    "docu_ai": {
+      "description": "Generiert maschinenlesbare YAML-Kontext-Header optimiert für AI-Verständnis",
+      "purpose": "Erstellt AI-optimierte Dokumentation für besseres Code-Verständnis"
+    },
+    "ignore": {
+      "description": "Fügt ein Tool zur Ignorierliste hinzu",
+      "purpose": "Schließt spezifische Tools von Empfehlungen und Monitoring aus"
+    },
+    "review": {
+      "description": "Code-Review und Analyse-Tools",
+      "purpose": "Umfassende Code-Qualitäts- und Sicherheitsanalyse"
+    },
+    "review_git": {
+      "description": "Analysiert Änderungen seit einem spezifischen Branch (git diff)",
+      "purpose": "Überprüft Änderungen in Ihrem git-Arbeitsverzeichnis"
+    },
+    "review_git_ai": {
+      "description": "AI-gestützte Analyse von git-Änderungen mit mehreren AI-Providern",
+      "purpose": "Erhalten Sie intelligente Einblicke in Ihre Code-Änderungen"
+    },
+    "review_local": {
+      "description": "Analysiert aktuelles Verzeichnis oder angegebenen Pfad ohne git-Abhängigkeiten",
+      "purpose": "Überprüft Code-Qualität ohne git-Integration"
+    },
+    "review_local_git": {
+      "description": "Analysiert uncommittete Änderungen im git-Arbeitsverzeichnis",
+      "purpose": "Überprüft Ihre ausstehenden Änderungen vor dem Commit"
+    },
+    "review_local_ai": {
+      "description": "AI-gestützte Analyse des aktuellen Verzeichnisses mit mehreren AI-Providern",
+      "purpose": "Erhalten Sie AI-gestützte Einblicke in Ihre aktuelle Codebasis"
+    },
+    "review_path": {
+      "description": "Analysiert spezifische Dateien oder Verzeichnisse",
+      "purpose": "Fokussiert Analyse auf spezifische Teile Ihrer Codebasis"
+    },
+    "review_path_ai": {
+      "description": "AI-gestützte Analyse spezifischer Dateien oder Verzeichnisse mit mehreren AI-Providern",
+      "purpose": "Erhalten Sie gezielte AI-Analyse für spezifische Code-Bereiche"
+    },
+    "analyze": {
+      "description": "Umfassende Projektanalyse inklusive Sicherheitsaudit",
+      "purpose": "Führt tiefgreifende Analyse der Projekt-Gesundheit und Sicherheit durch"
+    },
+    "analyze_ai": {
+      "description": "AI-gestützte umfassende Code-Analyse mit mehreren AI-Providern",
+      "purpose": "Erhalten Sie intelligente umfassende Analyse Ihres gesamten Projekts"
+    },
+    "rollback": {
+      "description": "Macht Änderungen rückgängig, die von einem spezifischen Tool gemacht wurden",
+      "purpose": "Macht Änderungen von WOARU-Tools und Konfigurationen rückgängig"
+    },
+    "commands": {
+      "description": "Zeigt detaillierte Befehlsreferenz-Dokumentation",
+      "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen"
+    },
+    "wiki": {
+      "description": "Zeigt umfassende WOARU-Dokumentation und Konzeptführer",
+      "purpose": "Zugriff auf vollständige Dokumentation und WOARU-Konzepte lernen"
+    },
+    "message": {
+      "description": "Sendet Berichte aus Historie an konfigurierte Nachrichten-Kanäle",
+      "purpose": "Teilt Analyse-Berichte über konfigurierte Kommunikationskanäle"
+    },
+    "message_all": {
+      "description": "Sendet alle Berichte aus .woaru/reports/ an konfigurierte Kanäle",
+      "purpose": "Teilt alle historischen Berichte über konfigurierte Kanäle"
+    },
+    "message_latest": {
+      "description": "Sendet den neuesten Bericht aus .woaru/reports/ an konfigurierte Kanäle",
+      "purpose": "Teilt den aktuellsten Analyse-Bericht"
+    },
+    "logs_main": {
+      "description": "Zeigt und verwaltet WOARU-Aktivitätslogs",
+      "purpose": "Zugriff und Verwaltung detaillierter Aktivitätslogs"
+    },
+    "logs_clear": {
+      "description": "Löscht alle WOARU-Aktivitätslogs",
+      "purpose": "Entfernt alle gespeicherten Aktivitätslogs und startet neu"
+    },
+    "logs_stats": {
+      "description": "Zeigt WOARU-Aktivitätslog-Statistiken",
+      "purpose": "Zeigt Statistiken über WOARU-Nutzung und Aktivitäten"
+    },
+    "version": {
+      "description": "Zeigt Versionsinformationen",
+      "purpose": "Zeigt aktuelle WOARU-Version und Systeminformationen"
+    },
+    "check": {
+      "description": "Prüft auf Updates",
+      "purpose": "Prüft ob neuere Versionen von WOARU verfügbar sind"
+    },
+    "update_main": {
+      "description": "Aktualisiert WOARU auf die neueste Version",
+      "purpose": "Upgrade auf die neueste Version von WOARU"
+    },
+    "config": {
+      "description": "Konfiguriert WOARU-Einstellungen",
+      "purpose": "Verwaltet WOARU-Konfiguration und Präferenzen"
+    },
+    "language": {
+      "description": "Interaktive Sprachauswahl",
+      "purpose": "Ändert die von WOARU-Interface verwendete Sprache"
+    }
+  },
+  "ui": {
+    "available_commands": "Verfügbare Befehle",
+    "help_tip": "Verwenden Sie \"woaru <command> --help\" für detaillierte Optionen",
+    "documentation_tip": "Für umfassende Dokumentation: woaru wiki"
   }
 }

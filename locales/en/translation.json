@@ -82,5 +82,192 @@
   },
   "ai_prompts": {
     "language_instruction": "Respond exclusively in English."
+  },
+  "commands": {
+    "main": {
+      "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
+      "purpose": "Streamline your development workflow with intelligent tool recommendations"
+    },
+    "quick_analyze": {
+      "description": "Quick analysis for project setup recommendations",
+      "purpose": "Get instant recommendations for improving your project setup"
+    },
+    "setup": {
+      "description": "Setup tools and AI integrations",
+      "purpose": "Configure development tools and AI providers for optimal workflow"
+    },
+    "setup_tools": {
+      "description": "Automatically setup recommended development tools",
+      "purpose": "Install and configure recommended tools based on your project type"
+    },
+    "ai": {
+      "description": "Manage AI providers for code analysis",
+      "purpose": "Configure and manage AI-powered code analysis capabilities"
+    },
+    "ai_setup": {
+      "description": "Setup and configure AI providers for code analysis",
+      "purpose": "Add new AI providers and configure their settings"
+    },
+    "ai_legacy": {
+      "description": "Setup and configure AI providers for code analysis (alias for \"woaru ai setup\")",
+      "purpose": "Legacy command for AI provider configuration"
+    },
+    "llm": {
+      "description": "Setup and configure AI providers for code analysis (legacy alias for \"woaru ai setup\")",
+      "purpose": "Legacy LLM configuration command"
+    },
+    "update_db": {
+      "description": "Update the tools database from remote source",
+      "purpose": "Refresh the database of available development tools and configurations"
+    },
+    "watch": {
+      "description": "Start WOARU supervisor to continuously monitor the project",
+      "purpose": "Enable real-time monitoring and automated improvements for your project"
+    },
+    "status": {
+      "description": "Show WOARU supervisor status and project health",
+      "purpose": "View current monitoring status and project health metrics"
+    },
+    "update": {
+      "description": "Updates WOARU to the latest version from npm",
+      "purpose": "Keep WOARU up-to-date with the latest features and improvements"
+    },
+    "stop": {
+      "description": "Stop the WOARU supervisor",
+      "purpose": "Disable project monitoring and background processes"
+    },
+    "logs": {
+      "description": "Show supervisor logs",
+      "purpose": "View detailed logs from the WOARU supervisor"
+    },
+    "recommendations": {
+      "description": "Show current tool recommendations",
+      "purpose": "Display personalized tool suggestions for your project"
+    },
+    "helpers": {
+      "description": "Show all detected/activated development tools and helpers",
+      "purpose": "View all currently active development tools and configurations"
+    },
+    "docu": {
+      "description": "AI-powered code documentation generator",
+      "purpose": "Generate comprehensive documentation for your codebase"
+    },
+    "docu_nopro": {
+      "description": "Generate human-friendly \"Explain-for-humans\" comments for non-technical audiences",
+      "purpose": "Create accessible documentation for stakeholders and non-developers"
+    },
+    "docu_pro": {
+      "description": "Generate technical TSDoc/JSDoc documentation for developers",
+      "purpose": "Create detailed technical documentation following industry standards"
+    },
+    "docu_ai": {
+      "description": "Generate machine-readable YAML context headers optimized for AI comprehension",
+      "purpose": "Create AI-optimized documentation for better code understanding"
+    },
+    "ignore": {
+      "description": "Add a tool to the ignore list",
+      "purpose": "Exclude specific tools from recommendations and monitoring"
+    },
+    "review": {
+      "description": "Code review and analysis tools",
+      "purpose": "Comprehensive code quality and security analysis"
+    },
+    "review_git": {
+      "description": "Analyze changes since a specific branch (git diff)",
+      "purpose": "Review changes in your git working directory"
+    },
+    "review_git_ai": {
+      "description": "AI-powered analysis of git changes using multiple AI providers",
+      "purpose": "Get intelligent insights on your code changes"
+    },
+    "review_local": {
+      "description": "Analyze current directory or specified path without git dependencies",
+      "purpose": "Review code quality without requiring git integration"
+    },
+    "review_local_git": {
+      "description": "Analyze uncommitted changes in git working directory",
+      "purpose": "Review your pending changes before committing"
+    },
+    "review_local_ai": {
+      "description": "AI-powered analysis of current directory using multiple AI providers",
+      "purpose": "Get AI-powered insights on your current codebase"
+    },
+    "review_path": {
+      "description": "Analyze specific files or directories",
+      "purpose": "Focus analysis on specific parts of your codebase"
+    },
+    "review_path_ai": {
+      "description": "AI-powered analysis of specific files or directories using multiple AI providers",
+      "purpose": "Get targeted AI analysis for specific code areas"
+    },
+    "analyze": {
+      "description": "Comprehensive project analysis including security audit",
+      "purpose": "Perform deep analysis of your project's health and security"
+    },
+    "analyze_ai": {
+      "description": "AI-powered comprehensive code analysis using multiple AI providers",
+      "purpose": "Get intelligent comprehensive analysis of your entire project"
+    },
+    "rollback": {
+      "description": "Rollback changes made by a specific tool",
+      "purpose": "Undo changes made by WOARU tools and configurations"
+    },
+    "commands": {
+      "description": "Show detailed command reference documentation",
+      "purpose": "Browse all available WOARU commands with detailed explanations"
+    },
+    "wiki": {
+      "description": "Show comprehensive WOARU documentation and concept guide",
+      "purpose": "Access complete documentation and learn WOARU concepts"
+    },
+    "message": {
+      "description": "Send reports from history to configured message channels",
+      "purpose": "Share analysis reports via configured communication channels"
+    },
+    "message_all": {
+      "description": "Send all reports from .woaru/reports/ to configured channels",
+      "purpose": "Share all historical reports via configured channels"
+    },
+    "message_latest": {
+      "description": "Send the latest report from .woaru/reports/ to configured channels",
+      "purpose": "Share the most recent analysis report"
+    },
+    "logs_main": {
+      "description": "View and manage WOARU activity logs",
+      "purpose": "Access and manage detailed activity logs"
+    },
+    "logs_clear": {
+      "description": "Clear all WOARU activity logs",
+      "purpose": "Remove all stored activity logs and start fresh"
+    },
+    "logs_stats": {
+      "description": "Show WOARU activity log statistics",
+      "purpose": "View statistics about WOARU usage and activities"
+    },
+    "version": {
+      "description": "Show version information",
+      "purpose": "Display current WOARU version and system information"
+    },
+    "check": {
+      "description": "Check for updates",
+      "purpose": "Check if newer versions of WOARU are available"
+    },
+    "update_main": {
+      "description": "Update WOARU to the latest version",
+      "purpose": "Upgrade to the latest version of WOARU"
+    },
+    "config": {
+      "description": "Configure WOARU settings",
+      "purpose": "Manage WOARU configuration and preferences"
+    },
+    "language": {
+      "description": "Interactive language selection",
+      "purpose": "Change the language used by WOARU interface"
+    }
+  },
+  "ui": {
+    "available_commands": "Available Commands",
+    "help_tip": "Use \"woaru <command> --help\" for detailed options",
+    "documentation_tip": "For comprehensive documentation: woaru wiki"
   }
 }
