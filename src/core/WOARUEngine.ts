@@ -15,7 +15,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-export class WAUEngine {
+export class WOARUEngine {
   private projectAnalyzer: ProjectAnalyzer;
   private codeAnalyzer: CodeAnalyzer;
   private databaseManager: DatabaseManager;

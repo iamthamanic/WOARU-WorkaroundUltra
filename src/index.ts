@@ -1,4 +1,4 @@
-export { WAUEngine } from './core/WAUEngine';
+export { WOARUEngine } from './core/WOARUEngine';
 export { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 export { LanguageDetector } from './analyzer/LanguageDetector';
 export { CodeAnalyzer } from './analyzer/CodeAnalyzer';

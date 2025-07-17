@@ -4,7 +4,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { WAUEngine } from './core/WAUEngine';
+import { WOARUEngine } from './core/WOARUEngine';
 import { WOARUSupervisor } from './supervisor/WAUSupervisor';
 import { ProjectAnalyzer } from './analyzer/ProjectAnalyzer';
 import { APP_CONFIG } from './config/constants';
@@ -73,7 +73,7 @@ async function initialize() {
 initialize();
 
 const program = new Command();
-const wauEngine = new WAUEngine();
+const woaruEngine = new WOARUEngine();
 
 program
   .name(APP_CONFIG.NAME)
@@ -89,7 +89,7 @@ program
     try {
       const projectPath = path.resolve(options.path);
 
-      const result = await wauEngine.analyzeProject(projectPath);
+      const result = await woaruEngine.analyzeProject(projectPath);
 
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
@@ -207,7 +207,7 @@ setupCommand
         interactive: !options.yes,
       };
 
-      const success = await wauEngine.setupProject(projectPath, setupOptions);
+      const success = await woaruEngine.setupProject(projectPath, setupOptions);
 
       if (success) {
         console.log(chalk.green('\n🎉 Project setup completed successfully!'));
@@ -325,11 +325,18 @@ setupCommand
 async function runAiControlCenter() {
   const configManager = ConfigManager.getInstance();
   
+  // First show the current AI status with usage statistics
+  console.clear();
+  console.log(chalk.cyan.bold('🤖 WOARU AI Control Center'));
+  console.log(chalk.gray('════════════════════════════════════════════════════════════════'));
+  console.log();
+  
+  // Display AI Integration Status (moved from wiki)
+  await displayCurrentAIStatus();
+  console.log();
+  console.log(chalk.gray('════════════════════════════════════════════════════════════════'));
+  
   while (true) {
-    console.clear();
-    console.log(chalk.cyan.bold('🤖 WOARU AI Control Center'));
-    console.log(chalk.gray('════════════════════════════════════════════════════════════════'));
-    
     // Load current configuration
     const aiConfig = await configManager.loadAiConfig();
     const providers = await configManager.getConfiguredAiProviders();
@@ -337,7 +344,7 @@ async function runAiControlCenter() {
     const enabledProviders = await configManager.getEnabledAiProviders();
     
     // Display current status
-    console.log(chalk.blue('\n📊 Current Status:'));
+    console.log(chalk.blue('\n📊 Interactive Control Menu:'));
     
     if (providers.length === 0) {
       console.log(chalk.yellow('   No AI providers configured'));
@@ -845,7 +852,7 @@ program
   .command('update-db')
   .description('Update the tools database from remote source')
   .action(async () => {
-    const success = await wauEngine.updateDatabase();
+    const success = await woaruEngine.updateDatabase();
     process.exit(success ? 0 : 1);
   });
 
@@ -1309,7 +1316,7 @@ program
           chalk.yellow('📊 Supervisor not running. Starting quick analysis...')
         );
         // Fall back to one-time analysis
-        const result = await wauEngine.analyzeProject(projectPath);
+        const result = await woaruEngine.analyzeProject(projectPath);
 
         if (options.json) {
           console.log(JSON.stringify(result.setup_recommendations, null, 2));
@@ -1416,7 +1423,7 @@ program
         );
 
         // Get both analysis result and project analysis
-        const result = await wauEngine.analyzeProject(projectPath);
+        const result = await woaruEngine.analyzeProject(projectPath);
         const projectAnalyzer = new ProjectAnalyzer();
         const projectAnalysis =
           await projectAnalyzer.analyzeProject(projectPath);
@@ -3070,7 +3077,7 @@ analyzeCommand
       console.log(chalk.blue('🔍 Running comprehensive project analysis...'));
 
       // Run analysis
-      const result = await wauEngine.analyzeProject(projectPath);
+      const result = await woaruEngine.analyzeProject(projectPath);
 
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
@@ -4079,7 +4086,6 @@ async function displayWikiContent(): Promise<void> {
     console.log(chalk.yellow('1. 📖 WOARU Concept & Philosophy'));
     console.log(chalk.yellow('2. 🔧 Commands & Usage'));
     console.log(chalk.yellow('3. ⚡ Features & Capabilities'));
-    console.log(chalk.yellow('4. 🤖 AI Integration Status'));
     console.log();
 
     // Section 1: Concept
@@ -4100,17 +4106,13 @@ async function displayWikiContent(): Promise<void> {
     displayMarkdownContent(featuresContent);
     console.log();
 
-    // Section 4: Current AI Status (Dynamic)
-    console.log(chalk.cyan.bold('🤖 SECTION 4: CURRENT AI INTEGRATION STATUS'));
-    console.log(chalk.gray('═'.repeat(60)));
-    await displayCurrentAIStatus();
-    console.log();
-
     // Footer
     console.log(chalk.gray('═'.repeat(80)));
     console.log(chalk.cyan.bold('📝 Documentation Generation Info'));
     console.log(chalk.gray(`Generated: ${new Date().toLocaleString()}`));
-    console.log(chalk.gray(`WOARU Version: 1.2.0`));
+    const packagePath = path.join(__dirname, '..', 'package.json');
+    const packageData = await fs.readJSON(packagePath);
+    console.log(chalk.gray(`WOARU Version: ${packageData.version}`));
     console.log(chalk.yellow('💡 This documentation is dynamically generated and auto-updates'));
     console.log(chalk.cyan('🔄 Run "woaru wiki" anytime to get the latest information'));
     console.log();

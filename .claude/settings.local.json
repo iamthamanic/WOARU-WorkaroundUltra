@@ -6,7 +6,8 @@
       "Bash(npm run build:*)",
       "Bash(cd:*)",
       "Bash(npm install:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }
