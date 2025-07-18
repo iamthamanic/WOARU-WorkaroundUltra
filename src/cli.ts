@@ -18,6 +18,7 @@ import { AIProviderUtils } from './utils/AIProviderUtils';
 import { initializeI18n, t } from './config/i18n';
 import { handleFirstTimeLanguageSetup } from './config/languageSetup';
 import { generateTranslatedCommandsOutput, getTranslatedDescription, getTranslatedPurpose } from './utils/commandHelpers';
+import { ensureAiIsConfigured } from './utils/ai-helpers';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
@@ -1651,12 +1652,12 @@ program
 // Documentation command with sub-commands
 const docuCommand = program
   .command('docu')
-  .description('AI-powered code documentation generator');
+  .description('AI-powered documentation generator (requires AI configuration)');
 
 // Documentation nopro sub-command (human-friendly explanations)
 docuCommand
   .command('nopro')
-  .description('Generate human-friendly "Explain-for-humans" comments for non-technical audiences')
+  .description('AI-powered generation of human-friendly comments for non-technical audiences')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
   .option('--git [branch]', 'Document only changes compared to branch')
@@ -1665,6 +1666,9 @@ docuCommand
   .option('--preview', 'Preview changes without writing to files')
   .action(async options => {
     try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
       const projectPath = path.resolve(options.path);
       console.log(chalk.blue('📝 Generating human-friendly documentation...'));
       
@@ -1685,7 +1689,7 @@ docuCommand
 // Documentation pro sub-command (technical TSDoc/JSDoc)
 docuCommand
   .command('pro')
-  .description('Generate technical TSDoc/JSDoc documentation for developers')
+  .description('AI-powered generation of technical TSDoc/JSDoc documentation for developers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
   .option('--git [branch]', 'Document only changes compared to branch')
@@ -1694,6 +1698,9 @@ docuCommand
   .option('--preview', 'Preview changes without writing to files')
   .action(async options => {
     try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
       const projectPath = path.resolve(options.path);
       console.log(chalk.blue('📚 Generating technical documentation...'));
       
@@ -1711,10 +1718,10 @@ docuCommand
     }
   });
 
-// Documentation ai sub-command (machine-readable context headers)
+// Documentation forai sub-command (machine-readable context headers)
 docuCommand
-  .command('ai')
-  .description('Generate machine-readable YAML context headers optimized for AI comprehension')
+  .command('forai')
+  .description('AI-powered generation of machine-readable YAML context headers optimized for AI tools')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--local', 'Document only uncommitted changes')
   .option('--git [branch]', 'Document only changes compared to branch')
@@ -1723,13 +1730,16 @@ docuCommand
   .option('--preview', 'Preview changes without writing to files')
   .action(async options => {
     try {
-      // Show proactive explanation for 'woaru docu ai'
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
+      // Show proactive explanation for 'woaru docu forai'
       // This helps users understand what AI documentation headers are and why they're useful
-      console.log(chalk.cyan.bold('🧠 WOARU AI Documentation Generator'));
+      console.log(chalk.cyan.bold('🧠 WOARU ForAI Documentation Generator'));
       console.log(chalk.gray('═'.repeat(50)));
       console.log();
       
-      console.log(chalk.yellow('💡 Was macht "woaru docu ai"?'));
+      console.log(chalk.yellow('💡 Was macht "woaru docu forai"?'));
       console.log(chalk.gray('   Dieses Tool generiert spezielle YAML-Header in deinen Code-Dateien,'));
       console.log(chalk.gray('   die KI-Assistenten wie Claude, ChatGPT oder Copilot dabei helfen,'));
       console.log(chalk.gray('   deinen Code besser zu verstehen und präzisere Antworten zu geben.'));
@@ -1806,6 +1816,23 @@ program
  * @param fileList - Array of file paths to filter
  * @returns Array of code file paths
  */
+/**
+ * Check if at least one AI provider is configured and active
+ * @returns true if AI is configured, false otherwise
+ */
+async function checkAIConfiguration(): Promise<boolean> {
+  const configManager = ConfigManager.getInstance();
+  const aiConfig = await configManager.loadAiConfig();
+  
+  // Check if any provider is configured with an API key
+  const hasConfiguredProvider = Object.entries(aiConfig).some(
+    ([providerId, provider]: [string, any]) => 
+      provider && provider.enabled && provider.apiKey && provider.apiKey.trim() !== ''
+  );
+  
+  return hasConfiguredProvider;
+}
+
 function filterCodeFiles(fileList: string[]): string[] {
   const codeExtensions = ['.js', '.ts', '.tsx', '.jsx', '.py', '.java', '.cpp', '.c', '.cs', '.go', '.rs', '.php', '.rb', '.swift', '.kt', '.scala', '.clj', '.hs', '.ml', '.elm', '.dart', '.vue', '.svelte'];
   const nonCodeExtensions = ['.yml', '.yaml', '.md', '.txt', '.json', '.xml', '.html', '.css', '.scss', '.sass', '.less', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.doc', '.docx', '.zip', '.tar', '.gz'];
@@ -2508,13 +2535,13 @@ const reviewCommand = program
 Examples:
   woaru analyze ai                       # AI analysis of entire project
   woaru review git                        # Analyze changes since main branch
-  woaru review git ai                    # AI analysis of git changes
+  woaru review ai git                    # AI analysis of git changes
   woaru review local                      # Analyze current directory (no git required)
   woaru review local src/components       # Analyze specific directory (no git required)
   woaru review local git                  # Analyze uncommitted changes (requires git)
-  woaru review local ai                  # AI analysis of current directory
+  woaru review ai local                  # AI analysis of current directory
   woaru review path src/components        # Analyze specific directory
-  woaru review path src/components ai    # AI analysis of specific directory
+  woaru review ai path src/components    # AI analysis of specific directory
 `
   );
 
@@ -2992,7 +3019,7 @@ const pathCommand = reviewCommand
 
 // Add AI sub-command to path review
 pathCommand
-  .command('ai')
+  .command('ai <file_or_directory>')
   .description('AI-powered analysis of specific files or directories using multiple AI providers')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option(
@@ -3055,6 +3082,415 @@ pathCommand
       console.error(
         chalk.red(
           `❌ Path AI review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// NEW: Review AI command with sub-commands for AI-powered analysis
+const reviewAiCommand = reviewCommand
+  .command('ai')
+  .description('AI-powered code review and analysis using multiple AI providers');
+
+// Review AI git sub-command
+reviewAiCommand
+  .command('git')
+  .description('AI-powered analysis of git changes')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option('-b, --branch <branch>', 'Base branch to compare against', 'main')
+  .option(
+    '-o, --output <file>',
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
+  )
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template', 'default_review')
+  .action(async options => {
+    try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
+      const projectPath = path.resolve(options.path);
+
+      // Check if we're in a git repository
+      if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
+        console.error(
+          chalk.red('❌ Not a git repository. Git review requires git.')
+        );
+        process.exit(1);
+      }
+
+      console.log(
+        chalk.blue(`🧠 Running AI analysis on changes since branch: ${options.branch}`)
+      );
+
+      // Get list of changed files using git diff
+      const { spawn } = require('child_process');
+      const gitProcess = spawn(
+        'git',
+        ['diff', '--name-only', `${options.branch}...HEAD`],
+        {
+          cwd: projectPath,
+          stdio: 'pipe',
+        }
+      );
+
+      let changedFiles = '';
+      let gitError = '';
+
+      gitProcess.stdout.on('data', (data: Buffer) => {
+        changedFiles += data.toString();
+      });
+
+      gitProcess.stderr.on('data', (data: Buffer) => {
+        gitError += data.toString();
+      });
+
+      gitProcess.on('close', async (code: number) => {
+        if (code !== 0) {
+          console.error(chalk.red(`❌ Git command failed: ${gitError}`));
+          process.exit(1);
+        }
+
+        const allFileList = changedFiles
+          .trim()
+          .split('\n')
+          .filter(file => file.length > 0)
+          .map(file => path.join(projectPath, file));
+
+        // Filter to only include code files
+        const fileList = filterCodeFiles(allFileList);
+
+        if (fileList.length === 0) {
+          console.log(
+            chalk.green('✅ No code file changes detected since the base branch.')
+          );
+          return;
+        }
+
+        // Run AI analysis
+        const { ConfigLoader } = await import('./ai/ConfigLoader');
+        const { AIReviewAgent } = await import('./ai/AIReviewAgent');
+        const { PromptManager } = await import('./ai/PromptManager');
+        
+        const configLoader = ConfigLoader.getInstance();
+        const aiConfig = await configLoader.loadConfig(projectPath);
+        
+        if (!aiConfig) {
+          console.error(chalk.red('❌ No AI configuration found. Please run "woaru ai setup" first.'));
+          process.exit(1);
+        }
+
+        const enabledProviders = aiConfig.providers.filter((p: any) => p.enabled);
+        if (enabledProviders.length === 0) {
+          console.error(chalk.red('❌ No AI providers enabled. Please run "woaru ai setup" to configure.'));
+          process.exit(1);
+        }
+
+        const promptManager = PromptManager.getInstance();
+        const aiAgent = new AIReviewAgent(aiConfig);
+
+        // Read and analyze files
+        const fileContents = await Promise.all(
+          fileList.map(async (file) => {
+            const content = await fs.readFile(file, 'utf-8');
+            return { path: file, content };
+          })
+        );
+        
+        const combinedCode = fileContents.map(f => `// File: ${f.path}\n${f.content}`).join('\n\n');
+        const aiResult = await aiAgent.performMultiLLMReview(combinedCode, {
+          filePath: 'git_diff',
+          language: 'auto',
+          totalLines: combinedCode.split('\n').length,
+          gitDiff: combinedCode
+        });
+
+        // Generate and save report
+        const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
+        const reportGenerator = new ReviewReportGenerator();
+        
+        const report = options.json
+          ? JSON.stringify(aiResult, null, 2)
+          : await reportGenerator.generateMarkdownReport({
+              context: {
+                type: 'git',
+                description: `AI analysis of changes since branch: ${options.branch}`
+              },
+              gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+              qualityResults: [],
+              productionAudits: [],
+              aiReviewResults: aiResult,
+              currentBranch: options.branch,
+              commits: []
+            });
+
+        const outputPath = path.resolve(projectPath, options.output);
+        await fs.ensureDir(path.dirname(outputPath));
+        await fs.writeFile(outputPath, report);
+
+        console.log(chalk.green(`\n✅ AI review report saved to: ${outputPath}`));
+      });
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI git review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Review AI local sub-command
+reviewAiCommand
+  .command('local [target_path]')
+  .description('AI-powered analysis of current directory or specified path')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option(
+    '-o, --output <file>',
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
+  )
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template', 'default_review')
+  .action(async (targetPath, options) => {
+    try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
+      const projectPath = path.resolve(options.path);
+      const analyzePath = targetPath 
+        ? path.resolve(projectPath, targetPath) 
+        : projectPath;
+
+      console.log(chalk.blue('🧠 Running AI analysis on directory...'));
+
+      // Get all files in directory recursively (no git dependency)
+      const { glob } = await import('glob');
+      const globPattern = path.join(analyzePath, '**/*');
+      let fileList = await glob(globPattern, {
+        ignore: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/dist/**',
+          '**/build/**',
+          '**/.woaru/**',
+        ],
+      });
+
+      // Filter to only include files (not directories)
+      fileList = fileList.filter(file => {
+        try {
+          return fs.statSync(file).isFile();
+        } catch {
+          return false;
+        }
+      });
+
+      if (fileList.length === 0) {
+        console.log(chalk.yellow('⚠️ No files found in the specified directory.'));
+        return;
+      }
+
+      // Run AI analysis
+      const { ConfigLoader } = await import('./ai/ConfigLoader');
+      const { AIReviewAgent } = await import('./ai/AIReviewAgent');
+      const { PromptManager } = await import('./ai/PromptManager');
+      
+      const configLoader = ConfigLoader.getInstance();
+      const aiConfig = await configLoader.loadConfig(projectPath);
+      
+      if (!aiConfig) {
+        console.error(chalk.red('❌ No AI configuration found. Please run "woaru ai setup" first.'));
+        process.exit(1);
+      }
+
+      const enabledProviders = aiConfig.providers.filter((p: any) => p.enabled);
+      if (enabledProviders.length === 0) {
+        console.error(chalk.red('❌ No AI providers enabled. Please run "woaru ai setup" to configure.'));
+        process.exit(1);
+      }
+
+      const promptManager = PromptManager.getInstance();
+      const aiAgent = new AIReviewAgent(aiConfig);
+
+      // Read and analyze files
+      const fileContents = await Promise.all(
+        fileList.map(async (file) => {
+          const content = await fs.readFile(file, 'utf-8');
+          return { path: file, content };
+        })
+      );
+      
+      const combinedCode = fileContents.map(f => `// File: ${f.path}\n${f.content}`).join('\n\n');
+      const aiResult = await aiAgent.performMultiLLMReview(combinedCode, {
+        filePath: 'local_analysis',
+        language: 'auto',
+        totalLines: combinedCode.split('\n').length
+      });
+
+      // Generate and save report
+      const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
+      const reportGenerator = new ReviewReportGenerator();
+      
+      const report = options.json
+        ? JSON.stringify(aiResult, null, 2)
+        : await reportGenerator.generateMarkdownReport({
+            context: {
+              type: 'local',
+              description: targetPath 
+                ? `AI analysis of directory: ${targetPath}`
+                : 'AI analysis of current directory'
+            },
+            gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+            qualityResults: [],
+            productionAudits: [],
+            aiReviewResults: aiResult,
+            currentBranch: 'local',
+            commits: []
+          });
+
+      const outputPath = path.resolve(projectPath, options.output);
+      await fs.ensureDir(path.dirname(outputPath));
+      await fs.writeFile(outputPath, report);
+
+      console.log(chalk.green(`\n✅ AI review report saved to: ${outputPath}`));
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI local review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      );
+      process.exit(1);
+    }
+  });
+
+// Review AI path sub-command
+reviewAiCommand
+  .command('path <file_or_directory>')
+  .description('AI-powered analysis of specific files or directories')
+  .option('-p, --path <path>', 'Project path', process.cwd())
+  .option(
+    '-o, --output <file>',
+    'Output file for AI review report',
+    path.join('.woaru', 'woaru-ai-review.md')
+  )
+  .option('-j, --json', 'Output as JSON instead of markdown')
+  .option('--prompt <prompt_name>', 'Use specific prompt template', 'default_review')
+  .action(async (targetPath: string, options: any) => {
+    try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
+      const projectPath = path.resolve(options.path);
+      const absoluteTargetPath = path.resolve(projectPath, targetPath);
+
+      console.log(chalk.blue(`🧠 Running AI analysis on path: ${targetPath}`));
+
+      // Check if target path exists
+      if (!(await fs.pathExists(absoluteTargetPath))) {
+        console.error(chalk.red(`❌ Path does not exist: ${targetPath}`));
+        process.exit(1);
+      }
+
+      let fileList: string[] = [];
+      const stat = await fs.stat(absoluteTargetPath);
+
+      if (stat.isFile()) {
+        fileList = [absoluteTargetPath];
+      } else if (stat.isDirectory()) {
+        // Get all files in directory recursively
+        const { glob } = await import('glob');
+        const globPattern = path.join(absoluteTargetPath, '**/*');
+        fileList = await glob(globPattern, {
+          ignore: [
+            '**/node_modules/**',
+            '**/.git/**',
+            '**/dist/**',
+            '**/build/**',
+          ],
+        });
+        // Filter to only include files (not directories)
+        fileList = fileList.filter(file => {
+          try {
+            return fs.statSync(file).isFile();
+          } catch {
+            return false;
+          }
+        });
+      }
+
+      if (fileList.length === 0) {
+        console.log(chalk.yellow('⚠️ No files found in the specified path.'));
+        return;
+      }
+
+      // Run AI analysis
+      const { ConfigLoader } = await import('./ai/ConfigLoader');
+      const { AIReviewAgent } = await import('./ai/AIReviewAgent');
+      const { PromptManager } = await import('./ai/PromptManager');
+      
+      const configLoader = ConfigLoader.getInstance();
+      const aiConfig = await configLoader.loadConfig(projectPath);
+      
+      if (!aiConfig) {
+        console.error(chalk.red('❌ No AI configuration found. Please run "woaru ai setup" first.'));
+        process.exit(1);
+      }
+
+      const enabledProviders = aiConfig.providers.filter((p: any) => p.enabled);
+      if (enabledProviders.length === 0) {
+        console.error(chalk.red('❌ No AI providers enabled. Please run "woaru ai setup" to configure.'));
+        process.exit(1);
+      }
+
+      const promptManager = PromptManager.getInstance();
+      const aiAgent = new AIReviewAgent(aiConfig);
+
+      // Read and analyze files
+      const fileContents = await Promise.all(
+        fileList.map(async (file) => {
+          const content = await fs.readFile(file, 'utf-8');
+          return { path: file, content };
+        })
+      );
+      
+      const combinedCode = fileContents.map(f => `// File: ${f.path}\n${f.content}`).join('\n\n');
+      const aiResult = await aiAgent.performMultiLLMReview(combinedCode, {
+        filePath: targetPath,
+        language: 'auto',
+        totalLines: combinedCode.split('\n').length
+      });
+
+      // Generate and save report
+      const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
+      const reportGenerator = new ReviewReportGenerator();
+      
+      const report = options.json
+        ? JSON.stringify(aiResult, null, 2)
+        : await reportGenerator.generateMarkdownReport({
+            context: {
+              type: 'path',
+              description: `AI analysis of path: ${targetPath}`
+            },
+            gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+            qualityResults: [],
+            productionAudits: [],
+            aiReviewResults: aiResult,
+            currentBranch: 'path',
+            commits: []
+          });
+
+      const outputPath = path.resolve(projectPath, options.output);
+      await fs.ensureDir(path.dirname(outputPath));
+      await fs.writeFile(outputPath, report);
+
+      console.log(chalk.green(`\n✅ AI review report saved to: ${outputPath}`));
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `❌ AI path review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
         )
       );
       process.exit(1);
@@ -3414,6 +3850,9 @@ analyzeCommand
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
+      // Pre-Condition Check: Ensure AI is configured
+      await ensureAiIsConfigured();
+      
       const projectPath = path.resolve(options.path);
 
       console.log(chalk.blue('🧠 Running Multi-AI Code Analysis...'));
@@ -3652,18 +4091,32 @@ function displayCommandReference() {
         'Focused analysis tools for code reviews with optional AI-powered analysis. Choose from git diff analysis, directory analysis, or specific file/directory analysis.',
       subcommands: [
         {
-          name: 'woaru review git [ai]',
-          description: 'Analyze changes since a specific branch (git diff) with optional AI analysis',
-          usage: 'woaru review git [ai] [-b <branch>] [-o <file>] [-j]',
+          name: 'woaru review git',
+          description: 'Analyze changes since a specific branch (git diff)',
+          usage: 'woaru review git [-b <branch>] [-o <file>] [-j]',
           purpose:
-            'Analyzes changes between your current branch and a base branch (default: main). Optional multi-AI analysis for AI-powered code review insights.',
+            'Analyzes changes between your current branch and a base branch (default: main) using quality checks and security analysis.',
         },
         {
-          name: 'woaru review local [target_path] [ai]',
-          description: 'Analyze current directory or specified path (no git required) with optional AI analysis',
-          usage: 'woaru review local [target_path] [ai] [-o <file>] [-j]',
+          name: 'woaru review git ai',
+          description: 'AI-powered analysis of git changes',
+          usage: 'woaru review git ai [-b <branch>] [-o <file>] [-j]',
           purpose:
-            'Reviews files in current directory or specified path without requiring git. Works in any directory. Optional AI analysis provides intelligent suggestions.',
+            'AI-powered analysis of git changes using multiple AI providers for code review insights.',
+        },
+        {
+          name: 'woaru review local [target_path]',
+          description: 'Analyze current directory or specified path (no git required)',
+          usage: 'woaru review local [target_path] [-o <file>] [-j]',
+          purpose:
+            'Reviews files in current directory or specified path without requiring git. Works in any directory.',
+        },
+        {
+          name: 'woaru review local ai',
+          description: 'AI-powered analysis of current directory',
+          usage: 'woaru review local ai [-o <file>] [-j]',
+          purpose:
+            'AI-powered analysis of current directory using multiple AI providers for intelligent suggestions.',
         },
         {
           name: 'woaru review local git',
@@ -3673,11 +4126,18 @@ function displayCommandReference() {
             'Reviews your uncommitted changes before you commit them. Requires git repository. Analyzes only modified files.',
         },
         {
-          name: 'woaru review path <path> [ai]',
-          description: 'Analyze specific files or directories with optional AI analysis',
-          usage: 'woaru review path <file_or_directory> [ai] [-o <file>] [-j]',
+          name: 'woaru review path <path>',
+          description: 'Analyze specific files or directories',
+          usage: 'woaru review path <file_or_directory> [-o <file>] [-j]',
           purpose:
-            'Focused analysis of specific files or directories. Optional multi-AI analysis provides deep insights into code quality and best practices.',
+            'Focused analysis of specific files or directories with quality checks and security analysis.',
+        },
+        {
+          name: 'woaru review path ai <path>',
+          description: 'AI-powered analysis of specific files or directories',
+          usage: 'woaru review path ai <file_or_directory> [-o <file>] [-j]',
+          purpose:
+            'AI-powered analysis of specific code areas using multiple AI providers for deep insights.',
         },
       ],
     },
@@ -3739,28 +4199,28 @@ function displayCommandReference() {
     },
     {
       name: '📚 woaru docu <subcommand>',
-      description: 'AI-powered code documentation generator',
-      usage: 'woaru docu <nopro|pro|ai> [options]',
+      description: 'AI-powered documentation generator (requires AI configuration)',
+      usage: 'woaru docu <nopro|pro|forai> [options]',
       purpose:
-        'Generate comprehensive documentation for your codebase using AI. Choose from human-friendly explanations, technical TSDoc/JSDoc, or machine-readable YAML context headers.',
+        'WOARU\'s AI-First documentation system generates comprehensive, AI-powered documentation for your codebase. Requires active AI provider configuration.',
       subcommands: [
         {
           name: 'woaru docu nopro',
-          description: 'Generate human-friendly "Explain-for-humans" comments for non-technical audiences',
+          description: 'AI-powered generation of human-friendly comments for non-technical audiences',
           usage: 'woaru docu nopro [--path-only <path>] [--preview] [--force]',
-          purpose: 'Creates clear, accessible documentation that explains complex code in simple terms for stakeholders.'
+          purpose: 'Leverages AI to create clear, accessible documentation that explains complex code in simple terms for stakeholders.'
         },
         {
           name: 'woaru docu pro',
-          description: 'Generate technical TSDoc/JSDoc documentation for developers',
+          description: 'AI-powered generation of technical TSDoc/JSDoc documentation for developers',
           usage: 'woaru docu pro [--path-only <path>] [--preview] [--force]',
-          purpose: 'Produces comprehensive technical documentation with parameter descriptions, return values, and examples.'
+          purpose: 'Uses AI to produce comprehensive technical documentation with parameter descriptions, return values, and examples.'
         },
         {
-          name: 'woaru docu ai',
-          description: 'Generate machine-readable YAML context headers optimized for AI comprehension',
-          usage: 'woaru docu ai [--path-only <path>] [--preview] [--force]',
-          purpose: 'Creates structured metadata headers that help AI tools understand code context, architecture, and relationships.'
+          name: 'woaru docu forai',
+          description: 'AI-powered generation of machine-readable YAML context headers optimized for AI tools',
+          usage: 'woaru docu forai [--path-only <path>] [--preview] [--force]',
+          purpose: 'Creates structured metadata headers specifically designed for AI tools (Claude, ChatGPT, Copilot) to better understand code context, architecture, and relationships.'
         }
       ]
     },
@@ -3882,22 +4342,40 @@ function generateDynamicCommandDocumentation(): string {
       purpose: 'Performs various types of code reviews with optional AI analysis',
       subcommands: [
         {
-          name: 'woaru review git [ai]',
-          description: 'Review git changes with optional AI analysis',
-          usage: 'woaru review git [ai] [-b <branch>] [-o <file>] [-j]',
-          purpose: 'Analyzes changes between branches using traditional tools and optionally multiple AI providers'
+          name: 'woaru review git',
+          description: 'Review git changes',
+          usage: 'woaru review git [-b <branch>] [-o <file>] [-j]',
+          purpose: 'Analyzes changes between branches using traditional quality and security tools'
         },
         {
-          name: 'woaru review local [ai]',
-          description: 'Review uncommitted changes with optional AI analysis',
-          usage: 'woaru review local [ai] [-o <file>] [-j]',
-          purpose: 'Analyzes uncommitted local changes for quality and security issues'
+          name: 'woaru review git ai',
+          description: 'AI-powered review of git changes',
+          usage: 'woaru review git ai [-b <branch>] [-o <file>] [-j]',
+          purpose: 'AI-powered analysis of git changes using multiple AI providers'
         },
         {
-          name: 'woaru review path <path> [ai]',
-          description: 'Review specific files/directories with optional AI analysis',
-          usage: 'woaru review path <path> [ai] [-o <file>] [-j]',
+          name: 'woaru review local',
+          description: 'Review current directory',
+          usage: 'woaru review local [-o <file>] [-j]',
+          purpose: 'Analyzes current directory for quality and security issues'
+        },
+        {
+          name: 'woaru review local ai',
+          description: 'AI-powered review of current directory',
+          usage: 'woaru review local ai [-o <file>] [-j]',
+          purpose: 'AI-powered analysis of current directory using multiple providers'
+        },
+        {
+          name: 'woaru review path <path>',
+          description: 'Review specific files/directories',
+          usage: 'woaru review path <path> [-o <file>] [-j]',
           purpose: 'Focused analysis of specific code areas with comprehensive reporting'
+        },
+        {
+          name: 'woaru review path ai <path>',
+          description: 'AI-powered review of specific files/directories',
+          usage: 'woaru review path ai <path> [-o <file>] [-j]',
+          purpose: 'AI-powered analysis of specific code areas using multiple providers'
         }
       ]
     },

@@ -3,7 +3,7 @@
  */
 
 export interface SecurityFinding {
-  tool: 'snyk' | 'gitleaks' | 'trufflehog' | 'trivy';
+  tool: 'snyk' | 'gitleaks' | 'trufflehog' | 'trivy' | 'semgrep' | 'woaru-security';
   type: 'vulnerability' | 'secret' | 'misconfiguration';
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   title: string;

@@ -154,15 +154,15 @@
     },
     "docu_nopro": {
       "description": "Generiert benutzerfreundliche \"Erkläre-für-Menschen\" Kommentare für nicht-technische Zielgruppen",
-      "purpose": "Erstellt zugängliche Dokumentation für Stakeholder und Nicht-Entwickler"
+      "purpose": "Erstellt zugängliche Dokumentation für Stakeholder und Nicht-Entwickler (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "docu_pro": {
       "description": "Generiert technische TSDoc/JSDoc-Dokumentation für Entwickler",
-      "purpose": "Erstellt detaillierte technische Dokumentation nach Industriestandards"
+      "purpose": "Erstellt detaillierte technische Dokumentation nach Industriestandards (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "docu_ai": {
       "description": "Generiert maschinenlesbare YAML-Kontext-Header optimiert für AI-Verständnis",
-      "purpose": "Erstellt AI-optimierte Dokumentation für besseres Code-Verständnis"
+      "purpose": "Erstellt AI-optimierte Dokumentation für besseres Code-Verständnis (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "ignore": {
       "description": "Fügt ein Tool zur Ignorierliste hinzu",
@@ -172,13 +172,17 @@
       "description": "Code-Review und Analyse-Tools",
       "purpose": "Umfassende Code-Qualitäts- und Sicherheitsanalyse"
     },
+    "review_ai": {
+      "description": "AI-gestützte Code-Review und Analyse mit mehreren AI-Providern",
+      "purpose": "Erhalten Sie intelligente Code-Einblicke mit fortgeschrittener AI-Analyse (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
+    },
     "review_git": {
       "description": "Analysiert Änderungen seit einem spezifischen Branch (git diff)",
       "purpose": "Überprüft Änderungen in Ihrem git-Arbeitsverzeichnis"
     },
     "review_git_ai": {
       "description": "AI-gestützte Analyse von git-Änderungen mit mehreren AI-Providern",
-      "purpose": "Erhalten Sie intelligente Einblicke in Ihre Code-Änderungen"
+      "purpose": "Erhalten Sie intelligente Einblicke in Ihre Code-Änderungen (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "review_local": {
       "description": "Analysiert aktuelles Verzeichnis oder angegebenen Pfad ohne git-Abhängigkeiten",
@@ -190,7 +194,7 @@
     },
     "review_local_ai": {
       "description": "AI-gestützte Analyse des aktuellen Verzeichnisses mit mehreren AI-Providern",
-      "purpose": "Erhalten Sie AI-gestützte Einblicke in Ihre aktuelle Codebasis"
+      "purpose": "Erhalten Sie AI-gestützte Einblicke in Ihre aktuelle Codebasis (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "review_path": {
       "description": "Analysiert spezifische Dateien oder Verzeichnisse",
@@ -198,7 +202,7 @@
     },
     "review_path_ai": {
       "description": "AI-gestützte Analyse spezifischer Dateien oder Verzeichnisse mit mehreren AI-Providern",
-      "purpose": "Erhalten Sie gezielte AI-Analyse für spezifische Code-Bereiche"
+      "purpose": "Erhalten Sie gezielte AI-Analyse für spezifische Code-Bereiche (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "analyze": {
       "description": "Umfassende Projektanalyse inklusive Sicherheitsaudit",
@@ -206,7 +210,7 @@
     },
     "analyze_ai": {
       "description": "AI-gestützte umfassende Code-Analyse mit mehreren AI-Providern",
-      "purpose": "Erhalten Sie intelligente umfassende Analyse Ihres gesamten Projekts"
+      "purpose": "Erhalten Sie intelligente umfassende Analyse Ihres gesamten Projekts (Erfordert einen konfigurierten AI-Provider. Richten Sie einen mit 'woaru ai setup' ein.)"
     },
     "rollback": {
       "description": "Macht Änderungen rückgängig, die von einem spezifischen Tool gemacht wurden",

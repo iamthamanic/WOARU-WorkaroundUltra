@@ -27,19 +27,20 @@ export const COMMAND_I18N_KEYS: Record<string, { description: string; purpose: s
   'docu': { description: 'commands.docu.description', purpose: 'commands.docu.purpose' },
   'docu nopro': { description: 'commands.docu_nopro.description', purpose: 'commands.docu_nopro.purpose' },
   'docu pro': { description: 'commands.docu_pro.description', purpose: 'commands.docu_pro.purpose' },
-  'docu ai': { description: 'commands.docu_ai.description', purpose: 'commands.docu_ai.purpose' },
+  'docu forai': { description: 'commands.docu_ai.description', purpose: 'commands.docu_ai.purpose' },
   
   'ignore': { description: 'commands.ignore.description', purpose: 'commands.ignore.purpose' },
   
   // Review commands
   'review': { description: 'commands.review.description', purpose: 'commands.review.purpose' },
+  'review ai': { description: 'commands.review_ai.description', purpose: 'commands.review_ai.purpose' },
   'review git': { description: 'commands.review_git.description', purpose: 'commands.review_git.purpose' },
-  'review git ai': { description: 'commands.review_git_ai.description', purpose: 'commands.review_git_ai.purpose' },
+  'review ai git': { description: 'commands.review_git_ai.description', purpose: 'commands.review_git_ai.purpose' },
   'review local': { description: 'commands.review_local.description', purpose: 'commands.review_local.purpose' },
   'review local git': { description: 'commands.review_local_git.description', purpose: 'commands.review_local_git.purpose' },
-  'review local ai': { description: 'commands.review_local_ai.description', purpose: 'commands.review_local_ai.purpose' },
+  'review ai local': { description: 'commands.review_local_ai.description', purpose: 'commands.review_local_ai.purpose' },
   'review path': { description: 'commands.review_path.description', purpose: 'commands.review_path.purpose' },
-  'review path ai': { description: 'commands.review_path_ai.description', purpose: 'commands.review_path_ai.purpose' },
+  'review ai path': { description: 'commands.review_path_ai.description', purpose: 'commands.review_path_ai.purpose' },
   
   // Analysis commands
   'analyze': { description: 'commands.analyze.description', purpose: 'commands.analyze.purpose' },

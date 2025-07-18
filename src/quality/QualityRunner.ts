@@ -512,7 +512,8 @@ export class QualityRunner {
 
   private async runESLintCheck(filePath: string): Promise<void> {
     try {
-      await execAsync(`${APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE} "${filePath}"`);
+      const eslintCommand = this.getContextSensitiveESLintCommand(filePath);
+      await execAsync(`${eslintCommand} "${filePath}"`);
       this.notificationManager.showQualitySuccess(filePath, 'ESLint');
     } catch (error: any) {
       // ESLint failed - extract error output
@@ -741,10 +742,9 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      // Run ESLint with detailed formatter
-      await execAsync(
-        `${APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT} "${filePath}"`
-      );
+      // Run ESLint with context-sensitive configuration
+      const eslintCommand = this.getContextSensitiveESLintCommand(filePath, true);
+      await execAsync(`${eslintCommand} "${filePath}"`);
       return null; // No issues found
     } catch (error: any) {
       const output = error.stdout || error.stderr || error.message;
@@ -1240,6 +1240,12 @@ export class QualityRunner {
     const gitleaksResult = await this.runGitleaksCheck(filePaths, options);
     if (gitleaksResult) {
       results.push(gitleaksResult);
+    }
+
+    // Run basic security analysis for XSS and other vulnerabilities
+    const basicSecurityResult = await this.runBasicSecurityAnalysis(filePaths, options);
+    if (basicSecurityResult) {
+      results.push(basicSecurityResult);
     }
 
     return results;
@@ -1748,5 +1754,312 @@ export class QualityRunner {
    */
   supportsCodeSmellAnalysis(language: string): boolean {
     return language === 'javascript' || language === 'typescript';
+  }
+
+  /**
+   * Get context-sensitive ESLint command based on file extension
+   * Implements Bug Fix 2: Context-sensitive linting for JS/TS files
+   */
+  private getContextSensitiveESLintCommand(filePath: string, withFormat = false): string {
+    const ext = path.extname(filePath).toLowerCase();
+    const isTypeScript = ['.ts', '.tsx'].includes(ext);
+    const isJavaScript = ['.js', '.jsx', '.mjs', '.cjs'].includes(ext);
+
+    if (!isTypeScript && !isJavaScript) {
+      // Fallback to default ESLint command
+      return withFormat ? APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT : APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE;
+    }
+
+    // Create temporary ESLint config for this file type
+    const baseCommand = withFormat ? 
+      'npx eslint --format stylish' : 
+      'npx eslint';
+
+    if (isJavaScript) {
+      // JavaScript-specific configuration (no TypeScript rules)
+      return `${baseCommand} --no-eslintrc --config '{"env":{"node":true,"es6":true},"extends":["eslint:recommended"],"parserOptions":{"ecmaVersion":2020,"sourceType":"module"},"rules":{"complexity":["error",10],"no-var":"error","eqeqeq":"error","no-console":"error","prefer-const":"error","no-unused-vars":["error",{"argsIgnorePattern":"^_"}]}}'`;
+    } else {
+      // TypeScript-specific configuration (with TypeScript rules)
+      return `${baseCommand} --no-eslintrc --config '{"env":{"node":true,"es6":true},"extends":["eslint:recommended"],"parser":"@typescript-eslint/parser","plugins":["@typescript-eslint"],"parserOptions":{"ecmaVersion":2020,"sourceType":"module","project":"./tsconfig.json"},"rules":{"complexity":["error",10],"no-var":"error","eqeqeq":"error","no-console":"error","prefer-const":"error","@typescript-eslint/no-unused-vars":["error",{"argsIgnorePattern":"^_"}],"@typescript-eslint/no-explicit-any":"warn"}}'`;
+    }
+  }
+
+  /**
+   * Run basic security analysis for XSS and other vulnerabilities
+   * Implements Bug Fix 3: Basic security analysis with pattern matching
+   */
+  private async runBasicSecurityAnalysis(
+    filePaths: string[],
+    options: SecurityCheckOptions = {}
+  ): Promise<SecurityScanResult | null> {
+    const findings: SecurityFinding[] = [];
+    const summary = {
+      total: 0,
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      info: 0,
+    };
+
+    try {
+      // First try Semgrep if available
+      const semgrepResult = await this.runSemgrepAnalysis(filePaths, options);
+      if (semgrepResult) {
+        return semgrepResult;
+      }
+
+      // Fallback to pattern-based analysis
+      for (const filePath of filePaths) {
+        const ext = path.extname(filePath).toLowerCase();
+        
+        // Only analyze JavaScript/TypeScript files for web vulnerabilities
+        if (!['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(ext)) {
+          continue;
+        }
+
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        const lines = fileContent.split('\n');
+        
+        // Check for XSS vulnerabilities
+        const xssFindings = this.detectXSSVulnerabilities(filePath, lines);
+        findings.push(...xssFindings);
+        
+        // Check for other security issues
+        const otherFindings = this.detectOtherSecurityIssues(filePath, lines);
+        findings.push(...otherFindings);
+      }
+
+      // Calculate summary
+      findings.forEach(finding => {
+        summary.total++;
+        summary[finding.severity]++;
+      });
+
+      return {
+        tool: 'woaru-security',
+        scanTime: new Date(),
+        findings,
+        summary,
+      };
+    } catch (error: any) {
+      return {
+        tool: 'woaru-security',
+        scanTime: new Date(),
+        findings: [],
+        summary,
+        error: `Basic security analysis failed: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Try to run Semgrep analysis if available
+   */
+  private async runSemgrepAnalysis(
+    filePaths: string[],
+    options: SecurityCheckOptions = {}
+  ): Promise<SecurityScanResult | null> {
+    try {
+      // Check if Semgrep is installed
+      await execAsync('which semgrep', { timeout: 5000 });
+      
+      // Run Semgrep with basic security rules
+      const { stdout } = await execAsync(
+        `semgrep --config=auto --json ${filePaths.join(' ')}`,
+        { timeout: 30000, maxBuffer: 10 * 1024 * 1024 }
+      );
+      
+      const results = JSON.parse(stdout);
+      const findings: SecurityFinding[] = [];
+      const summary = {
+        total: 0,
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        info: 0,
+      };
+
+      if (results.results && Array.isArray(results.results)) {
+        results.results.forEach((result: any) => {
+          const severity = this.mapSemgrepSeverity(result.extra?.severity || 'INFO');
+          summary.total++;
+          summary[severity]++;
+
+          findings.push({
+            tool: 'semgrep',
+            type: 'vulnerability',
+            severity,
+            title: result.check_id || 'Security Issue',
+            description: result.extra?.message || result.message || 'Security vulnerability detected',
+            file: result.path,
+            line: result.start?.line,
+            column: result.start?.col,
+            cwe: result.extra?.metadata?.cwe ? [result.extra.metadata.cwe] : undefined,
+            recommendation: result.extra?.fix || 'Review and fix the security issue',
+            references: result.extra?.references || [],
+          });
+        });
+      }
+
+      return {
+        tool: 'semgrep',
+        scanTime: new Date(),
+        findings,
+        summary,
+      };
+    } catch (error) {
+      // Semgrep not available, return null to fallback to pattern matching
+      return null;
+    }
+  }
+
+  /**
+   * Detect XSS vulnerabilities using pattern matching
+   */
+  private detectXSSVulnerabilities(filePath: string, lines: string[]): SecurityFinding[] {
+    const findings: SecurityFinding[] = [];
+    
+    const xssPatterns = [
+      {
+        pattern: /\.innerHTML\s*=\s*([^;]+)/gi,
+        title: 'Potential XSS vulnerability via innerHTML',
+        description: 'Direct assignment to innerHTML can lead to XSS attacks if user input is not sanitized',
+        severity: 'high' as const,
+        cwe: ['CWE-79'],
+        recommendation: 'Use textContent instead of innerHTML, or sanitize user input with a library like DOMPurify'
+      },
+      {
+        pattern: /document\.write\s*\(/gi,
+        title: 'Potential XSS vulnerability via document.write',
+        description: 'document.write can be exploited for XSS attacks',
+        severity: 'high' as const,
+        cwe: ['CWE-79'],
+        recommendation: 'Avoid document.write and use safer DOM manipulation methods'
+      },
+      {
+        pattern: /eval\s*\(/gi,
+        title: 'Code injection vulnerability via eval()',
+        description: 'eval() can execute arbitrary JavaScript code and is a major security risk',
+        severity: 'critical' as const,
+        cwe: ['CWE-94'],
+        recommendation: 'Replace eval() with safer alternatives like JSON.parse() for data or explicit function calls'
+      },
+      {
+        pattern: /setTimeout\s*\(\s*["'`][^"'`]*\+/gi,
+        title: 'Potential code injection via setTimeout with string concatenation',
+        description: 'setTimeout with string concatenation can lead to code injection',
+        severity: 'high' as const,
+        cwe: ['CWE-94'],
+        recommendation: 'Use function references instead of string concatenation in setTimeout'
+      },
+      {
+        pattern: /setInterval\s*\(\s*["'`][^"'`]*\+/gi,
+        title: 'Potential code injection via setInterval with string concatenation',
+        description: 'setInterval with string concatenation can lead to code injection',
+        severity: 'high' as const,
+        cwe: ['CWE-94'],
+        recommendation: 'Use function references instead of string concatenation in setInterval'
+      }
+    ];
+
+    lines.forEach((line, index) => {
+      xssPatterns.forEach(pattern => {
+        const match = pattern.pattern.exec(line);
+        if (match) {
+          findings.push({
+            tool: 'woaru-security',
+            type: 'vulnerability',
+            severity: pattern.severity,
+            title: pattern.title,
+            description: pattern.description,
+            file: filePath,
+            line: index + 1,
+            column: match.index + 1,
+            cwe: pattern.cwe,
+            recommendation: pattern.recommendation,
+          });
+        }
+        // Reset regex for next iteration
+        pattern.pattern.lastIndex = 0;
+      });
+    });
+
+    return findings;
+  }
+
+  /**
+   * Detect other security issues using pattern matching
+   */
+  private detectOtherSecurityIssues(filePath: string, lines: string[]): SecurityFinding[] {
+    const findings: SecurityFinding[] = [];
+    
+    const securityPatterns = [
+      {
+        pattern: /SELECT\s+.*\s+FROM\s+.*\s+WHERE\s+.*\s*\+\s*/gi,
+        title: 'Potential SQL injection vulnerability',
+        description: 'SQL query with string concatenation may be vulnerable to SQL injection',
+        severity: 'high' as const,
+        cwe: ['CWE-89'],
+        recommendation: 'Use parameterized queries or prepared statements instead of string concatenation'
+      },
+      {
+        pattern: /fs\.(unlink|rmdir|remove).*\+/gi,
+        title: 'Potential path traversal vulnerability',
+        description: 'File system operations with string concatenation may be vulnerable to path traversal',
+        severity: 'medium' as const,
+        cwe: ['CWE-22'],
+        recommendation: 'Validate and sanitize file paths, use path.join() and path.resolve()'
+      },
+      {
+        pattern: /process\.env\.[A-Z_]+\s*\+/gi,
+        title: 'Potential environment variable exposure',
+        description: 'Environment variables should not be concatenated directly into strings',
+        severity: 'medium' as const,
+        cwe: ['CWE-200'],
+        recommendation: 'Validate and sanitize environment variables before use'
+      }
+    ];
+
+    lines.forEach((line, index) => {
+      securityPatterns.forEach(pattern => {
+        const match = pattern.pattern.exec(line);
+        if (match) {
+          findings.push({
+            tool: 'woaru-security',
+            type: 'vulnerability',
+            severity: pattern.severity,
+            title: pattern.title,
+            description: pattern.description,
+            file: filePath,
+            line: index + 1,
+            column: match.index + 1,
+            cwe: pattern.cwe,
+            recommendation: pattern.recommendation,
+          });
+        }
+        // Reset regex for next iteration
+        pattern.pattern.lastIndex = 0;
+      });
+    });
+
+    return findings;
+  }
+
+  /**
+   * Map Semgrep severity to our standard severity levels
+   */
+  private mapSemgrepSeverity(severity: string): 'critical' | 'high' | 'medium' | 'low' | 'info' {
+    switch (severity.toUpperCase()) {
+      case 'ERROR':
+        return 'critical';
+      case 'WARNING':
+        return 'high';
+      case 'INFO':
+        return 'medium';
+      default:
+        return 'low';
+    }
   }
 }

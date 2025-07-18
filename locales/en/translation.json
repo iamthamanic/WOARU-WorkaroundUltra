@@ -154,15 +154,15 @@
     },
     "docu_nopro": {
       "description": "Generate human-friendly \"Explain-for-humans\" comments for non-technical audiences",
-      "purpose": "Create accessible documentation for stakeholders and non-developers"
+      "purpose": "Create accessible documentation for stakeholders and non-developers (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "docu_pro": {
       "description": "Generate technical TSDoc/JSDoc documentation for developers",
-      "purpose": "Create detailed technical documentation following industry standards"
+      "purpose": "Create detailed technical documentation following industry standards (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "docu_ai": {
       "description": "Generate machine-readable YAML context headers optimized for AI comprehension",
-      "purpose": "Create AI-optimized documentation for better code understanding"
+      "purpose": "Create AI-optimized documentation for better code understanding (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "ignore": {
       "description": "Add a tool to the ignore list",
@@ -172,13 +172,17 @@
       "description": "Code review and analysis tools",
       "purpose": "Comprehensive code quality and security analysis"
     },
+    "review_ai": {
+      "description": "AI-powered code review and analysis using multiple AI providers",
+      "purpose": "Get intelligent code insights using advanced AI analysis (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
+    },
     "review_git": {
       "description": "Analyze changes since a specific branch (git diff)",
       "purpose": "Review changes in your git working directory"
     },
     "review_git_ai": {
       "description": "AI-powered analysis of git changes using multiple AI providers",
-      "purpose": "Get intelligent insights on your code changes"
+      "purpose": "Get intelligent insights on your code changes (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "review_local": {
       "description": "Analyze current directory or specified path without git dependencies",
@@ -190,7 +194,7 @@
     },
     "review_local_ai": {
       "description": "AI-powered analysis of current directory using multiple AI providers",
-      "purpose": "Get AI-powered insights on your current codebase"
+      "purpose": "Get AI-powered insights on your current codebase (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "review_path": {
       "description": "Analyze specific files or directories",
@@ -198,7 +202,7 @@
     },
     "review_path_ai": {
       "description": "AI-powered analysis of specific files or directories using multiple AI providers",
-      "purpose": "Get targeted AI analysis for specific code areas"
+      "purpose": "Get targeted AI analysis for specific code areas (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "analyze": {
       "description": "Comprehensive project analysis including security audit",
@@ -206,7 +210,7 @@
     },
     "analyze_ai": {
       "description": "AI-powered comprehensive code analysis using multiple AI providers",
-      "purpose": "Get intelligent comprehensive analysis of your entire project"
+      "purpose": "Get intelligent comprehensive analysis of your entire project (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
     },
     "rollback": {
       "description": "Rollback changes made by a specific tool",

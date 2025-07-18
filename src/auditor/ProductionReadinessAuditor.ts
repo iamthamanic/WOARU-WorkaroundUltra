@@ -175,20 +175,7 @@ export class ProductionReadinessAuditor {
             config.frameworks
           );
 
-          audits.push({
-            category: 'error-monitoring',
-            check: 'error-tracking-setup',
-            status: 'missing',
-            priority: config.projectType === 'library' ? 'low' : 'high',
-            message: `💡 PRO-TIPP: Kein Error-Monitoring gefunden`,
-            recommendation: `Installiere ${recommendedTool.name} für Production-Error-Tracking. ${this.getInstallCommand(recommendedTool, config.frameworks)}`,
-            packages: this.getRecommendedPackages(
-              recommendedTool,
-              config.frameworks
-            ),
-          });
-
-          // Add alternative recommendations (sorted by popularity, excluding deprecated)
+          // Get alternative recommendations (sorted by popularity, excluding deprecated)
           const alternatives = (Object.values(errorMonitoringTools) as Tool[])
             .filter(
               (tool: Tool) =>
@@ -201,20 +188,19 @@ export class ProductionReadinessAuditor {
             })
             .slice(0, 2);
 
-          if (alternatives.length > 0) {
-            audits.push({
-              category: 'error-monitoring',
-              check: 'error-tracking-alternatives',
-              status: 'missing',
-              priority: 'high',
-              message: '⚠️ WARNUNG: Kein Error-Tracking-Tool gefunden',
-              recommendation: `Error-Monitoring ist essentiell für Production-Apps. Erwäge ${recommendedTool.name}${alternatives.length > 0 ? `, ${alternatives.map(t => t.name).join(' oder ')}` : ''}.`,
-              packages: this.getAllErrorMonitoringPackages(
-                errorMonitoringTools,
-                config.frameworks
-              ),
-            });
-          }
+          // Single consolidated recommendation
+          audits.push({
+            category: 'error-monitoring',
+            check: 'error-tracking-setup',
+            status: 'missing',
+            priority: config.projectType === 'library' ? 'low' : 'critical',
+            message: `🚨 KRITISCH: Kein Error-Monitoring für Production-Apps gefunden`,
+            recommendation: `Error-Monitoring ist essentiell für Production-Apps. Empfohlen: ${recommendedTool.name}${alternatives.length > 0 ? ` (Alternativen: ${alternatives.map(t => t.name).join(', ')})` : ''}. ${this.getInstallCommand(recommendedTool, config.frameworks)}`,
+            packages: [
+              ...this.getRecommendedPackages(recommendedTool, config.frameworks),
+              ...this.getAllErrorMonitoringPackages(errorMonitoringTools, config.frameworks).slice(0, 3)
+            ],
+          });
         }
       }
     } catch (error) {
