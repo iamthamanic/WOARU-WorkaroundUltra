@@ -380,18 +380,18 @@ async function runAiControlCenter() {
     if (!multiAiConfig.enabled && multiAiConfig.primaryProvider) {
       console.log(chalk.gray(`   Primary Provider: ${multiAiConfig.primaryProvider}`));
     } else if (!multiAiConfig.enabled && !multiAiConfig.primaryProvider && enabledProviders.length > 0) {
-      console.log(chalk.red('   ⚠️  Kein primärer Provider ausgewählt!'));
+      console.log(chalk.red(`   ${t('cli.ai_control_center.no_primary_provider')}`));
     }
     
     // Build menu options
     const menuChoices = [
-      { name: '🔧 Provider hinzufügen/bearbeiten', value: 'setup' },
-      { name: multiAiConfig.enabled ? '❌ Multi-AI Review deaktivieren' : '✅ Multi-AI Review aktivieren', value: 'toggle_multi_ai' },
+      { name: t('cli.ai_control_center.menu_options.add_edit_provider'), value: 'setup' },
+      { name: multiAiConfig.enabled ? t('cli.ai_control_center.menu_options.disable_multi_ai') : t('cli.ai_control_center.menu_options.enable_multi_ai'), value: 'toggle_multi_ai' },
     ];
     
     // Only show primary provider selection if multi-AI is disabled
     if (!multiAiConfig.enabled && enabledProviders.length > 0) {
-      menuChoices.push({ name: '🎯 Primäres Review-Modell auswählen', value: 'select_primary' });
+      menuChoices.push({ name: t('cli.ai_control_center.menu_options.select_primary'), value: 'select_primary' });
     }
     
     menuChoices.push(
@@ -403,7 +403,7 @@ async function runAiControlCenter() {
       {
         type: 'list',
         name: 'action',
-        message: 'Was möchtest du tun?',
+        message: t('cli.ai_control_center.menu_prompt'),
         choices: menuChoices,
       },
     ]);
@@ -419,13 +419,13 @@ async function runAiControlCenter() {
         
         if (newMultiAiState) {
           console.log(chalk.green('\n✅ Multi-AI Review wurde aktiviert!'));
-          console.log(chalk.gray('   Alle aktivierten Provider werden nun für Reviews verwendet.'));
+          console.log(chalk.gray(`   ${t('cli.ai_control_center.multi_ai_enabled')}`));
         } else {
           console.log(chalk.yellow('\n❌ Multi-AI Review wurde deaktiviert.'));
-          console.log(chalk.gray('   Du solltest einen primären Provider auswählen.'));
+          console.log(chalk.gray(`   ${t('cli.ai_control_center.should_select_primary')}`));
         }
         
-        await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+        await inquirer.prompt([{ type: 'input', name: 'continue', message: t('cli.ai_control_center.continue_prompt') }]);
         break;
         
       case 'select_primary':

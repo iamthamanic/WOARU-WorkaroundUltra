@@ -8,6 +8,7 @@ import { SOLIDCheckResult, SOLIDViolation } from '../solid/types/solid-types';
 import { CodeSmellFinding } from '../types/code-smell';
 import { MultiLLMReviewResult } from '../types/ai-review';
 import { FilenameHelper } from '../utils/filenameHelper';
+import { t } from '../config/i18n';
 
 /**
  * Data structure for review report generation
@@ -108,7 +109,7 @@ export class ReviewReportGenerator {
 
     // Header
     lines.push('# WOARU Code Review');
-    lines.push(`**Änderungen seit Branch: \`${data.gitDiff.baseBranch}\`**`);
+    lines.push(t('report_generator.summary.changes_since_branch', { branch: data.gitDiff.baseBranch }));
     lines.push(`**Aktueller Branch: \`${data.currentBranch}\`**`);
     lines.push(`**Generiert am: ${new Date().toLocaleString('de-DE')}**`);
     lines.push('');
@@ -120,7 +121,7 @@ export class ReviewReportGenerator {
       );
       lines.push('');
       lines.push(
-        `**⚠️ WARNUNG: ${securitySummary.critical} kritische und ${securitySummary.high} hohe Sicherheitslücken gefunden!**`
+        t('report_generator.summary.security_warnings', { critical: securitySummary.critical, high: securitySummary.high })
       );
       lines.push('');
       this.addCriticalSecuritySection(lines, data.securityResults || []);
@@ -130,8 +131,8 @@ export class ReviewReportGenerator {
     // Summary
     lines.push('## 📊 Zusammenfassung');
     lines.push('');
-    lines.push(`- **Geänderte Dateien:** ${data.gitDiff.totalChanges}`);
-    lines.push(`- **Qualitäts-Probleme:** ${data.qualityResults.length}`);
+    lines.push(t('report_generator.summary.changed_files', { count: data.gitDiff.totalChanges }));
+    lines.push(t('report_generator.summary.quality_problems', { count: data.qualityResults.length }));
     lines.push(
       `- **Sicherheits-Probleme:** ${securitySummary.total} (${securitySummary.critical} kritisch, ${securitySummary.high} hoch)`
     );
@@ -157,7 +158,7 @@ export class ReviewReportGenerator {
 
     // Changed Files
     if (data.gitDiff.changedFiles.length > 0) {
-      lines.push('## 📋 Geänderte Dateien');
+      lines.push(`## ${t('report_generator.headers.changed_files')}`);
       lines.push('');
       data.gitDiff.changedFiles.forEach(file => {
         const relativePath = path.basename(file);
@@ -179,7 +180,7 @@ export class ReviewReportGenerator {
 
     // Quality Issues
     if (data.qualityResults.length > 0) {
-      lines.push('## 🚨 Kritische Qualitäts-Probleme');
+      lines.push(`## ${t('report_generator.headers.critical_quality_issues')}`);
       lines.push('');
 
       // Group by file
@@ -210,7 +211,7 @@ export class ReviewReportGenerator {
 
           // Add fixes if available
           if (result.fixes && result.fixes.length > 0) {
-            lines.push('🔧 **Lösungsvorschläge:**');
+            lines.push(t('report_generator.headers.solution_suggestions'));
             result.fixes.forEach((fix, index) => {
               lines.push(`${index + 1}. ${fix}`);
             });

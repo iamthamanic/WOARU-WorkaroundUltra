@@ -273,5 +273,176 @@
     "available_commands": "Available Commands",
     "help_tip": "Use \"woaru <command> --help\" for detailed options",
     "documentation_tip": "For comprehensive documentation: woaru wiki"
+  },
+  "ai_helpers": {
+    "config_check_error": "Error checking AI configuration:",
+    "config_missing_error": "Error: This feature requires an active and correctly configured AI.",
+    "config_setup_hint": "Please first set up an AI provider with the command: woaru ai setup",
+    "config_loading_error": "Warning: Error loading AI providers:"
+  },
+  "security_analysis": {
+    "gitleaks_not_installed": "Gitleaks not installed. Skipping secret detection.",
+    "semgrep_not_available": "Semgrep not available, using pattern-based analysis.",
+    "analysis_failed": "Security analysis failed:",
+    "xss_vulnerability": "Potential XSS vulnerability detected",
+    "sql_injection": "Potential SQL injection vulnerability detected",
+    "path_traversal": "Potential path traversal vulnerability detected",
+    "code_injection": "Potential code injection vulnerability detected"
+  },
+  "quality_runner": {
+    "core_plugin_running": "Running core plugin: {{tool}} on {{file}}",
+    "experimental_tool_running": "Running experimental tool: {{tool}} on {{file}}",
+    "legacy_check_running": "Running legacy check for {{file}}",
+    "tool_warnings": "{{tool}} warnings in {{file}}",
+    "check_failed": "Quality check failed for {{file}}:",
+    "core_plugin_failed": "Core plugin check failed:",
+    "experimental_tool_failed": "Experimental tool check failed:"
+  },
+  "version_manager": {
+    "checking_updates": "🔍 Checking for updates...",
+    "up_to_date": "✅ You are using the latest version (v{{version}})",
+    "new_version_available": "📦 A new version (v{{version}}) is available!",
+    "released_on": "   Released on: {{date}}",
+    "update_instruction": "   Run `woaru update` to update.",
+    "updating": "🚀 Updating WOARU to latest version...",
+    "update_success": "✅ Update completed successfully!",
+    "update_failed": "❌ Update failed (Exit Code: {{code}})",
+    "update_error": "❌ Update failed:"
+  },
+  "solid": {
+    "srp": {
+      "method_count": {
+        "description": "Class {{className}} has {{count}} methods",
+        "explanation": "Classes with many methods often have multiple responsibilities. The Single Responsibility Principle states that a class should have only one reason to change.",
+        "impact": "Hard to test, understand and maintain. High probability of bugs when making changes.",
+        "suggestion": "Split class {{className}} into smaller, focused classes. Group related methods into separate services or utility classes."
+      },
+      "complexity": {
+        "description": "Class {{className}} has complexity of {{complexity}}",
+        "explanation": "High cyclomatic complexity indicates too many different logic paths in a class, violating the SRP.",
+        "impact": "Hard to test (many test cases needed), error-prone, hard to understand.",
+        "suggestion": "Extract complex logic into separate methods or classes. Use design patterns like Strategy or Command to reduce complexity."
+      },
+      "concern_diversity": {
+        "description": "Class {{className}} imports from {{concernCount}} different areas: {{concerns}}",
+        "explanation": "Imports from different areas (Database, HTTP, Filesystem, Email, etc.) indicate that the class has multiple responsibilities.",
+        "impact": "High coupling, hard to test (many mocks needed), changes in one area can affect others.",
+        "suggestion": "Separate the different concerns into their own services: {{concernServices}}. Use dependency injection to coordinate these services."
+      },
+      "class_size": {
+        "description": "Class {{className}} has {{linesOfCode}} lines of code",
+        "explanation": "Very large classes are often an indicator of multiple responsibilities and violate the Single Responsibility Principle.",
+        "impact": "Hard to navigate, understand and maintain. High probability of merge conflicts.",
+        "suggestion": "Refactor class {{className}} into smaller, cohesive units. Identify logical groups of methods and extract them into separate classes."
+      },
+      "method_parameters": {
+        "description": "Method {{methodName}} has {{parameterCount}} parameters",
+        "explanation": "Methods with many parameters often indicate that they do too many different things and violate the SRP.",
+        "impact": "Hard to use, error-prone (parameter order), hard to test.",
+        "suggestion": "Group related parameters into an object or split method {{methodName}} into smaller, more specific methods."
+      },
+      "file_class_count": {
+        "description": "File contains {{classCount}} classes: {{classList}}",
+        "explanation": "Files with many classes often indicate that related but different responsibilities are mixed in one file.",
+        "impact": "Hard to navigate, unclear structure, merge conflicts more likely.",
+        "suggestion": "Split file {{fileName}}: one file per class or group only truly closely related classes together."
+      },
+      "analysis_error": "SRP-Checker: Error analyzing {{filePath}}"
+    }
+  },
+  "report_generator": {
+    "headers": {
+      "changed_files": "📋 Changed Files",
+      "critical_quality_issues": "🚨 Critical Quality Issues",
+      "solution_suggestions": "🔧 **Solution Suggestions:**",
+      "security_analysis": "🔒 Security Analysis",
+      "solid_analysis": "🏗️ SOLID Architecture Analysis",
+      "code_smell_analysis": "👃 Code Smell Analysis",
+      "ai_review": "🤖 AI Review Analysis"
+    },
+    "summary": {
+      "no_critical_issues": "✅ No critical issues found - ready for review!",
+      "quality_issues_found": "{{count}} quality issues",
+      "security_warnings": "⚠️ WARNING: {{critical}} critical and {{high}} high security vulnerabilities found!",
+      "changes_since_branch": "**Changes since branch: `{{branch}}`**",
+      "changed_files": "- **Changed files:** {{count}}",
+      "quality_problems": "- **Quality issues:** {{count}}",
+      "fix_available": "- **✅ Fix available:** Upgrade to {{version}}"
+    },
+    "solid": {
+      "score": "📊 **SOLID Score: {{score}}/100** ({{violations}} violations found)",
+      "violations_found": "### 🔴 {{principle}} ({{count}} violations)",
+      "solution": "🔨 **Solution:** {{suggestion}}",
+      "complexity": "Complexity: {{complexity}}",
+      "more_violations": "*... and {{count}} more {{label}} violations*",
+      "systematic_refactoring": "🏗️ Perform systematic refactoring - start with the most critical SOLID violations",
+      "high_complexity_classes": "🔄 {{count}} classes with high complexity - extract complex logic into separate utility classes",
+      "files_with_violations": "⚠️ {{count}} files with many SOLID violations - prioritize these for architectural overhaul",
+      "check_documentation": "📚 Check the SOLID principles documentation for additional improvement ideas"
+    },
+    "code_smell": {
+      "reduce_complexity": "🔄 Reduce cyclomatic complexity in {{count}} functions by splitting",
+      "shorten_functions": "📏 Shorten {{count}} overly long functions by extracting logic"
+    },
+    "ai_review": {
+      "estimated_cost": "💰 **Estimated cost:** ${{cost}}",
+      "findings_summary": "📊 **{{findings}} findings found** | **Analysis duration:** {{duration}}ms | **LLM agreement:** {{agreement}}%",
+      "reasoning": "💭 **Reasoning:** {{rationale}}",
+      "estimated_fix_time": "⏱️ **Estimated fix time:** {{time}}",
+      "check_security": "🔒 Check {{count}} potential security issues",
+      "low_agreement": "🤔 Low LLM agreement - manual review recommended",
+      "high_costs": "💰 High AI costs - consider batch processing for large codebases",
+      "meets_standards": "✅ Code meets AI-based quality standards"
+    }
+  },
+  "cli": {
+    "ai_control_center": {
+      "title": "WOARU AI Control Center",
+      "current_status": "Current Status:",
+      "no_primary_provider": "⚠️ No primary provider selected!",
+      "menu_options": {
+        "add_edit_provider": "🔧 Add/Edit Provider",
+        "disable_multi_ai": "🔕 Disable Multi-AI Review",
+        "enable_multi_ai": "🔊 Enable Multi-AI Review",
+        "select_primary": "🎯 Select Primary Review Model",
+        "exit": "🚪 Exit"
+      },
+      "multi_ai_enabled": "All enabled providers will now be used for reviews.",
+      "should_select_primary": "You should select a primary provider.",
+      "continue_prompt": "Press Enter to continue...",
+      "disable_multi_ai_explanation": "Multi-AI Review disabled. Only the primary provider will be used for reviews.",
+      "menu_prompt": "What would you like to do?"
+    },
+    "provider_management": {
+      "select_provider": "Select an AI provider:",
+      "select_primary": "Select the primary provider for reviews:",
+      "primary_selected": "✅ {{provider}} has been selected as primary provider!",
+      "provider_actions": "What would you like to do with {{provider}}?",
+      "change_model": "🔄 Change Model",
+      "change_api_key": "🔑 Change API Key",
+      "toggle_enabled": "🔛 Toggle Enabled/Disabled",
+      "remove_provider": "🗑️ Remove Provider",
+      "back_to_menu": "← Back to Main Menu",
+      "model_changed": "✅ Model changed to: {{model}}",
+      "api_key_prompt": "New API key for {{provider}}:",
+      "api_key_validation": "API key validated and saved.",
+      "confirm_removal": "Are you sure you want to remove {{provider}}?",
+      "provider_removed": "✅ {{provider}} has been removed.",
+      "removal_cancelled": "❌ Removal cancelled."
+    },
+    "setup": {
+      "loading_models": "🔄 Loading available models...",
+      "api_key_prompt": "Enter API key for {{provider}}:",
+      "api_key_validation": "API key validated and saved.",
+      "select_model": "Select a model for {{provider}}:",
+      "enable_for_analysis": "Enable {{provider}} for code analysis?",
+      "provider_setup_complete": "✅ {{provider}} has been successfully set up!",
+      "setup_another": "Would you like to set up another provider?",
+      "enable_multi_ai": "Would you like to enable the \"Multi-AI Review\" feature, which uses all enabled providers simultaneously for more comprehensive analysis?",
+      "multi_ai_activated": "✅ Multi-AI Review has been activated! All enabled providers will now be used for reviews.",
+      "multi_ai_not_activated": "📋 Multi-AI Review remains disabled. You can change this later via \"woaru ai\".",
+      "more_changes": "Would you like to make more changes?",
+      "no_changes": "No further changes desired."
+    }
   }
 }

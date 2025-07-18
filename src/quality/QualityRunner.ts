@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import { APP_CONFIG } from '../config/constants';
 import { NotificationManager } from '../supervisor/NotificationManager';
+import i18next from 'i18next';
 import {
   ToolsDatabaseManager,
   CoreTool,
@@ -138,7 +139,7 @@ export class QualityRunner {
       // Phase 3: Fallback to legacy hardcoded checks
       await this.runLegacyChecks(relativePath, ext);
     } catch (error) {
-      console.warn(`Quality check failed for ${relativePath}:`, error);
+      console.warn(i18next.t('quality_runner.check_failed', { file: relativePath }), error);
     }
   }
 
@@ -159,7 +160,7 @@ export class QualityRunner {
 
         if (plugin && (await plugin.canHandleFile(filePath))) {
           console.log(
-            `🔧 Running core plugin: ${coreTool.name} on ${filePath}`
+            `🔧 ${i18next.t('quality_runner.core_plugin_running', { tool: coreTool.name, file: filePath })}`
           );
 
           const result = await plugin.runLinter(filePath, { fix: false });
@@ -171,7 +172,7 @@ export class QualityRunner {
               result.output
             );
           } else if (result.hasWarnings) {
-            console.log(`⚠️ ${coreTool.name} warnings in ${filePath}`);
+            console.log(`⚠️ ${i18next.t('quality_runner.tool_warnings', { tool: coreTool.name, file: filePath })}`);
           } else {
             this.notificationManager.showQualitySuccess(
               filePath,
@@ -185,7 +186,7 @@ export class QualityRunner {
 
       return false; // No core plugin could handle this file
     } catch (error) {
-      console.warn('Core plugin check failed:', error);
+      console.warn(i18next.t('quality_runner.core_plugin_failed'), error);
       return false;
     }
   }
@@ -207,7 +208,7 @@ export class QualityRunner {
       for (const experimentalTool of experimentalTools) {
         if (await this.canRunExperimentalTool(experimentalTool)) {
           console.log(
-            `🧪 Running experimental tool: ${experimentalTool.name} on ${filePath}`
+            `🧪 ${i18next.t('quality_runner.experimental_tool_running', { tool: experimentalTool.name, file: filePath })}`
           );
 
           const result = await this.executeExperimentalTool(
@@ -235,7 +236,7 @@ export class QualityRunner {
 
       return false; // No experimental tool could handle this file
     } catch (error) {
-      console.warn('Experimental tool check failed:', error);
+      console.warn(i18next.t('quality_runner.experimental_tool_failed'), error);
       return false;
     }
   }
@@ -248,7 +249,7 @@ export class QualityRunner {
     fileExtension: string
   ): Promise<void> {
     // Keep existing legacy logic for backward compatibility
-    console.log(`📦 Running legacy check for ${filePath}`);
+    console.log(`📦 ${i18next.t('quality_runner.legacy_check_running', { file: filePath })}`);
 
     // TypeScript/JavaScript files
     if (['.ts', '.tsx', '.js', '.jsx'].includes(fileExtension)) {
@@ -1262,7 +1263,7 @@ export class QualityRunner {
       // Check if gitleaks is installed
       await execAsync('which gitleaks');
     } catch {
-      console.log('⚠️  Gitleaks not installed. Skipping secret detection.');
+      console.log(`⚠️  ${i18next.t('security_analysis.gitleaks_not_installed')}`);
       return null;
     }
 
@@ -1708,7 +1709,7 @@ export class QualityRunner {
       }
     } catch (error) {
       console.warn(
-        `Internal code smell analysis failed for ${filePath}:`,
+        i18next.t('quality_runner.check_failed', { file: filePath }),
         error
       );
     }

@@ -1,13 +1,16 @@
-# WOARU 🚀 v5.0.0
+# WOARU 🚀 v5.1.0
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v5.0.0 - Revolutionary Just-in-Time i18n for CLI Commands**
-**Release Date:** July 17, 2025
+## 🆕 **Latest Release: v5.1.0 - Major Security & Quality Engine Enhancements**
+**Release Date:** July 18, 2025
 
-### 🌍 **MINOR: Comprehensive Internationalization System**
-**New Feature:** Complete i18n implementation for global users. WOARU now supports English and German with full localization of both user interface and AI responses. This groundbreaking feature makes WOARU the first development tool to provide truly international AI-powered code analysis.
+### 🔒 **MAJOR: Advanced Multi-Layer Security Analysis Engine**
+**New Feature:** Enterprise-grade security vulnerability detection system with comprehensive threat analysis. WOARU now includes professional-grade security scanning capabilities with Semgrep integration and intelligent pattern-based fallback analysis.
+
+### 🌍 **MAJOR: Complete Internationalization (i18n) Implementation**
+**Enhanced Feature:** Fully internationalized user interface with comprehensive language support. All hardcoded German strings (100+) have been replaced with proper i18n translation keys, providing seamless German and English language support throughout the entire application.
 
 **Revolutionary Solution:**
 - **🌍 Complete i18n Architecture**:

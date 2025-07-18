@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { ConfigManager } from '../config/ConfigManager';
+import i18next from 'i18next';
 
 /**
  * Zentrale Hilfsfunktion für AI Pre-Condition Checks
@@ -48,7 +49,7 @@ export async function ensureAiIsConfigured(): Promise<void> {
     return;
     
   } catch (error) {
-    console.error(chalk.red('❌ Fehler beim Prüfen der AI-Konfiguration:'), error);
+    console.error(chalk.red(`❌ ${i18next.t('ai_helpers.config_check_error')}`), error);
     showAiConfigurationError();
     process.exit(1);
   }
@@ -58,8 +59,8 @@ export async function ensureAiIsConfigured(): Promise<void> {
  * Zeigt die standardisierte Fehlermeldung für fehlende AI-Konfiguration
  */
 function showAiConfigurationError(): void {
-  console.error(chalk.red('❌ Fehler: Dieses Feature erfordert eine aktive und korrekt konfigurierte AI.'));
-  console.error(chalk.cyan('💡 Bitte richte zuerst einen AI-Provider ein mit dem Befehl: woaru ai setup'));
+  console.error(chalk.red(`❌ ${i18next.t('ai_helpers.config_missing_error')}`));
+  console.error(chalk.cyan(`💡 ${i18next.t('ai_helpers.config_setup_hint')}`));
 }
 
 /**
@@ -97,7 +98,7 @@ export async function getActiveAiProviders(): Promise<Array<{id: string, provide
     return activeProviders;
       
   } catch (error) {
-    console.warn(chalk.yellow('⚠️ Warnung: Fehler beim Laden der AI-Provider:', error));
+    console.warn(chalk.yellow(`⚠️ ${i18next.t('ai_helpers.config_loading_error')}`), error);
     return [];
   }
 }

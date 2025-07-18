@@ -273,5 +273,176 @@
     "available_commands": "Verfügbare Befehle",
     "help_tip": "Verwenden Sie \"woaru <command> --help\" für detaillierte Optionen",
     "documentation_tip": "Für umfassende Dokumentation: woaru wiki"
+  },
+  "ai_helpers": {
+    "config_check_error": "Fehler beim Prüfen der AI-Konfiguration:",
+    "config_missing_error": "Fehler: Dieses Feature erfordert eine aktive und korrekt konfigurierte AI.",
+    "config_setup_hint": "Bitte richte zuerst einen AI-Provider ein mit dem Befehl: woaru ai setup",
+    "config_loading_error": "Warnung: Fehler beim Laden der AI-Provider:"
+  },
+  "security_analysis": {
+    "gitleaks_not_installed": "Gitleaks nicht installiert. Überspringe Secret-Erkennung.",
+    "semgrep_not_available": "Semgrep nicht verfügbar, verwende musterbasierte Analyse.",
+    "analysis_failed": "Sicherheitsanalyse fehlgeschlagen:",
+    "xss_vulnerability": "Potenzielle XSS-Schwachstelle erkannt",
+    "sql_injection": "Potenzielle SQL-Injection-Schwachstelle erkannt",
+    "path_traversal": "Potenzielle Path-Traversal-Schwachstelle erkannt",
+    "code_injection": "Potenzielle Code-Injection-Schwachstelle erkannt"
+  },
+  "quality_runner": {
+    "core_plugin_running": "Führe Core-Plugin aus: {{tool}} auf {{file}}",
+    "experimental_tool_running": "Führe experimentelles Tool aus: {{tool}} auf {{file}}",
+    "legacy_check_running": "Führe Legacy-Check für {{file}} aus",
+    "tool_warnings": "{{tool}} Warnungen in {{file}}",
+    "check_failed": "Qualitätsprüfung fehlgeschlagen für {{file}}:",
+    "core_plugin_failed": "Core-Plugin-Prüfung fehlgeschlagen:",
+    "experimental_tool_failed": "Experimentelles Tool fehlgeschlagen:"
+  },
+  "version_manager": {
+    "checking_updates": "🔍 Suche nach Updates...",
+    "up_to_date": "✅ Du verwendest die aktuellste Version (v{{version}})",
+    "new_version_available": "📦 Eine neue Version (v{{version}}) ist verfügbar!",
+    "released_on": "   Veröffentlicht am: {{date}}",
+    "update_instruction": "   Führe `woaru update` aus, um zu aktualisieren.",
+    "updating": "🚀 Aktualisiere WOARU auf die neueste Version...",
+    "update_success": "✅ Update erfolgreich abgeschlossen!",
+    "update_failed": "❌ Update fehlgeschlagen (Exit Code: {{code}})",
+    "update_error": "❌ Update fehlgeschlagen:"
+  },
+  "solid": {
+    "srp": {
+      "method_count": {
+        "description": "Klasse {{className}} hat {{count}} Methoden",
+        "explanation": "Klassen mit vielen Methoden haben oft mehrere Verantwortlichkeiten. Das Single Responsibility Principle besagt, dass eine Klasse nur einen Grund zur Änderung haben sollte.",
+        "impact": "Schwer zu testen, zu verstehen und zu warten. Hohe Wahrscheinlichkeit für Bugs bei Änderungen.",
+        "suggestion": "Teile die Klasse {{className}} in kleinere, fokussierte Klassen auf. Gruppiere verwandte Methoden in separate Services oder Utility-Klassen."
+      },
+      "complexity": {
+        "description": "Klasse {{className}} hat eine Komplexität von {{complexity}}",
+        "explanation": "Hohe zyklomatische Komplexität deutet auf zu viele verschiedene Logik-Pfade in einer Klasse hin, was gegen das SRP verstößt.",
+        "impact": "Schwer zu testen (viele Test-Cases nötig), fehleranfällig, schwer zu verstehen.",
+        "suggestion": "Extrahiere komplexe Logik in separate Methoden oder Klassen. Verwende Design Patterns wie Strategy oder Command um Komplexität zu reduzieren."
+      },
+      "concern_diversity": {
+        "description": "Klasse {{className}} importiert aus {{concernCount}} verschiedenen Bereichen: {{concerns}}",
+        "explanation": "Imports aus verschiedenen Bereichen (Database, HTTP, Filesystem, Email, etc.) deuten darauf hin, dass die Klasse multiple Verantwortlichkeiten hat.",
+        "impact": "Hohe Kopplung, schwere Testbarkeit (viele Mocks nötig), Änderungen in einem Bereich können andere beeinflussen.",
+        "suggestion": "Separiere die verschiedenen Concerns in eigene Services: {{concernServices}}. Verwende Dependency Injection um diese Services zu koordinieren."
+      },
+      "class_size": {
+        "description": "Klasse {{className}} hat {{linesOfCode}} Zeilen Code",
+        "explanation": "Sehr große Klassen sind oft ein Indikator für multiple Verantwortlichkeiten und verletzen das Single Responsibility Principle.",
+        "impact": "Schwer zu navigieren, zu verstehen und zu warten. Hohe Wahrscheinlichkeit für Merge-Konflikte.",
+        "suggestion": "Refaktoriere die Klasse {{className}} in kleinere, kohäsive Einheiten. Identifiziere logische Gruppen von Methoden und extrahiere sie in separate Klassen."
+      },
+      "method_parameters": {
+        "description": "Methode {{methodName}} hat {{parameterCount}} Parameter",
+        "explanation": "Methoden mit vielen Parametern deuten oft darauf hin, dass sie zu viele verschiedene Dinge tun und gegen das SRP verstoßen.",
+        "impact": "Schwer zu nutzen, fehleranfällig (Parameter-Reihenfolge), schwer zu testen.",
+        "suggestion": "Fasse verwandte Parameter in ein Objekt zusammen oder teile die Methode {{methodName}} in kleinere, spezifischere Methoden auf."
+      },
+      "file_class_count": {
+        "description": "Datei enthält {{classCount}} Klassen: {{classList}}",
+        "explanation": "Dateien mit vielen Klassen deuten oft darauf hin, dass verwandte aber unterschiedliche Verantwortlichkeiten in einer Datei gemischt werden.",
+        "impact": "Schwer zu navigieren, unklare Struktur, Merge-Konflikte wahrscheinlicher.",
+        "suggestion": "Teile die Datei {{fileName}} auf: eine Datei pro Klasse oder gruppiere nur wirklich eng verwandte Klassen zusammen."
+      },
+      "analysis_error": "SRP-Checker: Fehler beim Analysieren von {{filePath}}"
+    }
+  },
+  "report_generator": {
+    "headers": {
+      "changed_files": "📋 Geänderte Dateien",
+      "critical_quality_issues": "🚨 Kritische Qualitäts-Probleme",
+      "solution_suggestions": "🔧 **Lösungsvorschläge:**",
+      "security_analysis": "🔒 Sicherheitsanalyse",
+      "solid_analysis": "🏗️ SOLID-Architektur Analyse",
+      "code_smell_analysis": "👃 Code-Smell Analyse",
+      "ai_review": "🤖 AI-Review Analyse"
+    },
+    "summary": {
+      "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
+      "quality_issues_found": "{{count}} Qualitäts-Probleme",
+      "security_warnings": "⚠️ WARNUNG: {{critical}} kritische und {{high}} hohe Sicherheitslücken gefunden!",
+      "changes_since_branch": "**Änderungen seit Branch: `{{branch}}`**",
+      "changed_files": "- **Geänderte Dateien:** {{count}}",
+      "quality_problems": "- **Qualitäts-Probleme:** {{count}}",
+      "fix_available": "- **✅ Fix verfügbar:** Upgrade auf {{version}}"
+    },
+    "solid": {
+      "score": "📊 **SOLID Score: {{score}}/100** ({{violations}} Verstöße gefunden)",
+      "violations_found": "### 🔴 {{principle}} ({{count}} Verstöße)",
+      "solution": "🔨 **Lösung:** {{suggestion}}",
+      "complexity": "Komplexität: {{complexity}}",
+      "more_violations": "*... und {{count}} weitere {{label}}-Verstöße*",
+      "systematic_refactoring": "🏗️ Führe systematisches Refactoring durch - beginne mit den kritischsten SOLID-Verstößen",
+      "high_complexity_classes": "🔄 {{count}} Klassen mit hoher Komplexität - extrahiere komplexe Logik in separate Utility-Klassen",
+      "files_with_violations": "⚠️ {{count}} Dateien mit vielen SOLID-Verstößen - priorisiere diese für Architektur-Überarbeitung",
+      "check_documentation": "📚 Überprüfe die SOLID-Prinzipien Dokumentation für weitere Verbesserungsideen"
+    },
+    "code_smell": {
+      "reduce_complexity": "🔄 Reduziere zyklomatische Komplexität in {{count}} Funktionen durch Aufteilen",
+      "shorten_functions": "📏 Kürze {{count}} zu lange Funktionen durch Extraktion von Logik"
+    },
+    "ai_review": {
+      "estimated_cost": "💰 **Geschätzte Kosten:** ${{cost}}",
+      "findings_summary": "📊 **{{findings}} Befunde gefunden** | **Analysedauer:** {{duration}}ms | **LLM Übereinstimmung:** {{agreement}}%",
+      "reasoning": "💭 **Begründung:** {{rationale}}",
+      "estimated_fix_time": "⏱️ **Geschätzte Behebungszeit:** {{time}}",
+      "check_security": "🔒 Überprüfe {{count}} potenzielle Sicherheitsprobleme",
+      "low_agreement": "🤔 Niedrige LLM-Übereinstimmung - manuelle Überprüfung empfohlen",
+      "high_costs": "💰 Hohe AI-Kosten - erwäge Batch-Processing für große Codebasen",
+      "meets_standards": "✅ Code erfüllt AI-basierte Qualitätsstandards"
+    }
+  },
+  "cli": {
+    "ai_control_center": {
+      "title": "WOARU AI Control Center",
+      "current_status": "Aktueller Status:",
+      "no_primary_provider": "⚠️ Kein primärer Provider ausgewählt!",
+      "menu_options": {
+        "add_edit_provider": "🔧 Provider hinzufügen/bearbeiten",
+        "disable_multi_ai": "🔕 Multi-AI Review deaktivieren",
+        "enable_multi_ai": "🔊 Multi-AI Review aktivieren",
+        "select_primary": "🎯 Primäres Review-Modell auswählen",
+        "exit": "🚪 Beenden"
+      },
+      "multi_ai_enabled": "Alle aktivierten Provider werden nun für Reviews verwendet.",
+      "should_select_primary": "Du solltest einen primären Provider auswählen.",
+      "continue_prompt": "Drücke Enter um fortzufahren...",
+      "disable_multi_ai_explanation": "Multi-AI Review deaktiviert. Nur der primäre Provider wird für Reviews verwendet.",
+      "menu_prompt": "Was möchtest du tun?"
+    },
+    "provider_management": {
+      "select_provider": "Wähle einen AI-Provider:",
+      "select_primary": "Wähle den primären Provider für Reviews:",
+      "primary_selected": "✅ {{provider}} wurde als primärer Provider ausgewählt!",
+      "provider_actions": "Was möchtest du mit {{provider}} machen?",
+      "change_model": "🔄 Modell ändern",
+      "change_api_key": "🔑 API-Key ändern",
+      "toggle_enabled": "🔛 Aktiviert/Deaktiviert umschalten",
+      "remove_provider": "🗑️ Provider entfernen",
+      "back_to_menu": "← Zurück zum Hauptmenü",
+      "model_changed": "✅ Modell geändert zu: {{model}}",
+      "api_key_prompt": "Neuer API-Key für {{provider}}:",
+      "api_key_validation": "API-Key validiert und gespeichert.",
+      "confirm_removal": "Bist du sicher, dass du {{provider}} entfernen möchtest?",
+      "provider_removed": "✅ {{provider}} wurde entfernt.",
+      "removal_cancelled": "❌ Entfernung abgebrochen."
+    },
+    "setup": {
+      "loading_models": "🔄 Lade verfügbare Modelle...",
+      "api_key_prompt": "API-Key für {{provider}} eingeben:",
+      "api_key_validation": "API-Key validiert und gespeichert.",
+      "select_model": "Wähle ein Modell für {{provider}}:",
+      "enable_for_analysis": "{{provider}} für Code-Analyse aktivieren?",
+      "provider_setup_complete": "✅ {{provider}} wurde erfolgreich eingerichtet!",
+      "setup_another": "Möchtest du einen weiteren Provider einrichten?",
+      "enable_multi_ai": "Möchtest du die \"Multi-AI Review\"-Funktion aktivieren, bei der alle aktivierten Provider gleichzeitig für eine umfassendere Analyse verwendet werden?",
+      "multi_ai_activated": "✅ Multi-AI Review wurde aktiviert! Alle aktivierten Provider werden nun für Reviews verwendet.",
+      "multi_ai_not_activated": "📋 Multi-AI Review bleibt deaktiviert. Du kannst dies später über \"woaru ai\" ändern.",
+      "more_changes": "Möchtest du weitere Änderungen vornehmen?",
+      "no_changes": "Keine weiteren Änderungen gewünscht."
+    }
   }
 }
