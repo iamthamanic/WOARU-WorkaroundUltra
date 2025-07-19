@@ -15,13 +15,39 @@ import { displaySplashScreen } from './assets/splash_logo';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { AIProviderUtils } from './utils/AIProviderUtils';
-import { initializeI18n, t } from './config/i18n';
+import { initializeI18n, t, isInitialized } from './config/i18n';
+import { AIProviderConfig, AIModel } from './types/i18n';
 import { handleFirstTimeLanguageSetup } from './config/languageSetup';
 import { generateTranslatedCommandsOutput, getTranslatedDescription, getTranslatedPurpose } from './utils/commandHelpers';
 import { ensureAiIsConfigured } from './utils/ai-helpers';
 
 // Global supervisor instance
 let supervisor: WOARUSupervisor | null = null;
+
+/**
+ * Safe translation function with fallback support
+ * 
+ * This function provides a safe wrapper around the i18n translation function (t).
+ * It handles cases where i18n might not be initialized yet, which is common
+ * during the early stages of CLI startup.
+ * 
+ * @param key - The translation key to look up (e.g., 'cli.commands.analyze.description')
+ * @param fallback - The fallback text to use if translation fails or i18n is not initialized
+ * @returns The translated text if available, otherwise the fallback text
+ * 
+ * @example
+ * // During early initialization when i18n might not be ready
+ * const description = safeT('cli.commands.analyze.description', 'Analyze project code');
+ */
+function safeT(key: string, fallback: string): string {
+  try {
+    return isInitialized() ? t(key) : fallback;
+  } catch (error) {
+    // Silently fall back to default text if translation fails
+    // This ensures the CLI remains functional even if translations are broken
+    return fallback;
+  }
+}
 
 // Initialize environment variables and i18n from global WOARU config
 async function initializeConfig() {
@@ -84,7 +110,7 @@ program
 
 program
   .command('quick-analyze')
-  .description('Quick analysis for project setup recommendations')
+  .description(safeT('cli.commands.quick_analyze.description', 'Quick analysis for project setup recommendations'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-j, --json', 'Output as JSON')
   .action(async options => {
@@ -171,7 +197,7 @@ program
 // Setup command with sub-commands
 const setupCommand = program
   .command('setup')
-  .description('Setup tools and AI integrations');
+  .description(safeT('cli.commands.setup.description', 'Setup tools and AI integrations'));
 
 // Setup tools sub-command (original setup functionality)
 setupCommand
@@ -243,7 +269,7 @@ setupCommand
 // New woaru ai command with sub-commands
 const aiCommand = program
   .command('ai')
-  .description('Manage AI providers for code analysis');
+  .description(safeT('cli.commands.ai.description', 'Manage AI providers for code analysis'));
 
 // Main ai command - Interactive AI Control Center
 aiCommand
@@ -772,7 +798,7 @@ async function runAiSetup() {
 }
 
 // Configure individual provider
-async function configureProvider(providerId: string): Promise<any> {
+async function configureProvider(providerId: string): Promise<AIProviderConfig | null> {
   try {
     // Load AI models from ai-models.json
     const aiModelsPath = path.resolve(__dirname, '../ai-models.json');
@@ -785,7 +811,7 @@ async function configureProvider(providerId: string): Promise<any> {
     }
 
     // Schritt 1: Modell-Auswahl (dynamisch aus ai-models.json)
-    const modelChoices = providerData.models.map((model: any) => ({
+    const modelChoices = providerData.models.map((model: AIModel) => ({
       name: `${model.name} - ${model.description}`,
       value: model.id,
       short: model.name,
@@ -797,7 +823,7 @@ async function configureProvider(providerId: string): Promise<any> {
         name: 'selectedModel',
         message: `Wähle ein Modell für ${providerData.name}:`,
         choices: modelChoices,
-        default: providerData.models.find((m: any) => m.isLatest)?.id || providerData.models[0]?.id,
+        default: providerData.models.find((m: AIModel) => m.isLatest)?.id || providerData.models[0]?.id,
       },
     ]);
 
@@ -852,7 +878,7 @@ async function configureProvider(providerId: string): Promise<any> {
 
 program
   .command('update-db')
-  .description('Update the tools database from remote source')
+  .description(safeT('cli.commands.update_db.description', 'Update the tools database from remote source'))
   .action(async () => {
     const success = await woaruEngine.updateDatabase();
     process.exit(success ? 0 : 1);
@@ -861,7 +887,7 @@ program
 // Supervisor Commands
 program
   .command('watch')
-  .description('Start WOARU supervisor to continuously monitor the project')
+  .description(safeT('cli.commands.watch.description', 'Start WOARU supervisor to continuously monitor the project'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('--dashboard', 'Show live dashboard')
   .option('--auto-setup', 'Automatically setup recommended tools')
@@ -1102,7 +1128,7 @@ program
 
 program
   .command('status')
-  .description('Show WOARU supervisor status and project health')
+  .description(safeT('cli.commands.status.description', 'Show WOARU supervisor status and project health'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async options => {
     await initializeConfig();
@@ -1186,7 +1212,7 @@ program
 
 program
   .command('update')
-  .description('Updates WOARU to the latest version from npm')
+  .description(safeT('cli.commands.update.description', 'Updates WOARU to the latest version from npm'))
   .action(async () => {
     try {
       console.log(chalk.blue('🔄 Updating WOARU to the latest version...'));
@@ -1224,7 +1250,7 @@ program
 
 program
   .command('stop')
-  .description('Stop the WOARU supervisor')
+  .description(safeT('cli.commands.stop.description', 'Stop the WOARU supervisor'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async options => {
     try {
@@ -1266,7 +1292,7 @@ program
 
 program
   .command('logs')
-  .description('Show supervisor logs')
+  .description(safeT('cli.commands.logs.description', 'Show supervisor logs'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-f, --follow', 'Follow logs in real-time')
   .option('-n, --lines <number>', 'Number of lines to show', '50')
@@ -1306,7 +1332,7 @@ program
 
 program
   .command('recommendations')
-  .description('Show current tool recommendations')
+  .description(safeT('cli.commands.recommendations.description', 'Show current tool recommendations'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-j, --json', 'Output as JSON')
   .action(async options => {
@@ -1407,7 +1433,7 @@ program
 
 program
   .command('helpers')
-  .description('Show all detected/activated development tools and helpers')
+  .description(safeT('cli.commands.helpers.description', 'Show all detected/activated development tools and helpers'))
   .option('-p, --path <path>', 'Project path', process.cwd())
   .option('-j, --json', 'Output as JSON')
   .option('--missing', 'Show only missing/recommended tools')
@@ -1652,7 +1678,7 @@ program
 // Documentation command with sub-commands
 const docuCommand = program
   .command('docu')
-  .description('AI-powered documentation generator (requires AI configuration)');
+  .description(safeT('cli.commands.docu.description', 'AI-powered code documentation generator'));
 
 // Documentation nopro sub-command (human-friendly explanations)
 docuCommand
@@ -1784,7 +1810,7 @@ docuCommand
 
 program
   .command('ignore')
-  .description('Add a tool to the ignore list')
+  .description(safeT('cli.commands.ignore.description', 'Add a tool to the ignore list'))
   .argument('<tool>', 'Tool name to ignore')
   .action(tool => {
     try {
@@ -2528,7 +2554,7 @@ async function runReviewAnalysis(
 // Review command with sub-commands
 const reviewCommand = program
   .command('review')
-  .description('Code review and analysis tools')
+  .description(safeT('cli.commands.review.description', 'Code review and analysis tools'))
   .addHelpText(
     'after',
     `
@@ -3500,7 +3526,7 @@ reviewAiCommand
 // Analyze command with sub-commands
 const analyzeCommand = program
   .command('analyze')
-  .description('Comprehensive project analysis including security audit');
+  .description(safeT('cli.commands.analyze.description', 'Comprehensive project analysis including security audit'));
 
 // Main analyze command
 analyzeCommand
@@ -3978,7 +4004,7 @@ analyzeCommand
 
 program
   .command('rollback')
-  .description('Rollback changes made by a specific tool')
+  .description(safeT('cli.commands.rollback.description', 'Rollback changes made by a specific tool'))
   .argument('<tool>', 'Tool name to rollback (e.g., prettier, eslint, husky)')
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async (tool, options) => {
@@ -4604,7 +4630,7 @@ async function displayWikiContent(): Promise<void> {
 
 program
   .command('commands')
-  .description('Show detailed command reference documentation')
+  .description(safeT('cli.commands.commands.description', 'Show detailed command reference documentation'))
   .action(async () => {
     // Ensure i18n is initialized
     await initializeI18n();
@@ -4624,7 +4650,7 @@ program
 
 program
   .command('wiki')
-  .description('Show comprehensive WOARU documentation and concept guide')
+  .description(safeT('cli.commands.wiki.description', 'Show comprehensive WOARU documentation and concept guide'))
   .action(async () => {
     await displayWikiContent();
   });
@@ -4632,7 +4658,7 @@ program
 // Message command
 const messageCommand = program
   .command('message')
-  .description('Send reports from history to configured message channels');
+  .description(safeT('cli.commands.message.description', 'Send reports from history to configured message channels'));
 
 messageCommand
   .command('all')
@@ -5019,6 +5045,8 @@ async function sendReportToChannels(content: string, fileName: string, projectPa
 
     // TODO: Integration with TelegramSender and other messaging systems
     // This will be implemented when the messaging configuration is set up
+    // Tracked in issue: #woaru-messaging-integration
+    // Current workaround: Reports are saved locally and can be manually sent
     
   } catch (error) {
     console.warn(chalk.yellow(`⚠️ Some channels failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -5742,7 +5770,7 @@ async function showLogStats(): Promise<void> {
 // Version command with subcommands
 const versionCommand = program
   .command('version')
-  .description('Show version information')
+  .description(safeT('cli.commands.version.description', 'Show version information'))
   .action(() => {
     VersionManager.displayVersion();
   });
@@ -5775,7 +5803,7 @@ program
 // Config command with language subcommand
 program
   .command('config')
-  .description('Configure WOARU settings')
+  .description(safeT('cli.commands.config.description', 'Configure WOARU settings'))
   .argument('<action>', 'Action to perform (set|show)')
   .argument('[setting]', 'Setting to configure (language)')
   .argument('[value]', 'Value to set')
@@ -5809,7 +5837,7 @@ program
 // Interactive language selection command
 program
   .command('language')
-  .description('Interactive language selection')
+  .description(safeT('cli.commands.language.description', 'Interactive language selection'))
   .action(async () => {
     await initializeConfig();
     

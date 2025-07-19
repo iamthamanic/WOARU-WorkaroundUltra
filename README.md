@@ -1,10 +1,10 @@
-# WOARU 🚀 v5.1.0
+# WOARU 🚀 v5.1.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v5.1.0 - Major Security & Quality Engine Enhancements**
-**Release Date:** July 18, 2025
+## 🆕 **Latest Release: v5.1.1 - i18n Bugfixes and Improvements**
+**Release Date:** July 19, 2025
 
 ### 🔒 **MAJOR: Advanced Multi-Layer Security Analysis Engine**
 **New Feature:** Enterprise-grade security vulnerability detection system with comprehensive threat analysis. WOARU now includes professional-grade security scanning capabilities with Semgrep integration and intelligent pattern-based fallback analysis.

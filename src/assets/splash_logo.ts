@@ -13,7 +13,9 @@ export const displaySplashScreen = async () => {
 
   // Display simple text-based logo
   console.log();
-  console.log(chalk.cyan.bold(`🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE`));
+  console.log(
+    chalk.cyan.bold(`🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE`)
+  );
   console.log(chalk.gray(`   Version ${version}`));
   console.log();
   console.log(chalk.white('Quick Commands:'));
@@ -26,7 +28,9 @@ export const displaySplashScreen = async () => {
   console.log(
     chalk.gray('  • woaru review         - Code review and analysis')
   );
-  console.log(chalk.gray('  • woaru setup          - Setup development tools & ai'));
+  console.log(
+    chalk.gray('  • woaru setup          - Setup development tools & ai')
+  );
   console.log(
     chalk.gray('  • woaru commands       - Show all available commands')
   );

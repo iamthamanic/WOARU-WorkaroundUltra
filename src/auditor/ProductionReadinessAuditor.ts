@@ -197,8 +197,14 @@ export class ProductionReadinessAuditor {
             message: `🚨 KRITISCH: Kein Error-Monitoring für Production-Apps gefunden`,
             recommendation: `Error-Monitoring ist essentiell für Production-Apps. Empfohlen: ${recommendedTool.name}${alternatives.length > 0 ? ` (Alternativen: ${alternatives.map(t => t.name).join(', ')})` : ''}. ${this.getInstallCommand(recommendedTool, config.frameworks)}`,
             packages: [
-              ...this.getRecommendedPackages(recommendedTool, config.frameworks),
-              ...this.getAllErrorMonitoringPackages(errorMonitoringTools, config.frameworks).slice(0, 3)
+              ...this.getRecommendedPackages(
+                recommendedTool,
+                config.frameworks
+              ),
+              ...this.getAllErrorMonitoringPackages(
+                errorMonitoringTools,
+                config.frameworks
+              ).slice(0, 3),
             ],
           });
         }

@@ -538,7 +538,7 @@ export class AIReviewAgent {
    */
   private buildDefaultPrompt(code: string, context: CodeContext): string {
     let prompt = this.promptTemplate.userPromptTemplate;
-    
+
     // Add language instruction at the beginning
     let languageInstruction = '';
     try {
@@ -674,6 +674,15 @@ export class AIReviewAgent {
 
     // For now, simple consensus based on similar messages
     // TODO: Implement more sophisticated similarity detection
+    // Current implementation uses simple string matching which may miss:
+    // - Similar findings with different wording
+    // - Findings that reference the same code issue from different perspectives
+    // - Semantically equivalent findings across different languages
+    // Consider implementing:
+    // - Embedding-based similarity using sentence transformers
+    // - AST-based comparison for code-related findings
+    // - Fuzzy matching with configurable thresholds
+    // Tracked in issue: #woaru-ai-similarity-enhancement
     for (const llmId of llmIds) {
       const findings = results[llmId];
       for (const finding of findings) {

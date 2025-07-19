@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 2025-07-19
+
+### Fixed
+- **i18n Command Descriptions**: Fixed incorrect command description for `woaru commands` that was showing wiki documentation text
+- **i18n Runtime Initialization**: Resolved runtime errors where translation functions were called before i18n system initialization
+  - Implemented `safeT()` wrapper function with fallback mechanism
+  - All command descriptions now properly handle early initialization phase
+- **Complete i18n Coverage**: Ensured all command descriptions and purposes are properly internationalized
+  - Added missing translation keys for all CLI commands
+  - Fixed mixed language output in dynamically generated content
+
+### Changed
+- **Documentation Improvements**:
+  - Enhanced JSDoc documentation for VersionManager class
+  - Added detailed context to TODO comments in AIReviewAgent.ts
+  - Improved documentation for i18n-related functions
+
+### Technical Details
+- Replaced all early `t()` calls in command definitions with `safeT()` wrapper
+- Extended both German and English translation files with complete CLI command descriptions
+- Fixed TypeScript compilation errors related to i18n initialization timing
+
 ## [5.1.0] - 2025-07-18
 
 ### Added

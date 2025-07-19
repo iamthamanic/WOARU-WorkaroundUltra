@@ -109,7 +109,11 @@ export class ReviewReportGenerator {
 
     // Header
     lines.push('# WOARU Code Review');
-    lines.push(t('report_generator.summary.changes_since_branch', { branch: data.gitDiff.baseBranch }));
+    lines.push(
+      t('report_generator.summary.changes_since_branch', {
+        branch: data.gitDiff.baseBranch,
+      })
+    );
     lines.push(`**Aktueller Branch: \`${data.currentBranch}\`**`);
     lines.push(`**Generiert am: ${new Date().toLocaleString('de-DE')}**`);
     lines.push('');
@@ -121,7 +125,10 @@ export class ReviewReportGenerator {
       );
       lines.push('');
       lines.push(
-        t('report_generator.summary.security_warnings', { critical: securitySummary.critical, high: securitySummary.high })
+        t('report_generator.summary.security_warnings', {
+          critical: securitySummary.critical,
+          high: securitySummary.high,
+        })
       );
       lines.push('');
       this.addCriticalSecuritySection(lines, data.securityResults || []);
@@ -131,8 +138,16 @@ export class ReviewReportGenerator {
     // Summary
     lines.push('## 📊 Zusammenfassung');
     lines.push('');
-    lines.push(t('report_generator.summary.changed_files', { count: data.gitDiff.totalChanges }));
-    lines.push(t('report_generator.summary.quality_problems', { count: data.qualityResults.length }));
+    lines.push(
+      t('report_generator.summary.changed_files', {
+        count: data.gitDiff.totalChanges,
+      })
+    );
+    lines.push(
+      t('report_generator.summary.quality_problems', {
+        count: data.qualityResults.length,
+      })
+    );
     lines.push(
       `- **Sicherheits-Probleme:** ${securitySummary.total} (${securitySummary.critical} kritisch, ${securitySummary.high} hoch)`
     );

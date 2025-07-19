@@ -59,7 +59,12 @@ export class SRPChecker extends BaseSOLIDChecker {
       violations.push(...this.checkFileClassCount(filePath, analysis.classes));
 
     } catch (error) {
-      console.warn(t('solid.srp.analysis_error', { filePath }), error);
+      // Log error with more context for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(t('solid.srp.analysis_error', { filePath }), {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
 
     return violations;

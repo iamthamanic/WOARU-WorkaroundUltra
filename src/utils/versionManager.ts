@@ -4,6 +4,11 @@ import * as path from 'path';
 import chalk from 'chalk';
 import { t } from '../config/i18n';
 
+/**
+ * VersionManager handles version checking and updates for WOARU
+ * Now with full i18n support for internationalized messages
+ */
+
 export interface VersionInfo {
   current: string;
   latest: string;
@@ -11,6 +16,17 @@ export interface VersionInfo {
   releaseDate?: string;
 }
 
+/**
+ * Manages version checking and updates for WOARU
+ * 
+ * This class provides utilities for:
+ * - Checking the current installed version
+ * - Fetching the latest available version from npm
+ * - Comparing versions and displaying update notifications
+ * - Performing self-updates of the WOARU package
+ * 
+ * All user-facing messages are internationalized using the i18n system.
+ */
 export class VersionManager {
   private static packageJsonPath = path.join(__dirname, '../../package.json');
 
@@ -97,17 +113,19 @@ export class VersionManager {
     } else {
       console.log(
         chalk.yellow(
-          t('version_manager.new_version_available', { version: versionInfo.latest })
+          t('version_manager.new_version_available', {
+            version: versionInfo.latest,
+          })
         )
       );
       if (versionInfo.releaseDate) {
         console.log(
-          chalk.gray(t('version_manager.released_on', { date: versionInfo.releaseDate }))
+          chalk.gray(
+            t('version_manager.released_on', { date: versionInfo.releaseDate })
+          )
         );
       }
-      console.log(
-        chalk.cyan(t('version_manager.update_instruction'))
-      );
+      console.log(chalk.cyan(t('version_manager.update_instruction')));
     }
   }
 

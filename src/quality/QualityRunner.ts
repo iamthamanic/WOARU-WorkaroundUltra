@@ -139,7 +139,10 @@ export class QualityRunner {
       // Phase 3: Fallback to legacy hardcoded checks
       await this.runLegacyChecks(relativePath, ext);
     } catch (error) {
-      console.warn(i18next.t('quality_runner.check_failed', { file: relativePath }), error);
+      console.warn(
+        i18next.t('quality_runner.check_failed', { file: relativePath }),
+        error
+      );
     }
   }
 
@@ -172,7 +175,9 @@ export class QualityRunner {
               result.output
             );
           } else if (result.hasWarnings) {
-            console.log(`⚠️ ${i18next.t('quality_runner.tool_warnings', { tool: coreTool.name, file: filePath })}`);
+            console.log(
+              `⚠️ ${i18next.t('quality_runner.tool_warnings', { tool: coreTool.name, file: filePath })}`
+            );
           } else {
             this.notificationManager.showQualitySuccess(
               filePath,
@@ -249,7 +254,9 @@ export class QualityRunner {
     fileExtension: string
   ): Promise<void> {
     // Keep existing legacy logic for backward compatibility
-    console.log(`📦 ${i18next.t('quality_runner.legacy_check_running', { file: filePath })}`);
+    console.log(
+      `📦 ${i18next.t('quality_runner.legacy_check_running', { file: filePath })}`
+    );
 
     // TypeScript/JavaScript files
     if (['.ts', '.tsx', '.js', '.jsx'].includes(fileExtension)) {
@@ -744,7 +751,10 @@ export class QualityRunner {
   ): Promise<QualityCheckResult | null> {
     try {
       // Run ESLint with context-sensitive configuration
-      const eslintCommand = this.getContextSensitiveESLintCommand(filePath, true);
+      const eslintCommand = this.getContextSensitiveESLintCommand(
+        filePath,
+        true
+      );
       await execAsync(`${eslintCommand} "${filePath}"`);
       return null; // No issues found
     } catch (error: any) {
@@ -1244,7 +1254,10 @@ export class QualityRunner {
     }
 
     // Run basic security analysis for XSS and other vulnerabilities
-    const basicSecurityResult = await this.runBasicSecurityAnalysis(filePaths, options);
+    const basicSecurityResult = await this.runBasicSecurityAnalysis(
+      filePaths,
+      options
+    );
     if (basicSecurityResult) {
       results.push(basicSecurityResult);
     }
@@ -1263,7 +1276,9 @@ export class QualityRunner {
       // Check if gitleaks is installed
       await execAsync('which gitleaks');
     } catch {
-      console.log(`⚠️  ${i18next.t('security_analysis.gitleaks_not_installed')}`);
+      console.log(
+        `⚠️  ${i18next.t('security_analysis.gitleaks_not_installed')}`
+      );
       return null;
     }
 
@@ -1761,20 +1776,25 @@ export class QualityRunner {
    * Get context-sensitive ESLint command based on file extension
    * Implements Bug Fix 2: Context-sensitive linting for JS/TS files
    */
-  private getContextSensitiveESLintCommand(filePath: string, withFormat = false): string {
+  private getContextSensitiveESLintCommand(
+    filePath: string,
+    withFormat = false
+  ): string {
     const ext = path.extname(filePath).toLowerCase();
     const isTypeScript = ['.ts', '.tsx'].includes(ext);
     const isJavaScript = ['.js', '.jsx', '.mjs', '.cjs'].includes(ext);
 
     if (!isTypeScript && !isJavaScript) {
       // Fallback to default ESLint command
-      return withFormat ? APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT : APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE;
+      return withFormat
+        ? APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT
+        : APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE;
     }
 
     // Create temporary ESLint config for this file type
-    const baseCommand = withFormat ? 
-      'npx eslint --format stylish' : 
-      'npx eslint';
+    const baseCommand = withFormat
+      ? 'npx eslint --format stylish'
+      : 'npx eslint';
 
     if (isJavaScript) {
       // JavaScript-specific configuration (no TypeScript rules)
@@ -1813,7 +1833,7 @@ export class QualityRunner {
       // Fallback to pattern-based analysis
       for (const filePath of filePaths) {
         const ext = path.extname(filePath).toLowerCase();
-        
+
         // Only analyze JavaScript/TypeScript files for web vulnerabilities
         if (!['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(ext)) {
           continue;
@@ -1821,11 +1841,11 @@ export class QualityRunner {
 
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const lines = fileContent.split('\n');
-        
+
         // Check for XSS vulnerabilities
         const xssFindings = this.detectXSSVulnerabilities(filePath, lines);
         findings.push(...xssFindings);
-        
+
         // Check for other security issues
         const otherFindings = this.detectOtherSecurityIssues(filePath, lines);
         findings.push(...otherFindings);
@@ -1864,13 +1884,13 @@ export class QualityRunner {
     try {
       // Check if Semgrep is installed
       await execAsync('which semgrep', { timeout: 5000 });
-      
+
       // Run Semgrep with basic security rules
       const { stdout } = await execAsync(
         `semgrep --config=auto --json ${filePaths.join(' ')}`,
         { timeout: 30000, maxBuffer: 10 * 1024 * 1024 }
       );
-      
+
       const results = JSON.parse(stdout);
       const findings: SecurityFinding[] = [];
       const summary = {
@@ -1884,7 +1904,9 @@ export class QualityRunner {
 
       if (results.results && Array.isArray(results.results)) {
         results.results.forEach((result: any) => {
-          const severity = this.mapSemgrepSeverity(result.extra?.severity || 'INFO');
+          const severity = this.mapSemgrepSeverity(
+            result.extra?.severity || 'INFO'
+          );
           summary.total++;
           summary[severity]++;
 
@@ -1893,12 +1915,18 @@ export class QualityRunner {
             type: 'vulnerability',
             severity,
             title: result.check_id || 'Security Issue',
-            description: result.extra?.message || result.message || 'Security vulnerability detected',
+            description:
+              result.extra?.message ||
+              result.message ||
+              'Security vulnerability detected',
             file: result.path,
             line: result.start?.line,
             column: result.start?.col,
-            cwe: result.extra?.metadata?.cwe ? [result.extra.metadata.cwe] : undefined,
-            recommendation: result.extra?.fix || 'Review and fix the security issue',
+            cwe: result.extra?.metadata?.cwe
+              ? [result.extra.metadata.cwe]
+              : undefined,
+            recommendation:
+              result.extra?.fix || 'Review and fix the security issue',
             references: result.extra?.references || [],
           });
         });
@@ -1919,17 +1947,22 @@ export class QualityRunner {
   /**
    * Detect XSS vulnerabilities using pattern matching
    */
-  private detectXSSVulnerabilities(filePath: string, lines: string[]): SecurityFinding[] {
+  private detectXSSVulnerabilities(
+    filePath: string,
+    lines: string[]
+  ): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
-    
+
     const xssPatterns = [
       {
         pattern: /\.innerHTML\s*=\s*([^;]+)/gi,
         title: 'Potential XSS vulnerability via innerHTML',
-        description: 'Direct assignment to innerHTML can lead to XSS attacks if user input is not sanitized',
+        description:
+          'Direct assignment to innerHTML can lead to XSS attacks if user input is not sanitized',
         severity: 'high' as const,
         cwe: ['CWE-79'],
-        recommendation: 'Use textContent instead of innerHTML, or sanitize user input with a library like DOMPurify'
+        recommendation:
+          'Use textContent instead of innerHTML, or sanitize user input with a library like DOMPurify',
       },
       {
         pattern: /document\.write\s*\(/gi,
@@ -1937,32 +1970,41 @@ export class QualityRunner {
         description: 'document.write can be exploited for XSS attacks',
         severity: 'high' as const,
         cwe: ['CWE-79'],
-        recommendation: 'Avoid document.write and use safer DOM manipulation methods'
+        recommendation:
+          'Avoid document.write and use safer DOM manipulation methods',
       },
       {
         pattern: /eval\s*\(/gi,
         title: 'Code injection vulnerability via eval()',
-        description: 'eval() can execute arbitrary JavaScript code and is a major security risk',
+        description:
+          'eval() can execute arbitrary JavaScript code and is a major security risk',
         severity: 'critical' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Replace eval() with safer alternatives like JSON.parse() for data or explicit function calls'
+        recommendation:
+          'Replace eval() with safer alternatives like JSON.parse() for data or explicit function calls',
       },
       {
         pattern: /setTimeout\s*\(\s*["'`][^"'`]*\+/gi,
-        title: 'Potential code injection via setTimeout with string concatenation',
-        description: 'setTimeout with string concatenation can lead to code injection',
+        title:
+          'Potential code injection via setTimeout with string concatenation',
+        description:
+          'setTimeout with string concatenation can lead to code injection',
         severity: 'high' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Use function references instead of string concatenation in setTimeout'
+        recommendation:
+          'Use function references instead of string concatenation in setTimeout',
       },
       {
         pattern: /setInterval\s*\(\s*["'`][^"'`]*\+/gi,
-        title: 'Potential code injection via setInterval with string concatenation',
-        description: 'setInterval with string concatenation can lead to code injection',
+        title:
+          'Potential code injection via setInterval with string concatenation',
+        description:
+          'setInterval with string concatenation can lead to code injection',
         severity: 'high' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Use function references instead of string concatenation in setInterval'
-      }
+        recommendation:
+          'Use function references instead of string concatenation in setInterval',
+      },
     ];
 
     lines.forEach((line, index) => {
@@ -1993,34 +2035,43 @@ export class QualityRunner {
   /**
    * Detect other security issues using pattern matching
    */
-  private detectOtherSecurityIssues(filePath: string, lines: string[]): SecurityFinding[] {
+  private detectOtherSecurityIssues(
+    filePath: string,
+    lines: string[]
+  ): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
-    
+
     const securityPatterns = [
       {
         pattern: /SELECT\s+.*\s+FROM\s+.*\s+WHERE\s+.*\s*\+\s*/gi,
         title: 'Potential SQL injection vulnerability',
-        description: 'SQL query with string concatenation may be vulnerable to SQL injection',
+        description:
+          'SQL query with string concatenation may be vulnerable to SQL injection',
         severity: 'high' as const,
         cwe: ['CWE-89'],
-        recommendation: 'Use parameterized queries or prepared statements instead of string concatenation'
+        recommendation:
+          'Use parameterized queries or prepared statements instead of string concatenation',
       },
       {
         pattern: /fs\.(unlink|rmdir|remove).*\+/gi,
         title: 'Potential path traversal vulnerability',
-        description: 'File system operations with string concatenation may be vulnerable to path traversal',
+        description:
+          'File system operations with string concatenation may be vulnerable to path traversal',
         severity: 'medium' as const,
         cwe: ['CWE-22'],
-        recommendation: 'Validate and sanitize file paths, use path.join() and path.resolve()'
+        recommendation:
+          'Validate and sanitize file paths, use path.join() and path.resolve()',
       },
       {
         pattern: /process\.env\.[A-Z_]+\s*\+/gi,
         title: 'Potential environment variable exposure',
-        description: 'Environment variables should not be concatenated directly into strings',
+        description:
+          'Environment variables should not be concatenated directly into strings',
         severity: 'medium' as const,
         cwe: ['CWE-200'],
-        recommendation: 'Validate and sanitize environment variables before use'
-      }
+        recommendation:
+          'Validate and sanitize environment variables before use',
+      },
     ];
 
     lines.forEach((line, index) => {
@@ -2051,7 +2102,9 @@ export class QualityRunner {
   /**
    * Map Semgrep severity to our standard severity levels
    */
-  private mapSemgrepSeverity(severity: string): 'critical' | 'high' | 'medium' | 'low' | 'info' {
+  private mapSemgrepSeverity(
+    severity: string
+  ): 'critical' | 'high' | 'medium' | 'low' | 'info' {
     switch (severity.toUpperCase()) {
       case 'ERROR':
         return 'critical';

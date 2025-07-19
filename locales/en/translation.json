@@ -443,6 +443,96 @@
       "multi_ai_not_activated": "📋 Multi-AI Review remains disabled. You can change this later via \"woaru ai\".",
       "more_changes": "Would you like to make more changes?",
       "no_changes": "No further changes desired."
+    },
+    "commands": {
+      "quick_analyze": {
+        "description": "Quick analysis for project setup recommendations",
+        "purpose": "Get instant recommendations for improving your project setup"
+      },
+      "setup": {
+        "description": "Setup tools and AI integrations",
+        "purpose": "Configure development tools and AI providers for optimal workflow"
+      },
+      "ai": {
+        "description": "Manage AI providers for code analysis",
+        "purpose": "Configure and manage AI-powered code analysis capabilities"
+      },
+      "update_db": {
+        "description": "Update the tools database from remote source",
+        "purpose": "Refresh the database of available development tools and configurations"
+      },
+      "watch": {
+        "description": "Start WOARU supervisor to continuously monitor the project",
+        "purpose": "Enable real-time monitoring and automated improvements for your project"
+      },
+      "status": {
+        "description": "Show WOARU supervisor status and project health",
+        "purpose": "View current monitoring status and project health metrics"
+      },
+      "update": {
+        "description": "Updates WOARU to the latest version from npm",
+        "purpose": "Keep WOARU up-to-date with the latest features and improvements"
+      },
+      "stop": {
+        "description": "Stop the WOARU supervisor",
+        "purpose": "Disable project monitoring and background processes"
+      },
+      "logs": {
+        "description": "Show supervisor logs",
+        "purpose": "View detailed logs from the WOARU supervisor"
+      },
+      "recommendations": {
+        "description": "Show current tool recommendations",
+        "purpose": "Display personalized tool suggestions for your project"
+      },
+      "helpers": {
+        "description": "Show all detected/activated development tools and helpers",
+        "purpose": "View all currently active development tools and configurations"
+      },
+      "docu": {
+        "description": "AI-powered code documentation generator",
+        "purpose": "Generate comprehensive documentation for your codebase"
+      },
+      "ignore": {
+        "description": "Add a tool to the ignore list",
+        "purpose": "Exclude specific tools from recommendations and monitoring"
+      },
+      "review": {
+        "description": "Code review and analysis tools",
+        "purpose": "Comprehensive code quality and security analysis"
+      },
+      "analyze": {
+        "description": "Comprehensive project analysis including security audit",
+        "purpose": "Perform deep analysis of your project's health and security"
+      },
+      "rollback": {
+        "description": "Rollback changes made by a specific tool",
+        "purpose": "Undo changes made by WOARU tools and configurations"
+      },
+      "commands": {
+        "description": "Show detailed command reference documentation",
+        "purpose": "Browse all available WOARU commands with detailed explanations"
+      },
+      "wiki": {
+        "description": "Show comprehensive WOARU documentation and concept guide",
+        "purpose": "Access complete documentation and learn WOARU concepts"
+      },
+      "message": {
+        "description": "Send reports from history to configured message channels",
+        "purpose": "Share analysis reports via configured communication channels"
+      },
+      "version": {
+        "description": "Show version information",
+        "purpose": "Display current WOARU version and system information"
+      },
+      "config": {
+        "description": "Configure WOARU settings",
+        "purpose": "Manage WOARU configuration and preferences"
+      },
+      "language": {
+        "description": "Interactive language selection",
+        "purpose": "Change the language used by WOARU interface"
+      }
     }
   }
 }
