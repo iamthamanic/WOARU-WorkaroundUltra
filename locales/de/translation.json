@@ -74,11 +74,12 @@
   },
   "language_command": {
     "title": "Sprachauswahl",
-    "current_language": "Aktuell ausgewählte Sprache: {{language}}",
+    "current_language": "Aktuell ausgewählte Sprache: {{language}} ({{code}})",
     "select_new": "Wählen Sie eine neue Sprache:",
     "language_changed": "Sprache wurde erfolgreich auf {{language}} geändert",
     "language_unchanged": "Sprache bleibt auf {{language}} eingestellt",
-    "next_usage_note": "Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv."
+    "next_usage_note": "Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv.",
+    "error_changing": "Fehler beim Ändern der Sprache:"
   },
   "ai_prompts": {
     "language_instruction": "Antworte ausschließlich in deutscher Sprache."
@@ -272,7 +273,9 @@
   "ui": {
     "available_commands": "Verfügbare Befehle",
     "help_tip": "Verwenden Sie \"woaru <command> --help\" für detaillierte Optionen",
-    "documentation_tip": "Für umfassende Dokumentation: woaru wiki"
+    "documentation_tip": "Für umfassende Dokumentation: woaru wiki",
+    "quick_commands": "Schnellbefehle",
+    "run_commands_help": "Führen Sie \"woaru commands\" für detaillierte Hilfe aus"
   },
   "ai_helpers": {
     "config_check_error": "Fehler beim Prüfen der AI-Konfiguration:",
@@ -534,5 +537,70 @@
         "purpose": "Ändert die von WOARU-Interface verwendete Sprache"
       }
     }
+  },
+  "general": {
+    "continue_prompt": "Drücke Enter um fortzufahren...",
+    "select_provider": "Wähle den primären Provider für Reviews:",
+    "select_ai_provider": "Wähle einen AI-Provider:",
+    "failed_to_configure": "Konfiguration fehlgeschlagen",
+    "setup_cancelled": "Setup abgebrochen.",
+    "project_setup_complete": "Projekt-Setup erfolgreich abgeschlossen!",
+    "next_steps": "Nächste Schritte:",
+    "deprecated_warning_path": "Hinweis: Projektpfad-Option ist veraltet. AI-Konfiguration ist jetzt global.",
+    "deprecated_warning_llm": "Hinweis: \"woaru setup llm\" ist veraltet. Verwende \"woaru ai setup\" stattdessen."
+  },
+  "startup": {
+    "startup_notes": "Startup-Hinweise:",
+    "startup_problems": "Startup-Probleme:"
+  },
+  "analysis": {
+    "results": "Analyseergebnisse:",
+    "setup_recommendations": "Setup-Empfehlungen:",
+    "framework_tools": "Framework-spezifische Tools:",
+    "refactor_suggestions": "Refactoring-Vorschläge:",
+    "already_installed": "Bereits installiert:",
+    "code_insights": "Code-Analyse-Einsichten:",
+    "claude_automation": "Claude-Automatisierungs-Ideen:",
+    "confirm_setup": "Möchten Sie mit dem automatisierten Setup fortfahren?"
+  },
+  "notifications": {
+    "critical_issues": "Kritische Probleme erkannt:",
+    "woaru_update": "WOARU Empfehlungs-Update:",
+    "critical_priority": "Kritisch:",
+    "high_priority": "Hohe Priorität:",
+    "suggestions": "Vorschläge:",
+    "run_recommendations": "Führen Sie \"woaru recommendations\" für Details aus",
+    "quality_check_failed": "KRITISCHE QUALITÄTSPRÜFUNG FEHLGESCHLAGEN",
+    "file": "Datei:",
+    "tool": "Tool:",
+    "fix_before_continuing": "Beheben Sie diese Probleme vor der Weiterentwicklung",
+    "run_manually": "Führen Sie das Tool manuell aus für detaillierte Ausgabe",
+    "production_audit": "Produktions-Bereitschafts-Audit:",
+    "critical_must_fix": "KRITISCH - Muss behoben werden:",
+    "high_should_fix": "HOCH - Sollte vor Produktion behoben werden:",
+    "medium_improvement": "MITTEL - Verbesserung empfohlen:",
+    "low_optional": "NIEDRIG - Optional:",
+    "run_analyze_details": "Führen Sie \"woaru analyze\" für detaillierte Analyse aus",
+    "security_alert": "SICHERHEITSWARNUNG",
+    "security_warning": "SICHERHEITSHINWEIS",
+    "action_required": "Handlung erforderlich:",
+    "recommended": "Empfohlen:"
+  },
+  "api_prompts": {
+    "anthropic": "Bitte fügen Sie Ihren Anthropic API-Schlüssel ein (beginnt mit 'sk-'):",
+    "openai": "Bitte fügen Sie Ihren OpenAI API-Schlüssel ein (beginnt mit 'sk-'):",
+    "google": "Bitte fügen Sie Ihren Google AI API-Schlüssel ein:",
+    "azure_key": "Bitte fügen Sie Ihren Azure OpenAI API-Schlüssel ein:",
+    "azure_endpoint": "Azure OpenAI Endpunkt-URL:",
+    "azure_deployment": "Deployment-Name:",
+    "deepseek": "Geben Sie Ihren DeepSeek API-Schlüssel ein:",
+    "ollama_url": "Ollama API-URL:",
+    "custom_model": "Geben Sie benutzerdefinierten Modellnamen ein:",
+    "select_claude_model": "Wählen Sie Claude-Modell:",
+    "select_gpt_model": "Wählen Sie GPT-Modell:",
+    "select_gemini_model": "Wählen Sie Gemini-Modell:",
+    "select_deepseek_model": "Wählen Sie DeepSeek-Modell:",
+    "select_ollama_model": "Wählen Sie Ollama-Modell:",
+    "confirm_clear_logs": "Sind Sie sicher, dass Sie alle Logs löschen möchten? Dies kann nicht rückgängig gemacht werden."
   }
 }

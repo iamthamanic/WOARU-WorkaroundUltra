@@ -6,6 +6,9 @@ export const displaySplashScreen = async () => {
   const fs = require('fs-extra');
   const path = require('path');
 
+  // Import i18n function
+  const { t } = await import('../config/i18n');
+
   // Get version from package.json
   const packagePath = path.resolve(__dirname, '../../package.json');
   const packageData = await fs.readJson(packagePath);
@@ -18,24 +21,24 @@ export const displaySplashScreen = async () => {
   );
   console.log(chalk.gray(`   Version ${version}`));
   console.log();
-  console.log(chalk.white('Quick Commands:'));
+  console.log(chalk.white(t('ui.quick_commands')));
   console.log(
-    chalk.gray('  • woaru analyze        - Comprehensive project analysis')
+    chalk.gray(`  • woaru analyze        - ${t('commands.analyze.description')}`)
   );
   console.log(
-    chalk.gray('  • woaru watch          - Start continuous monitoring')
+    chalk.gray(`  • woaru watch          - ${t('commands.watch.description')}`)
   );
   console.log(
-    chalk.gray('  • woaru review         - Code review and analysis')
+    chalk.gray(`  • woaru review         - ${t('commands.review.description')}`)
   );
   console.log(
-    chalk.gray('  • woaru setup          - Setup development tools & ai')
+    chalk.gray(`  • woaru setup          - ${t('commands.setup.description')}`)
   );
   console.log(
-    chalk.gray('  • woaru commands       - Show all available commands')
+    chalk.gray(`  • woaru commands       - ${t('commands.commands.description')}`)
   );
   console.log();
-  console.log(chalk.yellow('💡 Run "woaru commands" for detailed help'));
+  console.log(chalk.yellow(`💡 ${t('ui.run_commands_help')}`));
   console.log();
 };
 

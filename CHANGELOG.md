@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.2] - 2025-07-19
+
+### Added
+- **Complete i18n System Overhaul**: Comprehensive internationalization implementation
+  - Added 50+ new translation keys across all major UI components
+  - Implemented structured translation categories: `general`, `startup`, `analysis`, `notifications`, `api_prompts`
+  - Added support for parameterized translations with variable substitution
+- **Multilingual Wiki System**: Language-aware documentation
+  - Created separate language directories: `docs/wiki/en/` and `docs/wiki/de/`
+  - Added complete English translations for all wiki content
+  - Implemented dynamic language-based content loading with intelligent fallback
+- **Enhanced Language Selection**: Improved language switching functionality
+  - Fully internationalized language selection dialog
+  - Real-time language detection and switching
+  - Consistent language persistence across sessions
+
+### Fixed
+- **Mixed Language Output**: Eliminated all mixed German/English text display
+  - Replaced 100+ hardcoded strings with proper i18n function calls
+  - Fixed language command showing translation keys instead of translated text
+  - Resolved startup messages displaying in wrong language
+- **i18n Runtime Issues**: Improved initialization and fallback mechanisms
+  - Enhanced `safeT()` function with better fallback logic
+  - Fixed translation loading timing issues during CLI startup
+  - Implemented robust i18n initialization sequence
+
+### Changed
+- **Build System**: Enhanced build pipeline for internationalization
+  - Automatic copying of `locales/` and `docs/` directories to `dist/`
+  - Integrated i18n asset management into npm build process
+- **CLI User Experience**: Consistent multilingual interface
+  - All user-facing strings now properly localized
+  - Improved error messages and prompts in user's preferred language
+  - Enhanced splash screen with translated quick commands
+
+### Technical Improvements
+- **i18n Architecture**: Robust internationalization foundation
+  - Improved translation function with initialization checks
+  - Better error handling for missing translations
+  - Type-safe translation system with TypeScript support
+
 ## [5.1.1] - 2025-07-19
 
 ### Fixed

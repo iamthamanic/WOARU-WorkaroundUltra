@@ -41,7 +41,16 @@ let supervisor: WOARUSupervisor | null = null;
  */
 function safeT(key: string, fallback: string): string {
   try {
-    return isInitialized() ? t(key) : fallback;
+    if (!isInitialized()) {
+      return fallback;
+    }
+    const translation = t(key);
+    // Check if translation actually exists (i18next returns the key if no translation found)
+    // Also handle cases where the translation is the same as the key
+    if (translation && translation !== key && translation.trim() !== '') {
+      return translation;
+    }
+    return fallback;
   } catch (error) {
     // Silently fall back to default text if translation fails
     // This ensures the CLI remains functional even if translations are broken
@@ -73,7 +82,7 @@ async function performStartupChecks() {
     
     // Only display critical errors
     if (checkResult.errors.length > 0) {
-      console.log(chalk.red('\n❌ Startup-Probleme:'));
+      console.log(chalk.red(`\n❌ ${t('startup.startup_problems')}`));
       checkResult.errors.forEach(error => {
         console.log(`   ${error}`);
       });
@@ -81,7 +90,7 @@ async function performStartupChecks() {
     
     // Display warnings briefly
     if (checkResult.warnings.length > 0) {
-      console.log(chalk.yellow('\n📋 Hinweise:'));
+      console.log(chalk.yellow(`\n📋 ${t('startup.startup_notes')}`));
       checkResult.warnings.forEach(warning => {
         console.log(`   ${warning}`);
       });
@@ -122,10 +131,10 @@ program
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
       } else {
-        console.log(chalk.blue('📋 Analysis Results:\n'));
+        console.log(chalk.blue(`📋 ${t('analysis.results')}\n`));
 
         if (result.setup_recommendations.length > 0) {
-          console.log(chalk.yellow('🔧 Setup Recommendations:'));
+          console.log(chalk.yellow(`🔧 ${t('analysis.setup_recommendations')}:`));
           result.setup_recommendations.forEach(rec =>
             console.log(`  • ${rec}`)
           );
@@ -476,7 +485,7 @@ async function selectPrimaryProvider() {
   if (enabledProviders.length === 0) {
     console.log(chalk.red('\n❌ Keine aktivierten Provider gefunden!'));
     console.log(chalk.gray('   Bitte erst Provider konfigurieren und aktivieren.'));
-    await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+    await inquirer.prompt([{ type: 'input', name: 'continue', message: t('general.continue_prompt') }]);
     return;
   }
   
@@ -493,7 +502,7 @@ async function selectPrimaryProvider() {
     {
       type: 'list',
       name: 'selectedProvider',
-      message: 'Wähle den primären Provider für Reviews:',
+      message: t('general.select_provider'),
       choices: providerChoices,
     },
   ]);
@@ -501,7 +510,7 @@ async function selectPrimaryProvider() {
   await configManager.updateMultiAiReviewConfig(false, selectedProvider);
   console.log(chalk.green(`\n✅ ${selectedProvider} wurde als primärer Provider ausgewählt!`));
   
-  await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Drücke Enter um fortzufahren...' }]);
+  await inquirer.prompt([{ type: 'input', name: 'continue', message: t('general.continue_prompt') }]);
 }
 
 /**
@@ -561,7 +570,7 @@ async function runAiSetup() {
       {
         type: 'list',
         name: 'selectedProvider',
-        message: 'Wähle einen AI-Provider:',
+        message: t('general.select_ai_provider'),
         choices: choices,
       },
     ]);
@@ -4557,29 +4566,47 @@ async function displayCurrentAIStatus(): Promise<void> {
 
 async function displayWikiContent(): Promise<void> {
   try {
+    // Import i18n and get current language
+    const { getCurrentLanguage, initializeI18n } = await import('./config/i18n');
+    await initializeI18n();
+    const currentLang = getCurrentLanguage();
+    
     console.log(chalk.cyan.bold('📚 WOARU Wiki - Comprehensive Documentation'));
     console.log(chalk.gray('═'.repeat(80)));
     console.log();
 
-    // Load concept documentation
-    const conceptPath = path.join(__dirname, '..', 'docs', 'wiki', 'concept.md');
-    const featuresPath = path.join(__dirname, '..', 'docs', 'wiki', 'features.md');
+    // Load concept documentation based on current language
+    const conceptPath = path.join(__dirname, '..', 'docs', 'wiki', currentLang, 'concept.md');
+    const featuresPath = path.join(__dirname, '..', 'docs', 'wiki', currentLang, 'features.md');
 
     let conceptContent = '';
     let featuresContent = '';
 
-    // Load concept.md
+    // Load concept.md for current language
     if (await fs.pathExists(conceptPath)) {
       conceptContent = await fs.readFile(conceptPath, 'utf-8');
     } else {
-      conceptContent = '# WOARU Concept\n\nConcept documentation not found. Please ensure docs/wiki/concept.md exists.';
+      // Fallback to English if current language file doesn't exist
+      const fallbackConceptPath = path.join(__dirname, '..', 'docs', 'wiki', 'en', 'concept.md');
+      if (await fs.pathExists(fallbackConceptPath)) {
+        conceptContent = await fs.readFile(fallbackConceptPath, 'utf-8');
+        console.log(chalk.yellow(`ℹ️ Wiki content loaded in English (${currentLang} version not available)`));
+      } else {
+        conceptContent = '# WOARU Concept\n\nConcept documentation not found. Please ensure docs/wiki/concept.md exists.';
+      }
     }
 
-    // Load features.md
+    // Load features.md for current language
     if (await fs.pathExists(featuresPath)) {
       featuresContent = await fs.readFile(featuresPath, 'utf-8');
     } else {
-      featuresContent = '# WOARU Features\n\nFeature documentation not found. Please ensure docs/wiki/features.md exists.';
+      // Fallback to English if current language file doesn't exist
+      const fallbackFeaturesPath = path.join(__dirname, '..', 'docs', 'wiki', 'en', 'features.md');
+      if (await fs.pathExists(fallbackFeaturesPath)) {
+        featuresContent = await fs.readFile(fallbackFeaturesPath, 'utf-8');
+      } else {
+        featuresContent = '# WOARU Features\n\nFeature documentation not found. Please ensure docs/wiki/features.md exists.';
+      }
     }
 
     // Generate dynamic command documentation
@@ -5096,7 +5123,7 @@ async function setupAnthropicProvider(): Promise<any> {
     {
       type: 'password',
       name: 'apiKey',
-      message: 'Bitte füge deinen Anthropic API-Key ein (beginnt mit \'sk-\'):',
+      message: t('api_prompts.anthropic'),
       mask: '*',
       validate: (input: string) => {
         const trimmed = input.trim();
@@ -5109,7 +5136,7 @@ async function setupAnthropicProvider(): Promise<any> {
     {
       type: 'list',
       name: 'model',
-      message: 'Select Claude model:',
+      message: t('api_prompts.select_claude_model'),
       choices: modelChoices,
       default: defaultModel
     },
@@ -5208,7 +5235,7 @@ async function setupOpenAIProvider(): Promise<any> {
     {
       type: 'password',
       name: 'apiKey',
-      message: 'Bitte füge deinen OpenAI API-Key ein (beginnt mit \'sk-\'):',
+      message: t('api_prompts.openai'),
       mask: '*',
       validate: (input: string) => {
         const trimmed = input.trim();
@@ -5221,7 +5248,7 @@ async function setupOpenAIProvider(): Promise<any> {
     {
       type: 'list',
       name: 'model',
-      message: 'Select GPT model:',
+      message: t('api_prompts.select_gpt_model'),
       choices: modelChoices,
       default: defaultModel
     },
@@ -5322,7 +5349,7 @@ async function setupGoogleProvider(): Promise<any> {
     {
       type: 'password',
       name: 'apiKey',
-      message: 'Bitte füge deinen Google AI API-Key ein:',
+      message: t('api_prompts.google'),
       mask: '*',
       validate: (input: string) => {
         const trimmed = input.trim();
@@ -5842,18 +5869,28 @@ program
     await initializeConfig();
     
     try {
-      const { getCurrentLanguage, setUserLanguage, SUPPORTED_LANGUAGES, LANGUAGE_NAMES } = await import('./config/i18n');
+      // Import and explicitly initialize i18n
+      const { initializeI18n, getCurrentLanguage, setUserLanguage, SUPPORTED_LANGUAGES, LANGUAGE_NAMES, t } = await import('./config/i18n');
+      await initializeI18n(); // Ensure it's initialized
+      
+      // Wait a moment for initialization to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Get current language
       const currentLang = getCurrentLanguage();
       
-      console.log(chalk.cyan('\n🌍 Language Selection\n'));
+      // Use hardcoded fallbacks since this is a language selection command
+      const title = t('language_command.title') || 'Language Selection';
+      const currentLangText = t('language_command.current_language', { language: LANGUAGE_NAMES[currentLang], code: currentLang }) || `Currently selected language: ${LANGUAGE_NAMES[currentLang]} (${currentLang})`;
+      const selectNewText = t('language_command.select_new') || 'Choose a new language:';
+      
+      console.log(chalk.cyan(`\n🌍 ${title}\n`));
       
       const { language } = await inquirer.prompt([
         {
           type: 'list',
           name: 'language',
-          message: `Aktuell ausgewählte Sprache: ${LANGUAGE_NAMES[currentLang]} (${currentLang})\n\nWählen Sie eine neue Sprache:`,
+          message: `${currentLangText}\n\n${selectNewText}`,
           choices: SUPPORTED_LANGUAGES.map(lang => ({
             name: `${LANGUAGE_NAMES[lang]} (${lang})`,
             value: lang
@@ -5865,14 +5902,18 @@ program
       // Check if user selected a different language
       if (language !== currentLang) {
         await setUserLanguage(language);
-        console.log(chalk.green(`\n✅ Sprache wurde erfolgreich auf ${LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES]} geändert.`));
-        console.log(chalk.gray(`💡 Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv.\n`));
+        const changedText = t('language_command.language_changed', { language: LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] }) || `Language successfully changed to ${LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES]}`;
+        const nextUsageText = t('language_command.next_usage_note') || 'The new language will be active in the next WOARU usage.';
+        console.log(chalk.green(`\n✅ ${changedText}`));
+        console.log(chalk.gray(`💡 ${nextUsageText}\n`));
       } else {
-        console.log(chalk.blue(`\n📋 Sprache bleibt auf ${LANGUAGE_NAMES[currentLang]} eingestellt.\n`));
+        const unchangedText = t('language_command.language_unchanged', { language: LANGUAGE_NAMES[currentLang] }) || `Language remains set to ${LANGUAGE_NAMES[currentLang]}`;
+        console.log(chalk.blue(`\n📋 ${unchangedText}\n`));
       }
       
     } catch (error) {
-      console.error(chalk.red('❌ Fehler beim Ändern der Sprache:'), error);
+      const errorText = t('language_command.error_changing') || 'Error changing language:';
+      console.error(chalk.red(`❌ ${errorText}`), error);
       process.exit(1);
     }
   });

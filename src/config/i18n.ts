@@ -139,7 +139,13 @@ export async function isFirstRun(): Promise<boolean> {
  * Get translation function (shorthand)
  */
 export function t(key: string, options?: any): string {
-  return i18next.t(key, options) as string;
+  if (!i18next.isInitialized) {
+    // Return fallback during early initialization
+    return key;
+  }
+  const result = i18next.t(key, options) as string;
+  // i18next returns the key if no translation found - this is expected behavior
+  return result;
 }
 
 /**

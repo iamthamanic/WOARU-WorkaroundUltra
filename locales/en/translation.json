@@ -74,11 +74,12 @@
   },
   "language_command": {
     "title": "Language Selection",
-    "current_language": "Currently selected language: {{language}}",
+    "current_language": "Currently selected language: {{language}} ({{code}})",
     "select_new": "Choose a new language:",
     "language_changed": "Language successfully changed to {{language}}",
     "language_unchanged": "Language remains set to {{language}}",
-    "next_usage_note": "The new language will be active in the next WOARU usage."
+    "next_usage_note": "The new language will be active in the next WOARU usage.",
+    "error_changing": "Error changing language:"
   },
   "ai_prompts": {
     "language_instruction": "Respond exclusively in English."
@@ -272,7 +273,9 @@
   "ui": {
     "available_commands": "Available Commands",
     "help_tip": "Use \"woaru <command> --help\" for detailed options",
-    "documentation_tip": "For comprehensive documentation: woaru wiki"
+    "documentation_tip": "For comprehensive documentation: woaru wiki",
+    "quick_commands": "Quick Commands",
+    "run_commands_help": "Run \"woaru commands\" for detailed help"
   },
   "ai_helpers": {
     "config_check_error": "Error checking AI configuration:",
@@ -534,5 +537,70 @@
         "purpose": "Change the language used by WOARU interface"
       }
     }
+  },
+  "general": {
+    "continue_prompt": "Press Enter to continue...",
+    "select_provider": "Choose the primary provider for reviews:",
+    "select_ai_provider": "Choose an AI provider:",
+    "failed_to_configure": "Failed to configure",
+    "setup_cancelled": "Setup cancelled.",
+    "project_setup_complete": "Project setup completed successfully!",
+    "next_steps": "Next steps:",
+    "deprecated_warning_path": "Note: Project path option is deprecated. AI configuration is now global.",
+    "deprecated_warning_llm": "Note: \"woaru setup llm\" is deprecated. Use \"woaru ai setup\" instead."
+  },
+  "startup": {
+    "startup_notes": "Startup Notes:",
+    "startup_problems": "Startup Problems:"
+  },
+  "analysis": {
+    "results": "Analysis Results:",
+    "setup_recommendations": "Setup Recommendations:",
+    "framework_tools": "Framework-Specific Tools:",
+    "refactor_suggestions": "Refactor Suggestions:",
+    "already_installed": "Already Installed:",
+    "code_insights": "Code Analysis Insights:",
+    "claude_automation": "Claude Automation Ideas:",
+    "confirm_setup": "Do you want to proceed with automated setup?"
+  },
+  "notifications": {
+    "critical_issues": "Critical Issues Detected:",
+    "woaru_update": "WOARU Recommendations Update:",
+    "critical_priority": "Critical:",
+    "high_priority": "High Priority:",
+    "suggestions": "Suggestions:",
+    "run_recommendations": "Run \"woaru recommendations\" for details",
+    "quality_check_failed": "CRITICAL QUALITY CHECK FAILED",
+    "file": "File:",
+    "tool": "Tool:",
+    "fix_before_continuing": "Fix these issues before continuing development",
+    "run_manually": "Run the tool manually to see detailed output",
+    "production_audit": "Production-Readiness-Audit:",
+    "critical_must_fix": "CRITICAL - Must be fixed:",
+    "high_should_fix": "HIGH - Should be fixed before production:",
+    "medium_improvement": "MEDIUM - Improvement recommended:",
+    "low_optional": "LOW - Optional:",
+    "run_analyze_details": "Run \"woaru analyze\" for detailed analysis",
+    "security_alert": "SECURITY ALERT",
+    "security_warning": "SECURITY WARNING",
+    "action_required": "Action Required:",
+    "recommended": "Recommended:"
+  },
+  "api_prompts": {
+    "anthropic": "Please paste your Anthropic API key (starts with 'sk-'):",
+    "openai": "Please paste your OpenAI API key (starts with 'sk-'):",
+    "google": "Please paste your Google AI API key:",
+    "azure_key": "Please paste your Azure OpenAI API key:",
+    "azure_endpoint": "Azure OpenAI endpoint URL:",
+    "azure_deployment": "Deployment name:",
+    "deepseek": "Enter your DeepSeek API key:",
+    "ollama_url": "Ollama API URL:",
+    "custom_model": "Enter custom model name:",
+    "select_claude_model": "Select Claude model:",
+    "select_gpt_model": "Select GPT model:",
+    "select_gemini_model": "Select Gemini model:",
+    "select_deepseek_model": "Select DeepSeek model:",
+    "select_ollama_model": "Select Ollama model:",
+    "confirm_clear_logs": "Are you sure you want to clear all logs? This cannot be undone."
   }
 }
