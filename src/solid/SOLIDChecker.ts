@@ -3,7 +3,7 @@
  * Koordiniert alle SOLID-Prinzipien-Checker und erstellt Gesamtberichte
  */
 
-import * as path from 'path';
+// Removed unused path import
 import { BaseSOLIDChecker } from './principles/BaseSOLIDChecker';
 import { SRPChecker } from './principles/SRPChecker';
 import {
@@ -216,9 +216,21 @@ export class SOLIDChecker {
   /**
    * Gruppiert Verstöße nach SOLID-Prinzipien
    */
-  private groupViolationsByPrinciple(violations: SOLIDViolation[]) {
+  private groupViolationsByPrinciple(violations: SOLIDViolation[]): {
+    SRP: { violations: number; score: number };
+    OCP: { violations: number; score: number };
+    LSP: { violations: number; score: number };
+    ISP: { violations: number; score: number };
+    DIP: { violations: number; score: number };
+  } {
     const principles: SOLIDPrinciple[] = ['SRP', 'OCP', 'LSP', 'ISP', 'DIP'];
-    const breakdown: any = {};
+    const breakdown = {} as {
+      SRP: { violations: number; score: number };
+      OCP: { violations: number; score: number };
+      LSP: { violations: number; score: number };
+      ISP: { violations: number; score: number };
+      DIP: { violations: number; score: number };
+    };
 
     principles.forEach(principle => {
       const principleViolations = violations.filter(

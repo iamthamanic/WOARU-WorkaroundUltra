@@ -1,5 +1,6 @@
 import { BaseAction } from './BaseAction';
 import { SetupOptions, PackageJson } from '../types';
+import { t } from '../config/i18n';
 import * as path from 'path';
 
 export class HuskyAction extends BaseAction {
@@ -24,9 +25,9 @@ export class HuskyAction extends BaseAction {
       const huskyDir = path.join(projectPath, '.husky');
 
       if (options.dryRun) {
-        console.log('Would install husky and lint-staged packages');
-        console.log('Would create .husky directory and pre-commit hook');
-        console.log('Would configure lint-staged in package.json');
+        console.log(t('actions.husky.dry_run_install'));
+        console.log(t('actions.husky.dry_run_create_hooks'));
+        console.log(t('actions.husky.dry_run_configure'));
         return true;
       }
 
@@ -44,7 +45,11 @@ export class HuskyAction extends BaseAction {
       );
 
       if (!installResult.success) {
-        throw new Error(`Failed to install packages: ${installResult.output}`);
+        throw new Error(
+          t('actions.failed_to_install_packages', {
+            output: installResult.output,
+          })
+        );
       }
 
       // Initialize husky
@@ -119,12 +124,10 @@ export class HuskyAction extends BaseAction {
         await this.writeJsonFile(packageJsonPath, packageJson);
       }
 
-      console.log(
-        '✅ Husky and lint-staged installed and configured successfully'
-      );
+      console.log(t('actions.husky.setup_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to setup Husky:', error);
+      console.error(t('actions.husky.setup_failed'), error);
       return false;
     }
   }
@@ -150,10 +153,10 @@ export class HuskyAction extends BaseAction {
         await fs.remove(huskyDir);
       }
 
-      console.log('✅ Husky setup rolled back successfully');
+      console.log(t('actions.husky.rollback_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to rollback Husky setup:', error);
+      console.error(t('actions.husky.rollback_failed'), error);
       return false;
     }
   }

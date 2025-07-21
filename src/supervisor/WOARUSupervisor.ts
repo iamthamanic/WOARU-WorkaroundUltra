@@ -13,6 +13,7 @@ import {
 } from '../auditor/ProductionReadinessAuditor';
 import { ToolsDatabaseManager } from '../database/ToolsDatabaseManager';
 import { SecurityScanResult, SecurityFinding } from '../types/security';
+import { ProjectAnalysis } from '../types/index';
 import {
   SupervisorConfig,
   ProjectState,
@@ -272,7 +273,7 @@ export class WOARUSupervisor extends EventEmitter {
       this.stateManager.updateFrameworks(frameworks);
 
       // Detect existing tools
-      this.detectExistingTools(analysis as any);
+      this.detectExistingTools(analysis);
 
       this.notificationManager.showSuccess(
         `Project analyzed: ${language} ${frameworks.length > 0 ? `(${frameworks.join(', ')})` : ''}`
@@ -282,7 +283,7 @@ export class WOARUSupervisor extends EventEmitter {
     }
   }
 
-  private detectExistingTools(analysis: any): void {
+  private detectExistingTools(analysis: ProjectAnalysis): void {
     // Check package.json for tools
     const toolPatterns = {
       eslint: /eslint/,
@@ -298,8 +299,8 @@ export class WOARUSupervisor extends EventEmitter {
     };
 
     const allDeps = [
-      ...(analysis.dependencies || []),
-      ...(analysis.devDependencies || []),
+      ...analysis.dependencies,
+      ...analysis.devDependencies,
     ].join(' ');
 
     Object.entries(toolPatterns).forEach(([tool, pattern]) => {
@@ -320,7 +321,7 @@ export class WOARUSupervisor extends EventEmitter {
       'rustfmt.toml': 'rustfmt',
     };
 
-    (analysis.configFiles || []).forEach((file: string) => {
+    analysis.configFiles.forEach((file: string) => {
       Object.entries(configTools).forEach(([pattern, tool]) => {
         if (file.includes(pattern)) {
           this.stateManager.addDetectedTool(tool);

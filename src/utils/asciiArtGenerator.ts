@@ -106,13 +106,13 @@ export async function generateLogoAsciiArt(
 
     // Calculate aspect ratio and resize
     const aspectRatio = image.width / image.height;
-    const targetWidth = finalOptions.width!;
+    const targetWidth = finalOptions.width || 80;
     const targetHeight = Math.round(targetWidth / aspectRatio / 2); // Divide by 2 for terminal character aspect ratio
 
     image.resize({ w: targetWidth, h: targetHeight });
 
     let asciiArt = '';
-    const chars = finalOptions.chars!;
+    const chars = finalOptions.chars || '@%#*+=-:. ';
 
     // Process each row
     for (let y = 0; y < targetHeight; y++) {

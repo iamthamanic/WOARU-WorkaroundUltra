@@ -85,17 +85,15 @@ export class EslintPlugin extends HybridBasePlugin {
   /**
    * Gets framework-specific ESLint configuration from database
    */
-  async getFrameworkSpecificConfig(framework: string): Promise<{
-    extends: string[];
-    plugins: string[];
-    rules: Record<string, any>;
-  } | null> {
+  async getFrameworkSpecificConfig(
+    framework: string
+  ): Promise<Record<string, unknown>> {
     try {
       const frameworkRecs =
         await this.databaseManager.getFrameworkRecommendations(framework);
 
       if (!frameworkRecs || !frameworkRecs.core_tools.includes('eslint')) {
-        return null;
+        return {};
       }
 
       // Get framework-specific config from database
@@ -112,10 +110,10 @@ export class EslintPlugin extends HybridBasePlugin {
         };
       }
 
-      return null;
+      return {};
     } catch (error) {
       console.warn('Failed to get framework-specific ESLint config:', error);
-      return null;
+      return {};
     }
   }
 
@@ -155,7 +153,7 @@ export class EslintPlugin extends HybridBasePlugin {
       }
 
       return { isDeprecated: false };
-    } catch (error) {
+    } catch {
       return { isDeprecated: false };
     }
   }
@@ -396,7 +394,7 @@ export class EslintPlugin extends HybridBasePlugin {
   /**
    * Gets framework-specific ESLint rules
    */
-  private getFrameworkRules(framework: string): Record<string, any> {
+  private getFrameworkRules(framework: string): Record<string, unknown> {
     const baseRules = {
       'no-unused-vars': 'warn',
       'no-console': 'warn',

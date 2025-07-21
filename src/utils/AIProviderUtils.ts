@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
+import { t } from '../config/i18n';
 
 export interface AIModel {
   id: string;
@@ -23,7 +24,7 @@ export class AIProviderUtils {
    */
   static async fetchOpenAIModels(apiKey: string): Promise<AIModel[]> {
     try {
-      console.log(chalk.gray('🔄 Fetching available models from OpenAI...'));
+      console.log(chalk.gray(t('ai_provider_utils.fetching_openai_models')));
 
       const response = await axios.get('https://api.openai.com/v1/models', {
         headers: {
@@ -37,33 +38,36 @@ export class AIProviderUtils {
         // Filter and map OpenAI models
         const relevantModels = response.data.data
           .filter(
-            (model: any) =>
-              model.id.includes('gpt-4') ||
-              model.id.includes('gpt-3.5') ||
-              model.id.includes('o1')
+            (model: Record<string, unknown>) =>
+              typeof model.id === 'string' &&
+              (model.id.includes('gpt-4') ||
+                model.id.includes('gpt-3.5') ||
+                model.id.includes('o1'))
           )
-          .map((model: any) => ({
-            id: model.id,
-            name: model.id,
+          .map((model: Record<string, unknown>) => ({
+            id: model.id as string,
+            name: model.id as string,
             description: `OpenAI model ${model.id}`,
             category: 'live',
-            contextWindow: this.getContextWindowForModel(model.id),
+            contextWindow: this.getContextWindowForModel(model.id as string),
           }))
           .sort((a: AIModel, b: AIModel) => b.id.localeCompare(a.id));
 
         console.log(
           chalk.green(
-            `✅ Found ${relevantModels.length} models from OpenAI API`
+            t('ai_provider_utils.models_found_openai', {
+              count: relevantModels.length,
+            })
           )
         );
         return relevantModels;
       }
     } catch (error) {
       console.log(
-        chalk.yellow('⚠️ Could not fetch live models, using fallback')
+        chalk.yellow(t('ai_provider_utils.could_not_fetch_fallback'))
       );
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        console.log(chalk.red('❌ Invalid API key'));
+        console.log(chalk.red(t('ai_provider_utils.invalid_api_key_error')));
       }
     }
 
@@ -77,12 +81,10 @@ export class AIProviderUtils {
    * @param apiKey - The Anthropic API key
    * @returns Promise<AIModel[]> - List of available models
    */
-  static async fetchAnthropicModels(apiKey: string): Promise<AIModel[]> {
+  static async fetchAnthropicModels(_apiKey: string): Promise<AIModel[]> {
     // Anthropic doesn't have a public models endpoint
     // We could validate the API key with a test request, but for now use fallback
-    console.log(
-      chalk.gray('📋 Loading Anthropic models from configuration...')
-    );
+    console.log(chalk.gray(t('ai_provider_utils.fetching_anthropic_models')));
     return this.getFallbackModels('anthropic');
   }
 
@@ -93,7 +95,7 @@ export class AIProviderUtils {
    */
   static async fetchGoogleModels(apiKey: string): Promise<AIModel[]> {
     try {
-      console.log(chalk.gray('🔄 Fetching available models from Google...'));
+      console.log(chalk.gray(t('ai_provider_utils.fetching_google_models')));
 
       const response = await axios.get(
         `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
@@ -102,28 +104,35 @@ export class AIProviderUtils {
 
       if (response.data && response.data.models) {
         const relevantModels = response.data.models
-          .filter((model: any) => model.name.includes('gemini'))
-          .map((model: any) => ({
-            id: model.name.replace('models/', ''),
-            name: model.displayName || model.name,
-            description: model.description || `Google ${model.name}`,
+          .filter(
+            (model: Record<string, unknown>) =>
+              typeof model.name === 'string' && model.name.includes('gemini')
+          )
+          .map((model: Record<string, unknown>) => ({
+            id: (model.name as string).replace('models/', ''),
+            name: (model.displayName as string) || (model.name as string),
+            description:
+              (model.description as string) || `Google ${model.name}`,
             category: 'live',
-            supportedFeatures: model.supportedGenerationMethods || [],
+            supportedFeatures:
+              (model.supportedGenerationMethods as string[]) || [],
           }));
 
         console.log(
           chalk.green(
-            `✅ Found ${relevantModels.length} models from Google API`
+            t('ai_provider_utils.models_found_google', {
+              count: relevantModels.length,
+            })
           )
         );
         return relevantModels;
       }
     } catch (error) {
       console.log(
-        chalk.yellow('⚠️ Could not fetch live models, using fallback')
+        chalk.yellow(t('ai_provider_utils.could_not_fetch_fallback'))
       );
       if (axios.isAxiosError(error) && error.response?.status === 400) {
-        console.log(chalk.red('❌ Invalid API key'));
+        console.log(chalk.red(t('ai_provider_utils.invalid_api_key_error')));
       }
     }
 
@@ -142,7 +151,7 @@ export class AIProviderUtils {
       const providerData = aiModelsData.llm_providers[provider];
 
       if (providerData && providerData.models) {
-        return providerData.models.map((model: any) => ({
+        return providerData.models.map((model: Record<string, unknown>) => ({
           id: model.id,
           name: model.name,
           description: model.description,
@@ -155,7 +164,9 @@ export class AIProviderUtils {
     } catch (error) {
       console.log(
         chalk.red(
-          `❌ Error loading fallback models: ${error instanceof Error ? error.message : error}`
+          t('ai_provider_utils.error_loading_fallback', {
+            error: error instanceof Error ? error.message : error,
+          })
         )
       );
     }

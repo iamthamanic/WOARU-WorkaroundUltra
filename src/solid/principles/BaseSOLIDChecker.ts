@@ -4,6 +4,7 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { safeExecAsync, validateCommand, ALLOWED_COMMANDS } from '../../utils/secureExecution';
 import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
 import { APP_CONFIG } from '../../config/constants';
 
@@ -34,12 +35,17 @@ export abstract class BaseSOLIDChecker {
     options: { cwd?: string; timeout?: number } = {}
   ): Promise<string> {
     try {
-      const fullCommand = `${command} ${args.join(' ')}`;
-      const { stdout, stderr } = await execAsync(fullCommand, {
+      // Validate command to prevent injection
+      if (!validateCommand(command, [...ALLOWED_COMMANDS])) {
+        throw new Error(`Command '${command}' is not allowed`);
+      }
+      
+      const result = await safeExecAsync(command, args, {
         cwd: options.cwd || process.cwd(),
         timeout: options.timeout || APP_CONFIG.TIMEOUTS.DEFAULT,
-        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
       });
+      
+      const { stdout, stderr } = result;
       
       if (stderr && !stdout) {
         throw new Error(stderr);

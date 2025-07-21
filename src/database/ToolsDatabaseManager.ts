@@ -2,6 +2,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import https from 'https';
+import { safeJsonParse } from '../utils/safeJsonParser';
 
 // Core Tool Definition - Secure plugins with dynamic configuration
 export interface CoreTool {
@@ -81,7 +82,7 @@ export interface HybridToolsDatabase {
     [frameworkName: string]: {
       core_tools: string[];
       experimental_tools: string[];
-      [configType: string]: any; // eslint_config, prettier_config, etc.
+      [configType: string]: unknown; // eslint_config, prettier_config, etc.
     };
   };
 
@@ -90,7 +91,7 @@ export interface HybridToolsDatabase {
     [categoryName: string]: {
       description: string;
       tools: {
-        [toolName: string]: any;
+        [toolName: string]: unknown;
       };
     };
   };
@@ -251,7 +252,7 @@ export class ToolsDatabaseManager {
               '🔄 WOARU: Outdated database format, downloading hybrid version...'
             );
           }
-        } catch (error) {
+        } catch {
           console.warn(
             '🔄 WOARU: Cached tools database is corrupted, downloading fresh copy...'
           );
@@ -267,7 +268,7 @@ export class ToolsDatabaseManager {
       console.log('✅ WOARU: Hybrid tools database cached successfully');
 
       return freshData;
-    } catch (error) {
+    } catch {
       console.warn(
         '⚠️ WOARU: Failed to download hybrid database, using local fallback'
       );
@@ -284,7 +285,7 @@ export class ToolsDatabaseManager {
 
       // Convert hybrid database to legacy format for backward compatibility
       return this.convertHybridToLegacy(hybridDb);
-    } catch (error) {
+    } catch {
       console.warn(
         '⚠️ WOARU: Failed to get hybrid database, falling back to legacy'
       );
@@ -312,7 +313,10 @@ export class ToolsDatabaseManager {
 
         response.on('end', () => {
           try {
-            const parsedData = JSON.parse(data) as HybridToolsDatabase;
+            const parsedData = safeJsonParse<HybridToolsDatabase>(data);
+            if (!parsedData) {
+              throw new Error('Failed to parse tools database JSON');
+            }
 
             // Validate hybrid format
             if (!parsedData.core_tools || !parsedData.experimental_tools) {
@@ -361,7 +365,7 @@ export class ToolsDatabaseManager {
             const hybridData = cachedData as HybridToolsDatabase;
             return this.convertHybridToLegacy(hybridData);
           }
-        } catch (error) {
+        } catch {
           console.warn(
             '🔄 WOARU: Cached tools database is corrupted, downloading fresh copy...'
           );
@@ -377,7 +381,7 @@ export class ToolsDatabaseManager {
       console.log('✅ WOARU: Tools database cached successfully');
 
       return freshData;
-    } catch (error) {
+    } catch {
       console.warn(
         '⚠️ WOARU: Failed to download tools database, using local fallback'
       );
@@ -405,8 +409,11 @@ export class ToolsDatabaseManager {
 
         response.on('end', () => {
           try {
-            const parsedData = JSON.parse(data);
-            resolve(parsedData as ToolsDatabase);
+            const parsedData = safeJsonParse<ToolsDatabase>(data);
+            if (!parsedData) {
+              throw new Error('Failed to parse tools database JSON');
+            }
+            resolve(parsedData);
           } catch (error) {
             reject(new Error(`Failed to parse JSON: ${error}`));
           }
@@ -433,7 +440,7 @@ export class ToolsDatabaseManager {
         const localData = await fs.readJson(this.localFallbackPath);
         return localData as ToolsDatabase;
       }
-    } catch (error) {
+    } catch {
       console.warn('⚠️ WOARU: Local fallback also failed');
     }
 
@@ -494,7 +501,7 @@ export class ToolsDatabaseManager {
           version: data.version,
         };
       }
-    } catch (error) {
+    } catch {
       // Ignore errors
     }
 
@@ -540,7 +547,7 @@ export class ToolsDatabaseManager {
   /**
    * Gets tools by category
    */
-  async getToolsByCategory(category: string): Promise<any> {
+  async getToolsByCategory(category: string): Promise<Record<string, unknown>> {
     const database = await this.getDatabase();
     return database.categories[category]?.tools || {};
   }
@@ -558,9 +565,11 @@ export class ToolsDatabaseManager {
   /**
    * Searches for tools by keywords
    */
-  async searchToolsByKeywords(keywords: string[]): Promise<any[]> {
+  async searchToolsByKeywords(
+    keywords: string[]
+  ): Promise<Array<Record<string, unknown>>> {
     const database = await this.getDatabase();
-    const results: any[] = [];
+    const results: Array<Record<string, unknown>> = [];
 
     Object.entries(database.categories).forEach(([categoryName, category]) => {
       Object.entries(category.tools).forEach(([toolKey, tool]) => {
@@ -709,7 +718,7 @@ export class ToolsDatabaseManager {
         version: remoteData.version,
         lastModified: lastModified || new Date(),
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -924,7 +933,7 @@ export class ToolsDatabaseManager {
     try {
       const hybridDb = await this.getHybridDatabase();
       return hybridDb.deprecation_warnings[toolName] || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -950,7 +959,8 @@ export class ToolsDatabaseManager {
 
     // Use legacy_categories if available, otherwise create from core_tools
     if (hybridDb.legacy_categories) {
-      legacyDb.categories = hybridDb.legacy_categories;
+      legacyDb.categories =
+        hybridDb.legacy_categories as ToolsDatabase['categories'];
     } else {
       // Convert core_tools to legacy category format
       legacyDb.categories = this.createLegacyCategoriesFromCoreTools(hybridDb);
@@ -1024,7 +1034,7 @@ export class ToolsDatabaseManager {
           return localData as HybridToolsDatabase;
         }
       }
-    } catch (error) {
+    } catch {
       console.warn('⚠️ WOARU: Local hybrid fallback also failed');
     }
 
@@ -1089,7 +1099,7 @@ export class ToolsDatabaseManager {
             console.log('✅ WOARU: Using local AI models database');
             return localData as AIModelsDatabase;
           }
-        } catch (error) {
+        } catch {
           // Continue to cache/remote fallback
         }
       }
@@ -1110,7 +1120,7 @@ export class ToolsDatabaseManager {
               '🔄 WOARU: Outdated AI models database format, downloading new version...'
             );
           }
-        } catch (error) {
+        } catch {
           console.warn(
             '🔄 WOARU: Cached AI models database is corrupted, downloading fresh copy...'
           );
@@ -1126,7 +1136,7 @@ export class ToolsDatabaseManager {
       console.log('✅ WOARU: AI models database cached successfully');
 
       return freshData;
-    } catch (error) {
+    } catch {
       console.warn(
         '⚠️ WOARU: Failed to download AI models database, using local fallback'
       );
@@ -1154,7 +1164,10 @@ export class ToolsDatabaseManager {
 
         response.on('end', () => {
           try {
-            const parsedData = JSON.parse(data) as AIModelsDatabase;
+            const parsedData = safeJsonParse<AIModelsDatabase>(data);
+            if (!parsedData) {
+              throw new Error('Failed to parse AI models database JSON');
+            }
 
             // Validate AI models database format
             if (!parsedData.llm_providers || !parsedData.version) {
@@ -1189,7 +1202,7 @@ export class ToolsDatabaseManager {
         const localData = await fs.readJson(this.aiModelsLocalFallbackPath);
         return localData as AIModelsDatabase;
       }
-    } catch (error) {
+    } catch {
       console.warn('⚠️ WOARU: Local AI models fallback also failed');
     }
 

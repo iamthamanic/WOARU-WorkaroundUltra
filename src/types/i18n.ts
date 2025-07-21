@@ -47,7 +47,7 @@ export type SupportedLanguage = 'en' | 'de';
 /**
  * Translation key paths - helps with type safety for translation keys
  */
-export type TranslationKey = 
+export type TranslationKey =
   | `cli.commands.${string}.description`
   | `cli.commands.${string}.${string}`
   | `version_manager.${string}`

@@ -1,17 +1,32 @@
 import { ProjectAnalyzer } from '../analyzer/ProjectAnalyzer';
-import { CodeAnalyzer } from '../analyzer/CodeAnalyzer';
+import {
+  CodeAnalyzer,
+  CodeInsight as AnalyzerCodeInsight,
+} from '../analyzer/CodeAnalyzer';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { PluginManager } from '../plugins/PluginManager';
 import { ActionManager } from '../actions/ActionManager';
 import { ProductionReadinessAuditor } from '../auditor/ProductionReadinessAuditor';
 import { QualityRunner } from '../quality/QualityRunner';
 import { NotificationManager } from '../supervisor/NotificationManager';
-import { SecurityScanResult, SecurityFinding } from '../types/security';
-import { AnalysisResult, SetupOptions, ProjectAnalysis } from '../types';
+import { SecurityScanResult } from '../types/security';
+import {
+  AnalysisResult,
+  SetupOptions,
+  ProjectAnalysis,
+  SetupRecommendation,
+  ConfigurationAudit,
+  InfrastructureFinding,
+  InfrastructureSecurityResult,
+  SecurityCombinedFindings,
+  TrivyResult,
+  TrivyMisconfiguration,
+} from '../types';
 import chalk from 'chalk';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { t } from '../config/i18n';
 
 const execAsync = promisify(exec);
 
@@ -39,24 +54,36 @@ export class WOARUEngine {
 
   async analyzeProject(projectPath: string): Promise<AnalysisResult> {
     try {
-      console.log(chalk.blue('🔍 Analyzing project...'));
+      console.log(chalk.blue(t('woaru_engine.analyzing_project')));
 
       const analysis = await this.projectAnalyzer.analyzeProject(projectPath);
       const metadata =
         await this.projectAnalyzer.getProjectMetadata(projectPath);
 
       console.log(
-        chalk.gray(`📦 Project: ${metadata.name} (${metadata.version})`)
+        chalk.gray(
+          t('woaru_engine.project_info', {
+            name: metadata.name,
+            version: metadata.version,
+          })
+        )
       );
-      console.log(chalk.gray(`🔧 Language: ${analysis.language}`));
       console.log(
         chalk.gray(
-          `⚡ Frameworks: ${analysis.framework.join(', ') || 'None detected'}`
+          t('woaru_engine.language_info', { language: analysis.language })
+        )
+      );
+      console.log(
+        chalk.gray(
+          t('woaru_engine.frameworks_info', {
+            frameworks:
+              analysis.framework.join(', ') || t('woaru_engine.none_detected'),
+          })
         )
       );
 
       // Analyze code for specific insights
-      console.log(chalk.blue('🔬 Analyzing codebase for insights...'));
+      console.log(chalk.blue(t('woaru_engine.analyzing_codebase')));
       const codeInsights = await this.codeAnalyzer.analyzeCodebase(
         projectPath,
         analysis.language
@@ -78,17 +105,17 @@ export class WOARUEngine {
       const installedTools = await this.detectInstalledTools(analysis);
 
       // Run comprehensive security analysis
-      console.log(chalk.blue('🔒 Running comprehensive security analysis...'));
+      console.log(chalk.blue(t('woaru_engine.security_analysis')));
       const securityResults =
         await this.runComprehensiveSecurityAnalysis(projectPath);
 
       // Run infrastructure security check
-      console.log(chalk.blue('🛡️ Running infrastructure security audit...'));
+      console.log(chalk.blue(t('woaru_engine.infrastructure_audit')));
       const infrastructureResults =
         await this.runInfrastructureSecurityCheck(projectPath);
 
       // Run production-readiness audit (including security)
-      console.log(chalk.blue('🏗️ Running production readiness audit...'));
+      console.log(chalk.blue(t('woaru_engine.production_audit')));
       const productionAuditor = new ProductionReadinessAuditor(projectPath);
       const auditConfig = {
         language: analysis.language,
@@ -125,13 +152,15 @@ export class WOARUEngine {
       if (totalCritical > 0) {
         console.log(
           chalk.red(
-            `🚨 ${totalCritical} critical security issues found across codebase and infrastructure!`
+            t('woaru_engine.critical_security_issues', { count: totalCritical })
           )
         );
       }
       if (totalHigh > 0) {
         console.log(
-          chalk.yellow(`⚠️ ${totalHigh} high-severity security issues found!`)
+          chalk.yellow(
+            t('woaru_engine.high_security_issues', { count: totalHigh })
+          )
         );
       }
 
@@ -180,29 +209,42 @@ export class WOARUEngine {
             securityAudits,
             infrastructureResults
           ),
-          // Extended security metrics
-          secrets_found: allSecurityFindings.secrets,
-          vulnerabilities_found: allSecurityFindings.vulnerabilities,
-          infrastructure_issues: infrastructureResults?.findings?.length || 0,
-          tools_used: this.getSecurityToolsUsed(
-            securityResults,
-            infrastructureResults
-          ),
+          // Note: Extended metrics stored in detailed_security instead
           recommendations: this.generateSecurityRecommendations(
             allSecurityFindings,
             securityAudits
           ),
-        } as any,
+        },
         // Add detailed security results (extended data)
         detailed_security: {
-          dependency_vulnerabilities: securityResults,
-          infrastructure_security: infrastructureResults,
+          dependency_vulnerabilities: securityResults.flatMap(r =>
+            r.findings.map(f => ({
+              id: f.cve || `${f.tool}-${f.file || f.package}`,
+              title: f.title,
+              severity: (f.severity === 'info'
+                ? 'low'
+                : f.severity === 'critical' ||
+                    f.severity === 'high' ||
+                    f.severity === 'medium' ||
+                    f.severity === 'low'
+                  ? f.severity
+                  : 'low') as 'critical' | 'high' | 'medium' | 'low',
+              description: f.description || '',
+              packageName: f.package || 'unknown',
+              vulnerableVersions: f.version || 'unknown',
+              patchedVersions: f.fixedIn,
+              recommendation: f.recommendation || '',
+            }))
+          ),
+          infrastructure_security: infrastructureResults || undefined,
           configuration_audits: securityAudits,
         },
-      } as any; // Extended with comprehensive security analysis
+      };
     } catch (error) {
       throw new Error(
-        `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        t('woaru_engine.analysis_failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        })
       );
     }
   }
@@ -217,20 +259,29 @@ export class WOARUEngine {
         this.pluginManager.getAllRecommendations(analysis);
 
       if (recommendations.length === 0) {
-        console.log(chalk.green('✅ Project is already well configured!'));
+        console.log(chalk.green(t('woaru_engine.project_well_configured')));
         return true;
       }
 
       console.log(
-        chalk.blue(`🎯 Found ${recommendations.length} recommendations`)
+        chalk.blue(
+          t('woaru_engine.recommendations_found', {
+            count: recommendations.length,
+          })
+        )
       );
 
       if (options.dryRun) {
-        console.log(
-          chalk.yellow('🔍 Dry run mode - showing what would be done:')
-        );
+        console.log(chalk.yellow(t('woaru_engine.dry_run_mode')));
         recommendations.forEach(rec => {
-          console.log(chalk.gray(`  • ${rec.tool}: ${rec.reason}`));
+          console.log(
+            chalk.gray(
+              t('woaru_engine.dry_run_item', {
+                tool: rec.tool,
+                reason: rec.reason,
+              })
+            )
+          );
         });
         return true;
       }
@@ -245,7 +296,9 @@ export class WOARUEngine {
     } catch (error) {
       console.error(
         chalk.red(
-          `❌ Setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          t('woaru_engine.setup_failed', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          })
         )
       );
       return false;
@@ -253,14 +306,14 @@ export class WOARUEngine {
   }
 
   async updateDatabase(): Promise<boolean> {
-    console.log(chalk.blue('📡 Updating tools database...'));
+    console.log(chalk.blue(t('woaru_engine.updating_database')));
 
     const success = await this.databaseManager.updateDatabase();
 
     if (success) {
-      console.log(chalk.green('✅ Database updated successfully'));
+      console.log(chalk.green(t('woaru_engine.database_updated')));
     } else {
-      console.log(chalk.red('❌ Failed to update database'));
+      console.log(chalk.red(t('woaru_engine.database_update_failed')));
     }
 
     return success;
@@ -291,7 +344,9 @@ export class WOARUEngine {
       return installedTools;
     } catch (error) {
       console.warn(
-        `Warning: Tool detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        t('woaru_engine.tool_detection_warning', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        })
       );
       return [];
     }
@@ -379,7 +434,9 @@ export class WOARUEngine {
     try {
       return path.resolve(validPath);
     } catch {
-      throw new Error(`Invalid project path: ${validPath}`);
+      throw new Error(
+        t('woaru_engine.invalid_project_path', { path: validPath })
+      );
     }
   }
 
@@ -415,28 +472,24 @@ export class WOARUEngine {
 
     // Framework-specific automations
     if (analysis.framework.includes('nextjs')) {
-      automations.push(
-        'Generate Next.js API routes with proper TypeScript types'
-      );
-      automations.push(
-        'Create reusable Next.js components with proper prop types'
-      );
-      automations.push('Setup Next.js middleware for authentication');
+      automations.push(t('woaru_engine.automations.nextjs_api_routes'));
+      automations.push(t('woaru_engine.automations.nextjs_components'));
+      automations.push(t('woaru_engine.automations.nextjs_middleware'));
     }
 
     if (analysis.framework.includes('react')) {
       automations.push(
-        'Refactor class components to functional components with hooks'
+        t('woaru_engine.automations.react_functional_components')
       );
-      automations.push('Generate custom hooks for common functionality');
-      automations.push('Create component documentation with Storybook');
+      automations.push(t('woaru_engine.automations.react_custom_hooks'));
+      automations.push(t('woaru_engine.automations.react_storybook'));
     }
 
     // Language-specific automations
     if (analysis.language === 'TypeScript') {
-      automations.push('Generate TypeScript interfaces from API responses');
-      automations.push('Add strict typing to existing JavaScript functions');
-      automations.push('Create utility types for better type safety');
+      automations.push(t('woaru_engine.automations.typescript_interfaces'));
+      automations.push(t('woaru_engine.automations.typescript_strict'));
+      automations.push(t('woaru_engine.automations.typescript_utility_types'));
     }
 
     // Testing automations
@@ -444,27 +497,27 @@ export class WOARUEngine {
       !analysis.devDependencies.includes('jest') &&
       !analysis.devDependencies.includes('vitest')
     ) {
-      automations.push('Setup testing framework with example tests');
-      automations.push('Generate unit tests for existing components');
+      automations.push(t('woaru_engine.automations.setup_testing'));
+      automations.push(t('woaru_engine.automations.generate_unit_tests'));
     }
 
     // Documentation automations
-    automations.push('Generate README.md with project setup instructions');
-    automations.push('Create CONTRIBUTING.md with development guidelines');
-    automations.push('Generate API documentation from code comments');
+    automations.push(t('woaru_engine.automations.generate_readme'));
+    automations.push(t('woaru_engine.automations.generate_contributing'));
+    automations.push(t('woaru_engine.automations.generate_api_docs'));
 
     return automations;
   }
 
   private enhanceRecommendationsWithInsights(
-    recommendations: any[],
-    codeInsights: Map<string, any>
+    recommendations: SetupRecommendation[],
+    codeInsights: Map<string, AnalyzerCodeInsight>
   ): void {
-    recommendations.forEach((rec: any) => {
+    recommendations.forEach((rec: SetupRecommendation) => {
       const insight = codeInsights.get(rec.tool);
       if (insight) {
         rec.reason = insight.reason;
-        rec.evidence = insight.evidence;
+        rec.evidence = insight.evidence.join('; ');
         rec.priority =
           insight.severity === 'critical'
             ? 'high'
@@ -516,7 +569,9 @@ export class WOARUEngine {
     return 'library';
   }
 
-  private calculateSecurityHealthScore(securityAudits: any[]): number {
+  private calculateSecurityHealthScore(
+    securityAudits: ConfigurationAudit[]
+  ): number {
     if (securityAudits.length === 0) return 100;
 
     let score = 100;
@@ -545,9 +600,11 @@ export class WOARUEngine {
    * Run comprehensive security analysis using multiple tools
    */
   private async runComprehensiveSecurityAnalysis(
-    projectPath: string
+    _projectPath: string
   ): Promise<SecurityScanResult[]> {
-    console.log(chalk.gray('   Running Snyk + Gitleaks security scan...'));
+    console.log(
+      chalk.gray(t('woaru_engine.security_scan.running_snyk_gitleaks'))
+    );
 
     try {
       // Get all project files for security scanning
@@ -558,36 +615,54 @@ export class WOARUEngine {
         await this.qualityRunner.runSecurityChecksForReview(allFiles);
 
       // Log summary of findings
-      let totalFindings = 0;
       let criticalFindings = 0;
       securityResults.forEach(result => {
-        totalFindings += result.summary.total;
         criticalFindings += result.summary.critical;
 
         if (result.error) {
-          console.log(chalk.red(`   ⚠️  ${result.tool}: ${result.error}`));
+          console.log(
+            chalk.red(
+              t('woaru_engine.security_scan.tool_error', {
+                tool: result.tool,
+                error: result.error,
+              })
+            )
+          );
         } else if (result.summary.total > 0) {
           console.log(
             chalk.yellow(
-              `   🔍 ${result.tool}: ${result.summary.total} issues found`
+              t('woaru_engine.security_scan.issues_found', {
+                tool: result.tool,
+                count: result.summary.total,
+              })
             )
           );
         } else {
-          console.log(chalk.green(`   ✅ ${result.tool}: No issues found`));
+          console.log(
+            chalk.green(
+              t('woaru_engine.security_scan.no_issues', { tool: result.tool })
+            )
+          );
         }
       });
 
       if (criticalFindings > 0) {
         console.log(
           chalk.red(
-            `   🚨 ${criticalFindings} critical security vulnerabilities detected!`
+            t('woaru_engine.security_scan.critical_vulnerabilities', {
+              count: criticalFindings,
+            })
           )
         );
       }
 
       return securityResults;
     } catch (error) {
-      console.log(chalk.red(`   ❌ Security analysis failed: ${error}`));
+      console.log(
+        chalk.red(
+          t('woaru_engine.security_scan.analysis_failed', { error: error })
+        )
+      );
       return [];
     }
   }
@@ -597,14 +672,16 @@ export class WOARUEngine {
    */
   private async runInfrastructureSecurityCheck(
     projectPath: string
-  ): Promise<any> {
-    console.log(chalk.gray('   Scanning containers and infrastructure...'));
+  ): Promise<InfrastructureSecurityResult | null> {
+    console.log(
+      chalk.gray(t('woaru_engine.infrastructure_scan.scanning_containers'))
+    );
 
     try {
       // Check if Trivy is installed
       await execAsync('which trivy');
 
-      const findings: any[] = [];
+      const findings: InfrastructureFinding[] = [];
       const scanTargets = [];
 
       // Look for Docker files
@@ -643,37 +720,60 @@ export class WOARUEngine {
           if (stdout) {
             const results = JSON.parse(stdout);
             if (results.Results) {
-              results.Results.forEach((result: any) => {
-                if (result.Misconfigurations) {
-                  result.Misconfigurations.forEach((misc: any) => {
-                    findings.push({
-                      tool: 'trivy',
-                      type: 'misconfiguration',
-                      severity: misc.Severity?.toLowerCase() || 'medium',
-                      title: misc.Title,
-                      description: misc.Description,
-                      file: target.path,
-                      recommendation: misc.Resolution,
-                      references: misc.References,
-                    });
-                  });
+              results.Results.forEach((result: TrivyResult) => {
+                const resultWithMisconfigs = result as TrivyResult & {
+                  Misconfigurations?: TrivyMisconfiguration[];
+                };
+                if (resultWithMisconfigs.Misconfigurations) {
+                  resultWithMisconfigs.Misconfigurations.forEach(
+                    (misc: TrivyMisconfiguration) => {
+                      findings.push({
+                        tool: 'trivy',
+                        type: 'misconfiguration',
+                        severity: (misc.Severity?.toLowerCase() || 'medium') as
+                          | 'critical'
+                          | 'high'
+                          | 'medium'
+                          | 'low'
+                          | 'info',
+                        title: misc.Title,
+                        description: misc.Description,
+                        file: target.path,
+                        recommendation: misc.Resolution,
+                        references: misc.References,
+                      });
+                    }
+                  );
                 }
               });
             }
           }
 
           console.log(
-            chalk.green(`   ✅ Trivy: Scanned ${target.type} - ${target.path}`)
+            chalk.green(
+              t('woaru_engine.infrastructure_scan.trivy_scanned', {
+                type: target.type,
+                path: target.path,
+              })
+            )
           );
-        } catch (scanError) {
+        } catch {
           console.log(
-            chalk.yellow(`   ⚠️  Trivy: Failed to scan ${target.path}`)
+            chalk.yellow(
+              t('woaru_engine.infrastructure_scan.trivy_scan_failed', {
+                path: target.path,
+              })
+            )
           );
         }
       }
 
       if (scanTargets.length === 0) {
-        console.log(chalk.gray('   📋 No infrastructure files found to scan'));
+        console.log(
+          chalk.gray(
+            t('woaru_engine.infrastructure_scan.no_infrastructure_files')
+          )
+        );
         return null;
       }
 
@@ -689,11 +789,15 @@ export class WOARUEngine {
       if (findings.length > 0) {
         console.log(
           chalk.yellow(
-            `   🛡️  Trivy: ${findings.length} infrastructure issues found`
+            t('woaru_engine.infrastructure_scan.issues_found', {
+              count: findings.length,
+            })
           )
         );
       } else {
-        console.log(chalk.green(`   ✅ Trivy: No infrastructure issues found`));
+        console.log(
+          chalk.green(t('woaru_engine.infrastructure_scan.no_issues'))
+        );
       }
 
       return {
@@ -709,15 +813,17 @@ export class WOARUEngine {
         error.message.includes('command not found')
       ) {
         console.log(
-          chalk.gray('   📋 Trivy not installed - skipping infrastructure scan')
+          chalk.gray(t('woaru_engine.infrastructure_scan.trivy_not_installed'))
         );
         console.log(
-          chalk.gray(
-            '   💡 Install with: brew install trivy (macOS) or apt-get install trivy (Linux)'
-          )
+          chalk.gray(t('woaru_engine.infrastructure_scan.trivy_install_hint'))
         );
       } else {
-        console.log(chalk.red(`   ❌ Infrastructure scan failed: ${error}`));
+        console.log(
+          chalk.red(
+            t('woaru_engine.infrastructure_scan.scan_failed', { error: error })
+          )
+        );
       }
       return null;
     }
@@ -728,8 +834,8 @@ export class WOARUEngine {
    */
   private combineSecurityFindings(
     securityResults: SecurityScanResult[],
-    infrastructureResults: any
-  ): any {
+    infrastructureResults: InfrastructureSecurityResult | null
+  ): SecurityCombinedFindings {
     let total = 0;
     let critical = 0;
     let high = 0;
@@ -777,9 +883,9 @@ export class WOARUEngine {
    * Calculate comprehensive security score including all security aspects
    */
   private calculateComprehensiveSecurityScore(
-    allFindings: any,
-    securityAudits: any[],
-    infrastructureResults: any
+    allFindings: SecurityCombinedFindings,
+    securityAudits: ConfigurationAudit[],
+    infrastructureResults: InfrastructureSecurityResult | null
   ): number {
     let score = 100;
 
@@ -823,7 +929,7 @@ export class WOARUEngine {
    */
   private getSecurityToolsUsed(
     securityResults: SecurityScanResult[],
-    infrastructureResults: any
+    infrastructureResults: InfrastructureSecurityResult | null
   ): string[] {
     const tools = new Set<string>();
 
@@ -833,7 +939,7 @@ export class WOARUEngine {
       }
     });
 
-    if (infrastructureResults && !infrastructureResults.error) {
+    if (infrastructureResults && !('error' in infrastructureResults)) {
       tools.add('trivy');
     }
 
@@ -844,32 +950,40 @@ export class WOARUEngine {
    * Generate actionable security recommendations
    */
   private generateSecurityRecommendations(
-    allFindings: any,
-    securityAudits: any[]
+    allFindings: SecurityCombinedFindings,
+    securityAudits: ConfigurationAudit[]
   ): string[] {
     const recommendations: string[] = [];
 
     if (allFindings.critical > 0) {
       recommendations.push(
-        `🚨 URGENT: Fix ${allFindings.critical} critical security vulnerabilities immediately`
+        t('woaru_engine.security_recommendations.critical_urgent', {
+          count: allFindings.critical,
+        })
       );
     }
 
     if (allFindings.secrets > 0) {
       recommendations.push(
-        `🔐 URGENT: Remove ${allFindings.secrets} exposed secrets from codebase and rotate them`
+        t('woaru_engine.security_recommendations.secrets_urgent', {
+          count: allFindings.secrets,
+        })
       );
     }
 
     if (allFindings.vulnerabilities > 0) {
       recommendations.push(
-        `📦 Update vulnerable dependencies - ${allFindings.vulnerabilities} packages need attention`
+        t('woaru_engine.security_recommendations.update_dependencies', {
+          count: allFindings.vulnerabilities,
+        })
       );
     }
 
     if (allFindings.high > 0) {
       recommendations.push(
-        `⚠️ Address ${allFindings.high} high-severity security issues`
+        t('woaru_engine.security_recommendations.high_severity', {
+          count: allFindings.high,
+        })
       );
     }
 
@@ -878,13 +992,15 @@ export class WOARUEngine {
     );
     if (criticalAudits.length > 0) {
       recommendations.push(
-        `🔧 Configure missing security tools: ${criticalAudits.map(a => a.check).join(', ')}`
+        t('woaru_engine.security_recommendations.configure_tools', {
+          tools: criticalAudits.map(a => a.check).join(', '),
+        })
       );
     }
 
     if (recommendations.length === 0) {
       recommendations.push(
-        '✅ No critical security issues found - maintain good security hygiene'
+        t('woaru_engine.security_recommendations.no_critical_issues')
       );
     }
 
@@ -896,7 +1012,7 @@ export class WOARUEngine {
    */
   private async fileExists(filePath: string): Promise<boolean> {
     try {
-      const fs = require('fs-extra');
+      const fs = await import('fs-extra');
       return await fs.pathExists(filePath);
     } catch {
       return false;

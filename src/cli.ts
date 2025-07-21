@@ -17,6 +17,18 @@ import * as fs from 'fs-extra';
 import { AIProviderUtils } from './utils/AIProviderUtils';
 import { initializeI18n, t, isInitialized } from './config/i18n';
 import { AIProviderConfig, AIModel } from './types/i18n';
+import { AIReviewFinding } from './types/ai-review';
+import { 
+  GitCommit, 
+  CliOptions, 
+  SecurityFinding, 
+  UsageStatistics,
+  SecuritySummary,
+  ConfigurationAudit,
+  CodeInsight,
+  AIAnalysisResults,
+  InquirerAnswers
+} from './types';
 import { handleFirstTimeLanguageSetup } from './config/languageSetup';
 import { generateTranslatedCommandsOutput, getTranslatedDescription, getTranslatedPurpose } from './utils/commandHelpers';
 import { ensureAiIsConfigured } from './utils/ai-helpers';
@@ -124,11 +136,11 @@ program
   .option('-j, --json', 'Output as JSON')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       const result = await woaruEngine.analyzeProject(projectPath);
 
-      if (options.json) {
+      if ((options as any).json) {
         console.log(JSON.stringify(result, null, 2));
       } else {
         console.log(chalk.blue(`📋 ${t('analysis.results')}\n`));
@@ -219,7 +231,7 @@ setupCommand
   .option('-y, --yes', 'Skip confirmation prompts')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       if (!options.yes && !options.dryRun) {
         const { confirm } = await inquirer.prompt([
@@ -318,7 +330,7 @@ setupCommand
   .description('Setup and configure AI providers for code analysis (alias for "woaru ai setup")')
   .option('-p, --path <path>', 'Project path (deprecated - now uses global config)', process.cwd())
   .action(async (options) => {
-    if (options.path && options.path !== process.cwd()) {
+    if ((options as any).path && (options as any).path !== process.cwd()) {
       console.log(chalk.yellow('⚠️ Note: Project path option is deprecated. AI configuration is now global.'));
     }
     try {
@@ -340,7 +352,7 @@ setupCommand
   .option('-p, --path <path>', 'Project path (deprecated - now uses global config)', process.cwd())
   .action(async (options) => {
     console.log(chalk.yellow('⚠️ Note: "woaru setup llm" is deprecated. Use "woaru ai setup" instead.'));
-    if (options.path && options.path !== process.cwd()) {
+    if ((options as any).path && (options as any).path !== process.cwd()) {
       console.log(chalk.yellow('⚠️ Note: Project path option is deprecated. AI configuration is now global.'));
     }
     try {
@@ -392,15 +404,16 @@ async function runAiControlCenter() {
       for (const providerId of providers) {
         const provider = aiConfig[providerId];
         // Skip if this is not a provider object (e.g., _metadata, multi_ai_review_enabled, primary_review_provider_id)
-        if (!provider || typeof provider !== 'object' || !provider.hasOwnProperty('enabled')) {
+        if (!provider || typeof provider !== 'object' || !Object.prototype.hasOwnProperty.call(provider, 'enabled')) {
           continue;
         }
         
+        const providerObj = provider as { enabled: boolean; model?: string; [key: string]: unknown };
         const hasApiKey = await configManager.hasApiKey(providerId);
-        const status = provider.enabled ? '✅ enabled' : '❌ disabled';
+        const status = providerObj.enabled ? '✅ enabled' : '❌ disabled';
         const keyStatus = hasApiKey ? '🔑 API-Key gefunden' : '❌ API-Key fehlt!';
         
-        console.log(chalk.gray(`   • ${providerId} (${provider.model || 'unknown'}) - ${status} | ${keyStatus}`));
+        console.log(chalk.gray(`   • ${providerId} (${providerObj.model || 'unknown'}) - ${status} | ${keyStatus}`));
       }
     }
     
@@ -431,7 +444,7 @@ async function runAiControlCenter() {
     
     menuChoices.push(
       new inquirer.Separator() as any,
-      { name: '🚪 Beenden', value: 'exit' }
+      { name: t('ai_control_center.menu.exit'), value: 'exit' }
     );
     
     const { action } = await inquirer.prompt([
@@ -453,10 +466,10 @@ async function runAiControlCenter() {
         await configManager.updateMultiAiReviewConfig(newMultiAiState);
         
         if (newMultiAiState) {
-          console.log(chalk.green('\n✅ Multi-AI Review wurde aktiviert!'));
+          console.log(chalk.green(`\n${t('messages.success', { message: t('ai_control_center.multi_ai_enabled_message') })}`));
           console.log(chalk.gray(`   ${t('cli.ai_control_center.multi_ai_enabled')}`));
         } else {
-          console.log(chalk.yellow('\n❌ Multi-AI Review wurde deaktiviert.'));
+          console.log(chalk.yellow(`\n${t('messages.warning', { message: t('ai_control_center.multi_ai_disabled_message') })}`));
           console.log(chalk.gray(`   ${t('cli.ai_control_center.should_select_primary')}`));
         }
         
@@ -468,7 +481,7 @@ async function runAiControlCenter() {
         break;
         
       case 'exit':
-        console.log(chalk.blue('\n👋 Bis bald!'));
+        console.log(chalk.blue(`\n👋 ${t('ai_control_center.goodbye')}`));
         return;
     }
   }
@@ -483,17 +496,17 @@ async function selectPrimaryProvider() {
   const aiConfig = await configManager.loadAiConfig();
   
   if (enabledProviders.length === 0) {
-    console.log(chalk.red('\n❌ Keine aktivierten Provider gefunden!'));
-    console.log(chalk.gray('   Bitte erst Provider konfigurieren und aktivieren.'));
+    console.log(chalk.red(`\n${t('messages.error', { message: t('ai_control_center.no_providers_enabled') })}`));
+    console.log(chalk.gray(`   ${t('ai_control_center.configure_providers_first')}`));
     await inquirer.prompt([{ type: 'input', name: 'continue', message: t('general.continue_prompt') }]);
     return;
   }
   
   const providerChoices = await Promise.all(enabledProviders.map(async providerId => {
-    const provider = aiConfig[providerId];
+    const provider = aiConfig[providerId] as { model?: string; [key: string]: unknown } | undefined;
     const hasApiKey = await configManager.hasApiKey(providerId);
     return {
-      name: `${providerId} (${provider.model || 'unknown'}) ${hasApiKey ? '🔑' : '❌'}`,
+      name: `${providerId} (${provider?.model || 'unknown'}) ${hasApiKey ? '🔑' : '❌'}`,
       value: providerId,
     };
   }));
@@ -508,7 +521,7 @@ async function selectPrimaryProvider() {
   ]);
   
   await configManager.updateMultiAiReviewConfig(false, selectedProvider);
-  console.log(chalk.green(`\n✅ ${selectedProvider} wurde als primärer Provider ausgewählt!`));
+  console.log(chalk.green(`\n${t('messages.success', { message: t('cli.provider_management.primary_selected', { provider: selectedProvider }) })}`));
   
   await inquirer.prompt([{ type: 'input', name: 'continue', message: t('general.continue_prompt') }]);
 }
@@ -521,7 +534,7 @@ async function selectPrimaryProvider() {
  * @throws {Error} If AI configuration cannot be saved
  */
 async function runAiSetup() {
-  console.log(chalk.blue('🤖 WOARU AI Setup'));
+  console.log(chalk.blue(`🤖 ${t('setup.ai_setup_title')}`));
   console.log(chalk.blue('════════════════════════════════════════'));
   console.log('Intelligent AI provider configuration with live model detection');
   console.log(chalk.gray('(Press Ctrl+C to exit at any time)\n'));
@@ -547,11 +560,12 @@ async function runAiSetup() {
       let displayName;
       
       if (isConfigured) {
-        const model = currentConfig[provider.value].model || 'unknown';
-        const status = currentConfig[provider.value].enabled ? 'AKTIV' : 'DEAKTIVIERT';
+        const providerConfig = currentConfig[provider.value] as { model?: string; enabled?: boolean; [key: string]: unknown };
+        const model = providerConfig.model || 'unknown';
+        const status = providerConfig.enabled ? t('setup.status_active') : t('setup.status_disabled');
         displayName = `${provider.name} (${status}: ${model})`;
       } else {
-        displayName = `${provider.name} (NICHT KONFIGURIERT)`;
+        displayName = `${provider.name} (${t('setup.status_not_configured')})`;
       }
       
       choices.push({
@@ -563,7 +577,7 @@ async function runAiSetup() {
     // Add final options
     choices.push(
       new inquirer.Separator(),
-      { name: '✅ Fertig & Speichern', value: '_done' }
+      { name: t('ai_control_center.menu.done_save'), value: '_done' }
     );
 
     const { selectedProvider } = await inquirer.prompt([
@@ -585,20 +599,20 @@ async function runAiSetup() {
     // Context-sensitive logic: New vs Edit
     if (isConfigured) {
       // EDIT MODE - Show submenu
-      console.log(chalk.blue(`\n📝 Bearbeite ${providerName}`));
+      console.log(chalk.blue(`\n📝 ${t('messages.info', { message: `${providerName}` })}`));
       
       const { action } = await inquirer.prompt([
         {
           type: 'list',
           name: 'action',
-          message: `Was möchtest du mit ${providerName} machen?`,
+          message: t('setup.what_to_do_with', { provider: providerName }),
           choices: [
-            { name: '🔄 Modell ändern', value: 'change_model' },
-            { name: '🔑 API-Key aktualisieren', value: 'update_key' },
-            { name: currentConfig[selectedProvider].enabled ? '❌ Provider deaktivieren' : '✅ Provider aktivieren', value: 'toggle_status' },
-            { name: '🗑️  Provider entfernen', value: 'remove' },
+            { name: t('provider_actions.change_model'), value: 'change_model' },
+            { name: t('provider_actions.update_api_key'), value: 'update_key' },
+            { name: (currentConfig[selectedProvider] as { enabled?: boolean })?.enabled ? t('provider_actions.toggle_enabled') : t('provider_actions.toggle_enabled'), value: 'toggle_status' },
+            { name: t('provider_actions.remove_provider'), value: 'remove' },
             new inquirer.Separator(),
-            { name: '← Zurück zum Hauptmenü', value: 'back' },
+            { name: t('provider_actions.back_to_menu'), value: 'back' },
           ],
         },
       ]);
@@ -618,16 +632,16 @@ async function runAiSetup() {
               {
                 type: 'list',
                 name: 'selectedModel',
-                message: `Wähle ein neues Modell für ${providerName}:`,
+                message: t('setup.select_new_model', { provider: providerName }),
                 choices: modelChoices,
-                default: currentConfig[selectedProvider].model,
+                default: (currentConfig[selectedProvider] as { model?: string })?.model,
               },
             ]);
 
-            currentConfig[selectedProvider].model = selectedModel;
-            console.log(chalk.green(`✅ Modell geändert zu: ${selectedModel}`));
+            (currentConfig[selectedProvider] as { model: string }).model = selectedModel;
+            console.log(chalk.green(`${t('messages.success', { message: t('cli.provider_management.model_changed', { model: selectedModel }) })}`));
           } else {
-            console.log(chalk.red('❌ Kein API-Key gefunden. Bitte erst API-Key aktualisieren.'));
+            console.log(chalk.red(`${t('messages.error', { message: t('setup.no_api_key_found') })}`));
           }
           break;
 
@@ -636,18 +650,19 @@ async function runAiSetup() {
             {
               type: 'input',
               name: 'newApiKey',
-              message: `Neuer API-Key für ${providerName}:`,
+              message: t('setup.new_api_key_for', { provider: providerName }),
               validate: (input: string) => input.trim().length > 0 || 'API key is required',
             },
           ]);
           await configManager.storeApiKey(selectedProvider, newApiKey);
-          console.log(chalk.green('✅ API-Key aktualisiert'));
+          console.log(chalk.green(`${t('messages.success', { message: t('setup.api_key_updated') })}`));
           break;
 
         case 'toggle_status':
-          currentConfig[selectedProvider].enabled = !currentConfig[selectedProvider].enabled;
-          const newStatus = currentConfig[selectedProvider].enabled ? 'aktiviert' : 'deaktiviert';
-          console.log(chalk.green(`✅ ${providerName} wurde ${newStatus}`));
+          const providerConfig = currentConfig[selectedProvider] as { enabled: boolean };
+          providerConfig.enabled = !providerConfig.enabled;
+          const newStatus = providerConfig.enabled ? t('setup.status_active') : t('setup.status_disabled');
+          console.log(chalk.green(`${t('messages.success', { message: `${providerName} ${newStatus}` })}`));
           break;
 
         case 'remove':
@@ -655,14 +670,14 @@ async function runAiSetup() {
             {
               type: 'confirm',
               name: 'confirmRemove',
-              message: `Bist du sicher, dass du ${providerName} entfernen möchtest?`,
+              message: t('setup.confirm_removal', { provider: providerName }),
               default: false,
             },
           ]);
           if (confirmRemove) {
             delete currentConfig[selectedProvider];
             await configManager.removeApiKey(selectedProvider);
-            console.log(chalk.green(`✅ ${providerName} wurde entfernt`));
+            console.log(chalk.green(`${t('messages.success', { message: t('cli.provider_management.provider_removed', { provider: providerName }) })}`));
           }
           break;
 
@@ -671,7 +686,7 @@ async function runAiSetup() {
       }
     } else {
       // NEW MODE - Configure from scratch
-      console.log(chalk.blue(`\n🆕 Konfiguriere ${providerName} neu`));
+      console.log(chalk.blue(`\n🆕 ${t('messages.info', { message: `${providerName}` })}`));
       
       // Step 1: API Key FIRST
       let apiKey = '';
@@ -680,7 +695,7 @@ async function runAiSetup() {
           {
             type: 'input',
             name: 'inputApiKey',
-            message: `API-Key für ${providerName} eingeben:`,
+            message: t('setup.new_api_key_for', { provider: providerName }),
             validate: (input: string) => {
               if (!input || input.trim().length === 0) {
                 return 'API key is required';
@@ -693,11 +708,11 @@ async function runAiSetup() {
       }
 
       // Step 2: Live Model Fetch
-      console.log(chalk.gray('🔄 Lade verfügbare Modelle...'));
+      console.log(chalk.gray(`${t('messages.loading', { message: t('setup.loading_models') })}`));
       const models = await AIProviderUtils.fetchModelsForProvider(selectedProvider, apiKey);
       
       if (models.length === 0) {
-        console.log(chalk.red('❌ Keine Modelle gefunden. Konfiguration abgebrochen.'));
+        console.log(chalk.red(`${t('messages.error', { message: t('setup.no_models_found') })}`));
         continue;
       }
 
@@ -714,7 +729,7 @@ async function runAiSetup() {
         {
           type: 'list',
           name: 'selectedModel',
-          message: `Wähle ein Modell für ${providerName}:`,
+          message: t('setup.model_selection', { provider: providerName }),
           choices: modelChoices,
           default: defaultModel,
         },
@@ -725,7 +740,7 @@ async function runAiSetup() {
         {
           type: 'confirm',
           name: 'enabled',
-          message: `${providerName} für Code-Analyse aktivieren?`,
+          message: t('cli.setup.enable_for_analysis', { provider: providerName }),
           default: true,
         },
       ]);
@@ -913,7 +928,7 @@ program
         return;
       }
 
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       // Check if project path exists
       if (!(await fs.pathExists(projectPath))) {
@@ -945,7 +960,7 @@ program
         );
       });
 
-      supervisor.on('recommendation', (rec: any) => {
+      supervisor.on('recommendation', (rec: { tool: string; reason: string }) => {
         console.log(
           chalk.yellow(`\n💡 New recommendation: ${rec.tool} - ${rec.reason}`)
         );
@@ -1143,7 +1158,7 @@ program
     await initializeConfig();
     
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       if (!supervisor) {
         // Check if there's a state file indicating a previous session
@@ -1263,7 +1278,7 @@ program
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const pidFile = path.join(projectPath, '.woaru', 'supervisor.pid');
 
       // First check if supervisor is running in current process
@@ -1307,7 +1322,7 @@ program
   .option('-n, --lines <number>', 'Number of lines to show', '50')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const logFile = path.join(projectPath, '.woaru', 'supervisor.log');
 
       if (!(await fs.pathExists(logFile))) {
@@ -1346,7 +1361,7 @@ program
   .option('-j, --json', 'Output as JSON')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       if (!supervisor) {
         console.log(
@@ -1355,7 +1370,7 @@ program
         // Fall back to one-time analysis
         const result = await woaruEngine.analyzeProject(projectPath);
 
-        if (options.json) {
+        if ((options as any).json) {
           console.log(JSON.stringify(result.setup_recommendations, null, 2));
         } else {
           console.log(chalk.cyan('🔧 Quick Recommendations:'));
@@ -1368,7 +1383,7 @@ program
 
       const recommendations = await supervisor.getCurrentRecommendations();
 
-      if (options.json) {
+      if ((options as any).json) {
         console.log(JSON.stringify(recommendations, null, 2));
         return;
       }
@@ -1449,7 +1464,7 @@ program
   .option('--active', 'Show only active/detected tools')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       if (!supervisor) {
         // Use quick analysis if supervisor not running
@@ -1465,7 +1480,7 @@ program
         const projectAnalysis =
           await projectAnalyzer.analyzeProject(projectPath);
 
-        if (options.json) {
+        if ((options as any).json) {
           const output = {
             active_tools: result.installed_tools_detected || [],
             recommended_tools: result.setup_recommendations || [],
@@ -1525,7 +1540,7 @@ program
       const status = supervisor.getStatus();
       const recommendations = await supervisor.getCurrentRecommendations();
 
-      if (options.json) {
+      if ((options as any).json) {
         const output = {
           active_tools: Array.from(status.state.detectedTools),
           missing_tools: Array.from(status.state.missingTools),
@@ -1704,7 +1719,7 @@ docuCommand
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       console.log(chalk.blue('📝 Generating human-friendly documentation...'));
       
       await runDocumentationGeneration(projectPath, options, {
@@ -1736,7 +1751,7 @@ docuCommand
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       console.log(chalk.blue('📚 Generating technical documentation...'));
       
       await runDocumentationGeneration(projectPath, options, {
@@ -1800,7 +1815,7 @@ docuCommand
       console.log(chalk.blue('🧠 Generiere AI-optimierte Kontext-Header...'));
       
       await runDocumentationGeneration(
-        path.resolve(options.path),
+        path.resolve((options as any).path),
         options,
         { 
           type: 'ai', 
@@ -1909,7 +1924,7 @@ function filterCodeFiles(fileList: string[]): string[] {
  */
 async function runDocumentationGeneration(
   projectPath: string,
-  options: any,
+  options: { files?: string[]; all?: boolean; [key: string]: unknown },
   context: { type: 'nopro' | 'pro' | 'ai'; description: string }
 ) {
   try {
@@ -1919,9 +1934,9 @@ async function runDocumentationGeneration(
     // Determine file list based on options
     let fileList: string[] = [];
     
-    if (options.pathOnly) {
+    if ((options as any).pathOnly && typeof (options as any).pathOnly === 'string') {
       // Get files from specific path (highest priority)
-      fileList = await getPathFiles(projectPath, options.pathOnly);
+      fileList = await getPathFiles(projectPath, (options as any).pathOnly);
     } else if (options.local) {
       // Get uncommitted changes
       fileList = await getUncommittedFiles(projectPath);
@@ -2162,7 +2177,7 @@ async function getAllCodeFiles(projectPath: string): Promise<string[]> {
 async function runAIReviewAnalysis(
   fileList: string[],
   projectPath: string,
-  options: any,
+  options: { withAI?: boolean; branch?: string; since?: string; all?: boolean; [key: string]: unknown },
   context: { type: 'git' | 'local' | 'path' | 'local-git'; description: string }
 ) {
   if (fileList.length === 0) {
@@ -2197,7 +2212,7 @@ async function runAIReviewAnalysis(
   }
 
   // Handle dynamic prompt loading
-  const promptName = options.prompt || 'default_review';
+  const promptName = (typeof options.prompt === 'string' ? options.prompt : null) || 'default_review';
   if (promptName !== 'default_review') {
     console.log(chalk.cyan(`🎯 Using custom prompt template: ${promptName}`));
   }
@@ -2209,7 +2224,7 @@ async function runAIReviewAnalysis(
   const promptTemplates: Record<string, any> = {};
   for (const provider of enabledProviders) {
     try {
-      const promptTemplate = await promptManager.loadPrompt(provider.id, promptName);
+      const promptTemplate = await promptManager.loadPrompt(String(provider.id), promptName);
       promptTemplates[provider.id] = promptTemplate;
       console.log(chalk.gray(`   ✓ Loaded prompt "${promptTemplate.name}" for ${provider.id}`));
     } catch (error) {
@@ -2229,30 +2244,57 @@ async function runAIReviewAnalysis(
   const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
   const reportGenerator = new ReviewReportGenerator();
 
-  // Generate report with AI results
+  // Generate report with AI results - create compatible MultiLLMReviewResult format
+  const compatibleAiResults = aiReviewResults && aiReviewResults.results ? {
+    codeContext: { filePath: '', language: 'unknown', totalLines: 0 },
+    results: aiReviewResults.results.reduce((acc: { [llmId: string]: any[] }, result: any) => {
+      const llmId = result.llmId || 'default';
+      acc[llmId] = result.findings || [];
+      return acc;
+    }, {}),
+    aggregation: {
+      totalFindings: aiReviewResults.summary?.totalFindings || 0,
+      findingsBySeverity: {},
+      findingsByCategory: {},
+      consensusFindings: [],
+      uniqueFindings: {},
+      llmAgreementScore: 0
+    },
+    meta: {
+      analysisStartTime: new Date(),
+      analysisEndTime: new Date(),
+      totalDuration: 0,
+      llmResponseTimes: {},
+      tokensUsed: {},
+      estimatedCost: {},
+      totalEstimatedCost: aiReviewResults.summary?.estimatedCost || 0,
+      llmErrors: {}
+    }
+  } : undefined;
+
   const reportData = {
     context,
     gitDiff: {
       changedFiles: fileList,
-      baseBranch: options.branch || (context.type === 'git' ? 'main' : ''),
+      baseBranch: (options as any).branch || (context.type === 'git' ? 'main' : ''),
       totalChanges: fileList.length,
     },
     qualityResults: [], // Empty for AI-only analysis
     securityResults: [], // Empty for AI-only analysis  
     productionAudits: [], // Empty for AI-only analysis
-    aiReviewResults, // AI review results
+    aiReviewResults: compatibleAiResults,
     currentBranch: '',
     commits: [],
   };
 
-  if (options.json) {
+  if ((options as any).json) {
     const jsonReport = reportGenerator.generateJsonReport(reportData);
     console.log(jsonReport);
   } else {
     const woaruDir = path.join(projectPath, '.woaru');
     await fs.ensureDir(woaruDir);
     const defaultOutput = path.join(woaruDir, 'woaru-ai-review.md');
-    const outputPath = options.output ? path.resolve(projectPath, options.output) : defaultOutput;
+    const outputPath = (options as any).output ? path.resolve(projectPath, (options as any).output) : defaultOutput;
     await reportGenerator.generateMarkdownReport(reportData, outputPath);
 
     console.log(
@@ -2276,7 +2318,7 @@ async function runAIReviewAnalysis(
 
 // Helper function for AI Review on multiple files
 async function runAIReviewOnFiles(aiAgent: any, fileList: string[], projectPath: string) {
-  const allResults: any[] = [];
+  const allResults: Array<{ filePath: string; findings: AIReviewFinding[] }> = [];
   
   console.log(chalk.blue(`🧠 Running AI Code Review on ${fileList.length} files...`));
   
@@ -2384,8 +2426,8 @@ async function runAIReviewOnFiles(aiAgent: any, fileList: string[], projectPath:
   
   // Calculate summary
   const totalFiles = allResults.length;
-  const totalFindings = allResults.reduce((sum, result) => sum + result.aggregation.totalFindings, 0);
-  const totalCost = allResults.reduce((sum, result) => sum + result.meta.totalEstimatedCost, 0);
+  const totalFindings = allResults.reduce((sum, result) => sum + (result.findings?.length || 0), 0);
+  const totalCost = 0; // Cost estimation would need to be implemented properly
   
   console.log(chalk.green(`\\n✅ AI Code Review complete!`));
   console.log(chalk.cyan(`  📊 Analyzed: ${totalFiles} files`));
@@ -2407,7 +2449,7 @@ async function runAIReviewOnFiles(aiAgent: any, fileList: string[], projectPath:
 async function runReviewAnalysis(
   fileList: string[],
   projectPath: string,
-  options: any,
+  options: CliOptions,
   context: { type: 'git' | 'local' | 'path' | 'local-git'; description: string }
 ) {
   if (fileList.length === 0) {
@@ -2454,7 +2496,7 @@ async function runReviewAnalysis(
   try {
     currentBranch = await gitAnalyzer.getCurrentBranch();
     if (context.type === 'git') {
-      commits = await gitAnalyzer.getCommitsSince(options.branch || 'main');
+      commits = await gitAnalyzer.getCommitsSince((options as any).branch || 'main');
     }
   } catch (error) {
     // Git operations might fail for non-git contexts
@@ -2523,24 +2565,24 @@ async function runReviewAnalysis(
     context,
     gitDiff: {
       changedFiles: fileList,
-      baseBranch: options.branch || (context.type === 'git' ? 'main' : ''),
+      baseBranch: (options as any).branch || (context.type === 'git' ? 'main' : ''),
       totalChanges: fileList.length,
     },
     qualityResults,
     securityResults,
     productionAudits,
     currentBranch,
-    commits,
+    commits: commits.map(c => typeof c === 'string' ? c : c.hash || c.message || 'Unknown commit'),
   };
 
-  if (options.json) {
+  if ((options as any).json) {
     const jsonReport = reportGenerator.generateJsonReport(reportData);
     console.log(jsonReport);
   } else {
     const woaruDir = path.join(projectPath, '.woaru');
     await fs.ensureDir(woaruDir);
     const defaultOutput = path.join(woaruDir, 'woaru-review.md');
-    const outputPath = options.output ? path.resolve(projectPath, options.output) : defaultOutput;
+    const outputPath = (options as any).output ? path.resolve(projectPath, (options as any).output) : defaultOutput;
     await reportGenerator.generateMarkdownReport(reportData, outputPath);
 
     console.log(
@@ -2594,7 +2636,7 @@ const gitCommand = reviewCommand
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
@@ -2605,14 +2647,14 @@ const gitCommand = reviewCommand
       }
 
       console.log(
-        chalk.blue(`🔍 Analyzing changes since branch: ${options.branch}`)
+        chalk.blue(`🔍 Analyzing changes since branch: ${(options as any).branch}`)
       );
 
       // Get list of changed files using git diff
       const { spawn } = require('child_process');
       const gitProcess = spawn(
         'git',
-        ['diff', '--name-only', `${options.branch}...HEAD`],
+        ['diff', '--name-only', `${(options as any).branch}...HEAD`],
         {
           cwd: projectPath,
           stdio: 'pipe',
@@ -2654,7 +2696,7 @@ const gitCommand = reviewCommand
 
         await runReviewAnalysis(fileList, projectPath, options, {
           type: 'git',
-          description: `Changes since branch: ${options.branch}`,
+          description: `Changes since branch: ${(options as any).branch}`,
         });
       });
     } catch (error) {
@@ -2682,7 +2724,7 @@ gitCommand
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
@@ -2693,14 +2735,14 @@ gitCommand
       }
 
       console.log(
-        chalk.blue(`🧠 Running AI analysis on changes since branch: ${options.branch}`)
+        chalk.blue(`🧠 Running AI analysis on changes since branch: ${(options as any).branch}`)
       );
 
       // Get list of changed files using git diff
       const { spawn } = require('child_process');
       const gitProcess = spawn(
         'git',
-        ['diff', '--name-only', `${options.branch}...HEAD`],
+        ['diff', '--name-only', `${(options as any).branch}...HEAD`],
         {
           cwd: projectPath,
           stdio: 'pipe',
@@ -2740,9 +2782,9 @@ gitCommand
           return;
         }
 
-        await runAIReviewAnalysis(fileList, projectPath, options, {
+        await runAIReviewAnalysis(fileList, projectPath, options as any, {
           type: 'git',
-          description: `AI analysis of changes since branch: ${options.branch}`,
+          description: `AI analysis of changes since branch: ${(options as any).branch}`,
         });
       });
     } catch (error) {
@@ -2768,7 +2810,7 @@ const localCommand = reviewCommand
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async (targetPath, options) => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const analysisPath = targetPath ? path.resolve(projectPath, targetPath) : projectPath;
 
       console.log(chalk.blue(`🔍 Analyzing directory: ${path.relative(process.cwd(), analysisPath) || '.'}`));
@@ -2842,7 +2884,7 @@ localCommand
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
@@ -2934,7 +2976,7 @@ localCommand
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       console.log(chalk.blue('🧠 Running AI analysis on current directory...'));
 
@@ -2995,7 +3037,7 @@ const pathCommand = reviewCommand
   .option('-j, --json', 'Output as JSON instead of markdown')
   .action(async (targetPath, options) => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const absoluteTargetPath = path.resolve(projectPath, targetPath);
 
       console.log(chalk.blue(`🔍 Analyzing path: ${targetPath}`));
@@ -3064,9 +3106,9 @@ pathCommand
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .option('--prompt <prompt_name>', 'Use specific prompt template (default: default_review)', 'default_review')
-  .action(async (targetPath: string, options: any) => {
+  .action(async (targetPath: string, options: CliOptions) => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const absoluteTargetPath = path.resolve(projectPath, targetPath);
 
       console.log(chalk.blue(`🧠 Running AI analysis on path: ${targetPath}`));
@@ -3109,7 +3151,7 @@ pathCommand
         return;
       }
 
-      await runAIReviewAnalysis(fileList, projectPath, options, {
+      await runAIReviewAnalysis(fileList, projectPath, options as any, {
         type: 'path',
         description: `AI analysis of path: ${targetPath}`,
       });
@@ -3146,7 +3188,7 @@ reviewAiCommand
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       // Check if we're in a git repository
       if (!(await fs.pathExists(path.join(projectPath, '.git')))) {
@@ -3157,14 +3199,14 @@ reviewAiCommand
       }
 
       console.log(
-        chalk.blue(`🧠 Running AI analysis on changes since branch: ${options.branch}`)
+        chalk.blue(`🧠 Running AI analysis on changes since branch: ${(options as any).branch}`)
       );
 
       // Get list of changed files using git diff
       const { spawn } = require('child_process');
       const gitProcess = spawn(
         'git',
-        ['diff', '--name-only', `${options.branch}...HEAD`],
+        ['diff', '--name-only', `${(options as any).branch}...HEAD`],
         {
           cwd: projectPath,
           stdio: 'pipe',
@@ -3246,22 +3288,22 @@ reviewAiCommand
         const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
         const reportGenerator = new ReviewReportGenerator();
         
-        const report = options.json
+        const report = (options as any).json
           ? JSON.stringify(aiResult, null, 2)
           : await reportGenerator.generateMarkdownReport({
               context: {
                 type: 'git',
-                description: `AI analysis of changes since branch: ${options.branch}`
+                description: `AI analysis of changes since branch: ${(options as any).branch}`
               },
-              gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+              gitDiff: { changedFiles: fileList, baseBranch: (options as any).branch, totalChanges: fileList.length },
               qualityResults: [],
               productionAudits: [],
               aiReviewResults: aiResult,
-              currentBranch: options.branch,
+              currentBranch: (options as any).branch,
               commits: []
             });
 
-        const outputPath = path.resolve(projectPath, options.output);
+        const outputPath = path.resolve(projectPath, (options as any).output || 'ai-review.md');
         await fs.ensureDir(path.dirname(outputPath));
         await fs.writeFile(outputPath, report);
 
@@ -3294,7 +3336,7 @@ reviewAiCommand
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const analyzePath = targetPath 
         ? path.resolve(projectPath, targetPath) 
         : projectPath;
@@ -3369,7 +3411,7 @@ reviewAiCommand
       const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
       const reportGenerator = new ReviewReportGenerator();
       
-      const report = options.json
+      const report = (options as any).json
         ? JSON.stringify(aiResult, null, 2)
         : await reportGenerator.generateMarkdownReport({
             context: {
@@ -3378,7 +3420,7 @@ reviewAiCommand
                 ? `AI analysis of directory: ${targetPath}`
                 : 'AI analysis of current directory'
             },
-            gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+            gitDiff: { changedFiles: fileList, baseBranch: (options as any).branch, totalChanges: fileList.length },
             qualityResults: [],
             productionAudits: [],
             aiReviewResults: aiResult,
@@ -3386,7 +3428,7 @@ reviewAiCommand
             commits: []
           });
 
-      const outputPath = path.resolve(projectPath, options.output);
+      const outputPath = path.resolve(projectPath, (options as any).output || 'ai-review.md');
       await fs.ensureDir(path.dirname(outputPath));
       await fs.writeFile(outputPath, report);
 
@@ -3413,12 +3455,12 @@ reviewAiCommand
   )
   .option('-j, --json', 'Output as JSON instead of markdown')
   .option('--prompt <prompt_name>', 'Use specific prompt template', 'default_review')
-  .action(async (targetPath: string, options: any) => {
+  .action(async (targetPath: string, options: CliOptions) => {
     try {
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       const absoluteTargetPath = path.resolve(projectPath, targetPath);
 
       console.log(chalk.blue(`🧠 Running AI analysis on path: ${targetPath}`));
@@ -3502,14 +3544,14 @@ reviewAiCommand
       const { ReviewReportGenerator } = await import('./reports/ReviewReportGenerator');
       const reportGenerator = new ReviewReportGenerator();
       
-      const report = options.json
+      const report = (options as any).json
         ? JSON.stringify(aiResult, null, 2)
         : await reportGenerator.generateMarkdownReport({
             context: {
               type: 'path',
               description: `AI analysis of path: ${targetPath}`
             },
-            gitDiff: { changedFiles: fileList, baseBranch: options.branch, totalChanges: fileList.length },
+            gitDiff: { changedFiles: fileList, baseBranch: (options as any).branch, totalChanges: fileList.length },
             qualityResults: [],
             productionAudits: [],
             aiReviewResults: aiResult,
@@ -3517,7 +3559,7 @@ reviewAiCommand
             commits: []
           });
 
-      const outputPath = path.resolve(projectPath, options.output);
+      const outputPath = path.resolve(projectPath, (options as any).output || 'ai-review.md');
       await fs.ensureDir(path.dirname(outputPath));
       await fs.writeFile(outputPath, report);
 
@@ -3544,14 +3586,14 @@ analyzeCommand
   .option('--no-security', 'Skip security analysis')
   .action(async options => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       console.log(chalk.blue('🔍 Running comprehensive project analysis...'));
 
       // Run analysis
       const result = await woaruEngine.analyzeProject(projectPath);
 
-      if (options.json) {
+      if ((options as any).json) {
         console.log(JSON.stringify(result, null, 2));
         return;
       }
@@ -3606,7 +3648,7 @@ analyzeCommand
               (scanResult: any) => {
                 if (scanResult.error) {
                   console.log(
-                    chalk.red(`⚠️ ${scanResult.tool}: ${scanResult.error}`)
+                    chalk.red(`⚠️ ${scanResult.tool || 'Unknown'}: ${scanResult.error}`)
                   );
                   return;
                 }
@@ -3618,13 +3660,13 @@ analyzeCommand
 
                   // Group findings by severity
                   const critical = scanResult.findings.filter(
-                    (f: any) => f.severity === 'critical'
+                    (f: SecurityFinding) => f.severity === 'critical'
                   );
                   const high = scanResult.findings.filter(
-                    (f: any) => f.severity === 'high'
+                    (f: SecurityFinding) => f.severity === 'high'
                   );
                   const medium = scanResult.findings.filter(
-                    (f: any) => f.severity === 'medium'
+                    (f: SecurityFinding) => f.severity === 'medium'
                   );
 
                   [
@@ -3712,7 +3754,9 @@ analyzeCommand
               if (security.recommendations.length > 3) {
                 console.log(
                   chalk.gray(
-                    `... und ${security.recommendations.length - 3} weitere Empfehlungen`
+                    t('cli.additional_recommendations', {
+                      count: security.recommendations.length - 3
+                    })
                   )
                 );
               }
@@ -3730,12 +3774,12 @@ analyzeCommand
         console.log(chalk.gray('─'.repeat(40)));
 
         const auditsByCategory = result.production_audits.reduce(
-          (acc: any, audit: any) => {
+          (acc: Record<string, any[]>, audit: any) => {
             if (!acc[audit.category]) acc[audit.category] = [];
             acc[audit.category].push(audit);
             return acc;
           },
-          {}
+          {} as Record<string, any[]>
         );
 
         Object.entries(auditsByCategory).forEach(
@@ -3820,7 +3864,7 @@ analyzeCommand
       if (result.code_insights && result.code_insights.length > 0) {
         console.log(chalk.cyan.bold('💡 CODE INSIGHTS'));
         console.log(chalk.gray('─'.repeat(40)));
-        result.code_insights.forEach((insight: any) => {
+        result.code_insights.forEach((insight: CodeInsight) => {
           const severityColor =
             insight.severity === 'critical'
               ? chalk.red
@@ -3888,7 +3932,7 @@ analyzeCommand
       // Pre-Condition Check: Ensure AI is configured
       await ensureAiIsConfigured();
       
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
 
       console.log(chalk.blue('🧠 Running Multi-AI Code Analysis...'));
 
@@ -3951,7 +3995,7 @@ analyzeCommand
       const aiAgent = new AIReviewAgent(aiConfig);
       const aiAnalysisResults = await runAIReviewOnFiles(aiAgent, relevantFiles, projectPath);
 
-      if (options.json) {
+      if ((options as any).json) {
         console.log(JSON.stringify(aiAnalysisResults, null, 2));
         return;
       }
@@ -3970,25 +4014,25 @@ analyzeCommand
       if (aiSummary.totalFindings > 0) {
         // Show top findings by severity
         const allFindings = aiAnalysisResults.results.flatMap((r: any) => 
-          Object.values(r.results).flat()
+          r.findings || []
         );
         
-        const findingsBySeverity = allFindings.reduce((acc: Record<string, number>, finding: any) => {
+        const findingsBySeverity = allFindings.reduce((acc: Record<string, number>, finding: AIReviewFinding) => {
           acc[finding.severity] = (acc[finding.severity] || 0) + 1;
           return acc;
         }, {});
         
         console.log(chalk.cyan('\n🎯 Findings by Severity:'));
-        Object.entries(findingsBySeverity).forEach(([severity, count]: [string, number]) => {
+        Object.entries(findingsBySeverity).forEach(([severity, count]: [string, any]) => {
           const icon = severity === 'critical' ? '🔴' : severity === 'high' ? '🟡' : 
                       severity === 'medium' ? '🔵' : '⚪';
           console.log(`  ${icon} ${severity}: ${count}`);
         });
 
-        const criticalFindings = allFindings.filter((f: any) => f.severity === 'critical');
+        const criticalFindings = allFindings.filter((f: AIReviewFinding) => f.severity === 'critical');
         if (criticalFindings.length > 0) {
           console.log(chalk.red('\n🚨 Critical Issues:'));
-          criticalFindings.slice(0, 3).forEach((finding: any) => {
+          criticalFindings.slice(0, 3).forEach((finding: AIReviewFinding) => {
             console.log(chalk.red(`  • ${finding.message}`));
           });
           if (criticalFindings.length > 3) {
@@ -4574,10 +4618,35 @@ async function displayWikiContent(): Promise<void> {
     console.log(chalk.cyan.bold('📚 WOARU Wiki - Comprehensive Documentation'));
     console.log(chalk.gray('═'.repeat(80)));
     console.log();
+    
+    // Try multiple path approaches for wiki content (development vs production)
+    const basePaths = [
+      // Production: from dist/
+      path.join(__dirname, '..', 'docs', 'wiki'),
+      // Alternative production path
+      path.join(__dirname, 'docs', 'wiki'),
+      // Development path
+      path.join(process.cwd(), 'docs', 'wiki'),
+      // Dist path
+      path.join(process.cwd(), 'dist', 'docs', 'wiki')
+    ];
+    
+    let wikiBasePath = '';
+    for (const basePath of basePaths) {
+      if (await fs.pathExists(path.join(basePath, currentLang))) {
+        wikiBasePath = basePath;
+        break;
+      }
+    }
+    
+    if (!wikiBasePath) {
+      // Fallback to first path if none found
+      wikiBasePath = basePaths[0];
+    }
 
     // Load concept documentation based on current language
-    const conceptPath = path.join(__dirname, '..', 'docs', 'wiki', currentLang, 'concept.md');
-    const featuresPath = path.join(__dirname, '..', 'docs', 'wiki', currentLang, 'features.md');
+    const conceptPath = path.join(wikiBasePath, currentLang, 'concept.md');
+    const featuresPath = path.join(wikiBasePath, currentLang, 'features.md');
 
     let conceptContent = '';
     let featuresContent = '';
@@ -4587,7 +4656,7 @@ async function displayWikiContent(): Promise<void> {
       conceptContent = await fs.readFile(conceptPath, 'utf-8');
     } else {
       // Fallback to English if current language file doesn't exist
-      const fallbackConceptPath = path.join(__dirname, '..', 'docs', 'wiki', 'en', 'concept.md');
+      const fallbackConceptPath = path.join(wikiBasePath, 'en', 'concept.md');
       if (await fs.pathExists(fallbackConceptPath)) {
         conceptContent = await fs.readFile(fallbackConceptPath, 'utf-8');
         console.log(chalk.yellow(`ℹ️ Wiki content loaded in English (${currentLang} version not available)`));
@@ -4601,7 +4670,7 @@ async function displayWikiContent(): Promise<void> {
       featuresContent = await fs.readFile(featuresPath, 'utf-8');
     } else {
       // Fallback to English if current language file doesn't exist
-      const fallbackFeaturesPath = path.join(__dirname, '..', 'docs', 'wiki', 'en', 'features.md');
+      const fallbackFeaturesPath = path.join(wikiBasePath, 'en', 'features.md');
       if (await fs.pathExists(fallbackFeaturesPath)) {
         featuresContent = await fs.readFile(fallbackFeaturesPath, 'utf-8');
       } else {
@@ -4693,7 +4762,7 @@ messageCommand
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async (options) => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       await sendAllReports(projectPath);
     } catch (error) {
       console.error(chalk.red(`❌ Failed to send all reports: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -4707,7 +4776,7 @@ messageCommand
   .option('-p, --path <path>', 'Project path', process.cwd())
   .action(async (options) => {
     try {
-      const projectPath = path.resolve(options.path);
+      const projectPath = path.resolve((options as any).path);
       await sendLatestReport(projectPath);
     } catch (error) {
       console.error(chalk.red(`❌ Failed to send latest report: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -4775,7 +4844,7 @@ program.on('command:*', () => {
 });
 
 // AI Usage Statistics Display Function
-async function showUsageStatistics(providers: any[]): Promise<void> {
+async function showUsageStatistics(providers: AIProviderConfig[]): Promise<void> {
   try {
     const { UsageTracker } = await import('./ai/UsageTracker');
     const usageTracker = UsageTracker.getInstance();
@@ -4819,14 +4888,14 @@ async function showUsageStatistics(providers: any[]): Promise<void> {
     } else {
       // Show usage for configured providers
       for (const provider of providers) {
-        const stats = await usageTracker.getUsageStats(provider.id);
+        const stats = await usageTracker.getUsageStats((provider as any).id);
         if (stats && stats.totalRequests > 0) {
-          console.log(chalk.gray(`       • ${provider.id}:`));
+          console.log(chalk.gray(`       • ${(provider as any).id}:`));
           console.log(chalk.gray(`         Requests: ${stats.totalRequests} | Tokens: ${stats.totalTokensUsed.toLocaleString()}`));
           console.log(chalk.gray(`         Cost: $${stats.totalCost.toFixed(4)} | Errors: ${stats.errorCount}`));
           console.log(chalk.gray(`         Last used: ${new Date(stats.lastUsed).toLocaleString()}`));
         } else {
-          console.log(chalk.gray(`       • ${provider.id}: No usage recorded`));
+          console.log(chalk.gray(`       • ${(provider as any).id}: No usage recorded`));
         }
       }
     }
@@ -4905,7 +4974,7 @@ async function showAIStatus(projectPath: string): Promise<void> {
       }
 
       // Show usage statistics
-      await showUsageStatistics(config.providers);
+      await showUsageStatistics(config.providers as any);
 
     } catch (error) {
       console.log(chalk.red('   Status: Configuration error'));
@@ -5101,13 +5170,13 @@ async function setupAnthropicProvider(): Promise<any> {
     
     if (anthropicProvider && anthropicProvider.models) {
       // Note: 'any' type is used here because aiModelsDb comes from external JSON without TypeScript definitions
-      modelChoices = anthropicProvider.models.map((model: any) => ({
+      modelChoices = anthropicProvider.models.map((model: AIModel) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
       
       // Find the latest model for default
-      const latestModel = anthropicProvider.models.find((model: any) => model.isLatest);
+      const latestModel = anthropicProvider.models.find((model: AIModel) => model.isLatest);
       if (latestModel) {
         defaultModel = latestModel.id;
       }
@@ -5213,7 +5282,7 @@ async function setupOpenAIProvider(): Promise<any> {
     const openaiProvider = aiModelsDb.llm_providers.openai;
     
     if (openaiProvider && openaiProvider.models) {
-      modelChoices = openaiProvider.models.map((model: any) => ({
+      modelChoices = openaiProvider.models.map((model: AIModel) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
@@ -5327,13 +5396,13 @@ async function setupGoogleProvider(): Promise<any> {
     const googleProvider = aiModelsDb.llm_providers.google;
     
     if (googleProvider && googleProvider.models) {
-      modelChoices = googleProvider.models.map((model: any) => ({
+      modelChoices = googleProvider.models.map((model: AIModel) => ({
         name: `${model.name}${model.isLatest ? ' (Latest)' : ''} - ${model.description}`,
         value: model.id
       }));
       
       // Find the latest model for default
-      const latestModel = googleProvider.models.find((model: any) => model.isLatest);
+      const latestModel = googleProvider.models.find((model: AIModel) => model.isLatest);
       if (latestModel) {
         defaultModel = latestModel.id;
       }
@@ -5619,7 +5688,7 @@ async function setupOllamaProvider(): Promise<any> {
       type: 'input',
       name: 'customModel',
       message: 'Enter custom model name:',
-      when: (answers: any) => answers.model === 'custom',
+      when: (answers: InquirerAnswers) => answers.model === 'custom',
       validate: (input: string) => input.trim().length > 0 || 'Model name is required'
     },
     {
@@ -5661,7 +5730,7 @@ async function setupOllamaProvider(): Promise<any> {
 }
 
 // Logs command implementation functions
-async function showLogs(options: any): Promise<void> {
+async function showLogs(options: CliOptions): Promise<void> {
   const { ActivityLogger } = await import('./utils/ActivityLogger');
   const logger = ActivityLogger.getInstance();
   
@@ -5671,23 +5740,23 @@ async function showLogs(options: any): Promise<void> {
   let logs: string[] = [];
   
   // Apply filters
-  if (options.project) {
-    logs = await logger.getLogsByProject(options.project);
-  } else if (options.action) {
-    logs = await logger.getLogsByAction(options.action);
-  } else if (options.since || options.until) {
-    const startDate = options.since ? new Date(options.since + 'T00:00:00.000Z') : new Date(0);
-    const endDate = options.until ? new Date(options.until + 'T23:59:59.999Z') : new Date();
+  if ((options as any).project) {
+    logs = await logger.getLogsByProject((options as any).project);
+  } else if ((options as any).action) {
+    logs = await logger.getLogsByAction((options as any).action);
+  } else if ((options as any).since || (options as any).until) {
+    const startDate = (options as any).since ? new Date((options as any).since + 'T00:00:00.000Z') : new Date(0);
+    const endDate = (options as any).until ? new Date((options as any).until + 'T23:59:59.999Z') : new Date();
     logs = await logger.getLogsByDateRange(startDate, endDate);
   } else {
-    const tailLines = parseInt(options.tail) || 50;
+    const tailLines = parseInt((options as any).tail) || 50;
     logs = await logger.getRecentLogs(tailLines);
   }
   
   // Export if requested
-  if (options.export) {
-    const outputFile = options.output || `woaru-logs-${new Date().toISOString().split('T')[0]}.${options.export}`;
-    await logger.exportLogs(options.export, outputFile);
+  if ((options as any).export) {
+    const outputFile = (options as any).output || `woaru-logs-${new Date().toISOString().split('T')[0]}.${(options as any).export}`;
+    await logger.exportLogs((options as any).export, outputFile);
     console.log(chalk.green(`✅ Logs exported to: ${outputFile}`));
     return;
   }
@@ -5727,11 +5796,11 @@ async function showLogs(options: any): Promise<void> {
   }
 }
 
-async function clearLogs(options: any): Promise<void> {
+async function clearLogs(options: CliOptions): Promise<void> {
   const { ActivityLogger } = await import('./utils/ActivityLogger');
   const logger = ActivityLogger.getInstance();
   
-  if (!options.confirm) {
+  if (!(options as any).confirm) {
     const { confirmClear } = await inquirer.prompt([
       {
         type: 'confirm',
@@ -5810,7 +5879,7 @@ versionCommand
     try {
       await VersionManager.displayVersionCheck();
     } catch (error) {
-      console.error(chalk.red('❌ Fehler beim Prüfen der Version:'), error);
+      console.error(chalk.red(t('cli.version_check_error')), error);
     }
   });
 

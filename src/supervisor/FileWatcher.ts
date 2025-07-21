@@ -24,7 +24,7 @@ export class FileWatcher extends EventEmitter {
     super();
     this.projectPath = projectPath;
     this.ignorePatterns = [
-      /(^|[\/\\])\../, // Dotfiles
+      /(^|[/\\])\../, // Dotfiles
       /node_modules/,
       /\.git/,
       /dist/,

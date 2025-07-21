@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import { t } from '../config/i18n';
-import { I18nCommand } from './I18nCommand';
 
 /**
  * Command mapping for i18n translation keys

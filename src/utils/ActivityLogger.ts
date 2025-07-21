@@ -7,7 +7,7 @@
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { FilenameHelper } from './filenameHelper';
+// Removed unused FilenameHelper import
 import { APP_CONFIG } from '../config/constants';
 
 /**
@@ -46,12 +46,16 @@ export interface ActivityLogEntry {
  */
 export class ActivityLogger {
   private static instance: ActivityLogger;
-  private logFile: string;
+  private logFile: string = '';
   private activeActions: Map<string, ActivityLogEntry> = new Map();
 
   private constructor() {
+    this.initializeAsync();
+  }
+
+  private async initializeAsync() {
     // Create logs directory in user's home
-    const homeDir = require('os').homedir();
+    const homeDir = (await import('os')).homedir();
     const logsDir = path.join(homeDir, APP_CONFIG.DIRECTORIES.HOME_LOGS);
     this.logFile = path.join(logsDir, APP_CONFIG.FILES.ACTIONS_LOG);
 
@@ -403,7 +407,7 @@ export class ActivityLogger {
     const logs = await this.getRecentLogs(1000);
 
     switch (format) {
-      case 'json':
+      case 'json': {
         const jsonLogs = logs
           .map(log => this.formatLogEntry(log))
           .filter(Boolean);
@@ -413,19 +417,21 @@ export class ActivityLogger {
           'utf-8'
         );
         break;
+      }
 
-      case 'csv':
+      case 'csv': {
         const csvHeader = 'Timestamp,Status,Action,Details\n';
         const csvLines = logs
           .map(log => this.formatLogEntry(log))
           .filter(Boolean)
-          .map(
-            entry =>
-              `"${entry!.timestamp}","${entry!.status}","${entry!.action}","${entry!.details}"`
-          )
+          .map(entry => {
+            if (!entry) return '';
+            return `"${entry.timestamp}","${entry.status}","${entry.action}","${entry.details}"`;
+          })
           .join('\n');
         await fs.writeFile(outputPath, csvHeader + csvLines, 'utf-8');
         break;
+      }
 
       case 'txt':
       default:

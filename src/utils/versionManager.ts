@@ -18,13 +18,13 @@ export interface VersionInfo {
 
 /**
  * Manages version checking and updates for WOARU
- * 
+ *
  * This class provides utilities for:
  * - Checking the current installed version
  * - Fetching the latest available version from npm
  * - Comparing versions and displaying update notifications
  * - Performing self-updates of the WOARU package
- * 
+ *
  * All user-facing messages are internationalized using the i18n system.
  */
 export class VersionManager {
@@ -38,7 +38,7 @@ export class VersionManager {
       const packageJson = fs.readJsonSync(this.packageJsonPath);
       return packageJson.version;
     } catch (error) {
-      console.error('Error reading package.json:', error);
+      console.error(t('version_manager.error_reading_package'), error);
       return 'unknown';
     }
   }
@@ -51,7 +51,7 @@ export class VersionManager {
       const result = execSync('npm view woaru version', { encoding: 'utf8' });
       return result.trim();
     } catch (error) {
-      console.error('Error fetching latest version:', error);
+      console.error(t('version_manager.error_fetching_latest'), error);
       return 'unknown';
     }
   }
@@ -67,7 +67,7 @@ export class VersionManager {
       const dateStr = result.trim();
       return new Date(dateStr).toLocaleDateString('de-DE');
     } catch (error) {
-      console.error('Error fetching release date:', error);
+      console.error(t('version_manager.error_fetching_release_date'), error);
       return undefined;
     }
   }
@@ -93,7 +93,11 @@ export class VersionManager {
    */
   static displayVersion(): void {
     const version = this.getCurrentVersion();
-    console.log(`${chalk.blue('WOARU')} Version: ${chalk.green(version)}`);
+    console.log(
+      chalk.blue(
+        t('version_manager.version_display', { version: chalk.green(version) })
+      )
+    );
   }
 
   /**

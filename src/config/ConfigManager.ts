@@ -217,7 +217,7 @@ export class ConfigManager {
   /**
    * Store AI configuration in global config file
    */
-  async storeAiConfig(config: any): Promise<void> {
+  async storeAiConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
       await fs.writeFile(this.aiConfigFile, JSON.stringify(config, null, 2));
@@ -235,7 +235,7 @@ export class ConfigManager {
   /**
    * Load AI configuration from global config file
    */
-  async loadAiConfig(): Promise<any> {
+  async loadAiConfig(): Promise<Record<string, unknown>> {
     try {
       if (!(await fs.pathExists(this.aiConfigFile))) {
         return {};
@@ -274,7 +274,7 @@ export class ConfigManager {
         if (
           value &&
           typeof value === 'object' &&
-          value.hasOwnProperty('enabled')
+          Object.prototype.hasOwnProperty.call(value, 'enabled')
         ) {
           providers.push(key);
         }
@@ -303,7 +303,7 @@ export class ConfigManager {
    * @deprecated Use storeAiConfig() instead
    * Backward compatibility alias for storing AI configuration
    */
-  async storeLlmConfig(config: any): Promise<void> {
+  async storeLlmConfig(config: Record<string, unknown>): Promise<void> {
     return this.storeAiConfig(config);
   }
 
@@ -311,7 +311,7 @@ export class ConfigManager {
    * @deprecated Use loadAiConfig() instead
    * Backward compatibility alias for loading AI configuration
    */
-  async loadLlmConfig(): Promise<any> {
+  async loadLlmConfig(): Promise<Record<string, unknown>> {
     return this.loadAiConfig();
   }
 
@@ -347,8 +347,8 @@ export class ConfigManager {
   }> {
     const config = await this.loadAiConfig();
     return {
-      enabled: config.multi_ai_review_enabled || false,
-      primaryProvider: config.primary_review_provider_id || null,
+      enabled: Boolean(config.multi_ai_review_enabled) || false,
+      primaryProvider: (config.primary_review_provider_id as string) || null,
     };
   }
 
@@ -386,8 +386,8 @@ export class ConfigManager {
       if (
         providerConfig &&
         typeof providerConfig === 'object' &&
-        providerConfig.hasOwnProperty('enabled') &&
-        (providerConfig as any).enabled
+        Object.prototype.hasOwnProperty.call(providerConfig, 'enabled') &&
+        (providerConfig as Record<string, unknown>).enabled
       ) {
         enabledProviders.push(providerId);
       }
@@ -417,7 +417,7 @@ export class ConfigManager {
       if (
         providerConfig &&
         typeof providerConfig === 'object' &&
-        providerConfig.hasOwnProperty('enabled')
+        Object.prototype.hasOwnProperty.call(providerConfig, 'enabled')
       ) {
         count++;
       }
@@ -589,7 +589,7 @@ export class ConfigManager {
   /**
    * Load user configuration from global user config file
    */
-  async loadUserConfig(): Promise<any> {
+  async loadUserConfig(): Promise<Record<string, unknown>> {
     try {
       if (!(await fs.pathExists(this.userConfigFile))) {
         return {};
@@ -609,7 +609,7 @@ export class ConfigManager {
   /**
    * Store user configuration in global user config file
    */
-  async storeUserConfig(config: any): Promise<void> {
+  async storeUserConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
       await fs.writeFile(this.userConfigFile, JSON.stringify(config, null, 2));
@@ -636,7 +636,7 @@ export class ConfigManager {
    */
   async getUserLanguage(): Promise<string | null> {
     const config = await this.loadUserConfig();
-    return config.language || null;
+    return (config.language as string) || null;
   }
 
   /**

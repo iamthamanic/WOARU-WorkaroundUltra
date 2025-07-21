@@ -63,10 +63,10 @@ export class DatabaseManager {
     return (
       typeof db === 'object' &&
       db !== null &&
-      typeof (db as any).version === 'string' &&
-      typeof (db as any).lastUpdated === 'string' &&
-      typeof (db as any).categories === 'object' &&
-      typeof (db as any).frameworks === 'object'
+      typeof (db as Record<string, unknown>).version === 'string' &&
+      typeof (db as Record<string, unknown>).lastUpdated === 'string' &&
+      typeof (db as Record<string, unknown>).categories === 'object' &&
+      typeof (db as Record<string, unknown>).frameworks === 'object'
     );
   }
 

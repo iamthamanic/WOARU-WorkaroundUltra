@@ -4,7 +4,7 @@
  */
 
 import { BaseSOLIDChecker } from './BaseSOLIDChecker';
-import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
+import { SOLIDViolation, SOLIDPrinciple, ClassAnalysis, MethodAnalysis } from '../types/solid-types';
 import { TypeScriptParser } from '../parsers/TypeScriptParser';
 import { APP_CONFIG } from '../../config/constants';
 import { t } from '../../config/i18n';
@@ -73,7 +73,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele Methoden in einer Klasse
    */
-  private checkMethodCount(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkMethodCount(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const methodCount = classAnalysis.methods.length;
 
@@ -105,7 +105,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu hohe Klassen-Komplexität
    */
-  private checkComplexity(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkComplexity(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const complexity = classAnalysis.complexity;
 
@@ -137,7 +137,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele verschiedene Concerns (Verantwortlichkeiten)
    */
-  private checkConcernDiversity(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkConcernDiversity(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const concernCount = classAnalysis.concerns.length;
 
@@ -169,7 +169,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu große Klassen (Lines of Code)
    */
-  private checkClassSize(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkClassSize(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const linesOfCode = classAnalysis.linesOfCode;
 
@@ -201,10 +201,10 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf Methoden mit zu vielen Parametern
    */
-  private checkMethodParameters(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkMethodParameters(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     
-    classAnalysis.methods.forEach((method: any) => {
+    classAnalysis.methods.forEach((method: MethodAnalysis) => {
       // Thresholds für Parameter Count
       const thresholds = APP_CONFIG.SOLID_THRESHOLDS.METHODS_PER_INTERFACE;
       
@@ -235,7 +235,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele Klassen in einer Datei
    */
-  private checkFileClassCount(filePath: string, classes: any[]): SOLIDViolation[] {
+  private checkFileClassCount(filePath: string, classes: ClassAnalysis[]): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const classCount = classes.length;
 

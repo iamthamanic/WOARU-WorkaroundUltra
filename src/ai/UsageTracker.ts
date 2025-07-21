@@ -35,7 +35,7 @@ export class UsageTracker {
     if (!UsageTracker.instance) {
       try {
         UsageTracker.instance = new UsageTracker();
-      } catch (error) {
+      } catch {
         console.warn(
           '⚠️ Failed to initialize UsageTracker, creating fallback instance'
         );
@@ -186,7 +186,7 @@ export class UsageTracker {
   private async ensureLoaded(): Promise<void> {
     try {
       await this.loadStats();
-    } catch (error) {
+    } catch {
       console.warn('⚠️ Failed to ensure stats are loaded, using empty stats');
       this.stats = {};
     }

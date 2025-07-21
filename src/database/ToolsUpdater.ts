@@ -20,6 +20,7 @@ interface ToolConfig {
     lastChecked: string;
     deprecated?: boolean;
     successor?: string;
+    alternatives?: string[];
   };
   [key: string]: unknown;
 }
@@ -175,7 +176,7 @@ export class ToolsUpdater {
         const stats = await this.updateToolStats(toolName, 'npm');
 
         if (stats) {
-          (toolConfig as any).metadata = {
+          (toolConfig as Record<string, unknown>).metadata = {
             popularity: stats.downloads,
             lastChecked: new Date().toISOString(),
             githubStars: stats.stars,
@@ -217,9 +218,8 @@ export class ToolsUpdater {
         metadata: {
           popularity: 50000,
           lastChecked: new Date().toISOString(),
-          githubStars: 5000,
           alternatives: [],
-        } as any,
+        },
       };
     }
 
@@ -237,9 +237,8 @@ export class ToolsUpdater {
         metadata: {
           popularity: 100000,
           lastChecked: new Date().toISOString(),
-          githubStars: 60000,
           alternatives: ['node', 'deno'],
-        } as any,
+        },
       };
     }
   }
