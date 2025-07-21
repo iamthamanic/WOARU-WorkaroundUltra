@@ -176,7 +176,9 @@ export abstract class BaseAction {
     return fs.pathExists(filePath);
   }
 
-  protected async readJsonFile<T = any>(filePath: string): Promise<T | null> {
+  protected async readJsonFile<T = unknown>(
+    filePath: string
+  ): Promise<T | null> {
     const fs = await import('fs-extra');
     try {
       // Validate file path to prevent directory traversal

@@ -29,12 +29,12 @@ function rgbToAnsi256(r: number, g: number, b: number): number {
     if (r > 248) return 231;
     return Math.round(((r - 8) / 247) * 24) + 232;
   }
-  
+
   const red = Math.round((r / 255) * 5);
   const green = Math.round((g / 255) * 5);
   const blue = Math.round((b / 255) * 5);
-  
-  return 16 + (36 * red) + (6 * green) + blue;
+
+  return 16 + 36 * red + 6 * green + blue;
 }
 
 /**
@@ -42,19 +42,24 @@ function rgbToAnsi256(r: number, g: number, b: number): number {
  * @param color - Integer color value
  * @returns RGBA object
  */
-function intToRGBA(color: number): { r: number; g: number; b: number; a: number } {
+function intToRGBA(color: number): {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+} {
   return {
     r: (color >>> 24) & 0xff,
     g: (color >>> 16) & 0xff,
     b: (color >>> 8) & 0xff,
-    a: color & 0xff
+    a: color & 0xff,
   };
 }
 
 /**
  * Gets brightness of a pixel for character selection
  * @param r - Red component
- * @param g - Green component  
+ * @param g - Green component
  * @param b - Blue component
  * @param a - Alpha component
  * @returns Brightness value (0-1)
@@ -79,7 +84,7 @@ export async function generateLogoAsciiArt(
     // Default logo path
     const defaultLogoPath = path.resolve(__dirname, '../../woaru logo 3.png');
     const imagePath = logoPath || defaultLogoPath;
-    
+
     // Check if file exists
     if (!fs.existsSync(imagePath)) {
       console.warn(`Logo file not found: ${imagePath}`);
@@ -91,37 +96,37 @@ export async function generateLogoAsciiArt(
       width: 60,
       height: 15,
       colored: true,
-      chars: [' ', '░', '▒', '▓', '█']
+      chars: [' ', '░', '▒', '▓', '█'],
     };
 
     const finalOptions = { ...defaultOptions, ...options };
 
     // Load and process image with jimp
     const image = await Jimp.read(imagePath);
-    
+
     // Calculate aspect ratio and resize
     const aspectRatio = image.width / image.height;
-    const targetWidth = finalOptions.width!;
+    const targetWidth = finalOptions.width || 80;
     const targetHeight = Math.round(targetWidth / aspectRatio / 2); // Divide by 2 for terminal character aspect ratio
-    
+
     image.resize({ w: targetWidth, h: targetHeight });
 
     let asciiArt = '';
-    const chars = finalOptions.chars!;
-    
+    const chars = finalOptions.chars || '@%#*+=-:. ';
+
     // Process each row
     for (let y = 0; y < targetHeight; y++) {
       let line = '';
-      
+
       for (let x = 0; x < targetWidth; x++) {
         const pixelColor = image.getPixelColor(x, y);
         const color = intToRGBA(pixelColor);
         const brightness = getBrightness(color.r, color.g, color.b, color.a);
-        
+
         // Select character based on brightness
         const charIndex = Math.floor(brightness * (chars.length - 1));
         const char = chars[charIndex];
-        
+
         if (finalOptions.colored && brightness > 0.1) {
           // Add ANSI color codes
           const ansiColor = rgbToAnsi256(color.r, color.g, color.b);
@@ -130,7 +135,7 @@ export async function generateLogoAsciiArt(
           line += char;
         }
       }
-      
+
       asciiArt += line + '\n';
     }
 
@@ -158,12 +163,14 @@ function generateFallbackAsciiArt(): string {
  * @param logoPath - Path to the logo PNG file
  * @returns Promise<string> - Terminal-optimized ASCII art
  */
-export async function generateTerminalOptimizedAsciiArt(logoPath?: string): Promise<string> {
+export async function generateTerminalOptimizedAsciiArt(
+  logoPath?: string
+): Promise<string> {
   const terminalOptions: AsciiArtOptions = {
     width: 70,
     height: 20,
     colored: true,
-    chars: [' ', '░', '▒', '▓', '█']
+    chars: [' ', '░', '▒', '▓', '█'],
   };
 
   return generateLogoAsciiArt(logoPath, terminalOptions);
@@ -174,12 +181,14 @@ export async function generateTerminalOptimizedAsciiArt(logoPath?: string): Prom
  * @param logoPath - Path to the logo PNG file
  * @returns Promise<string> - Compact ASCII art
  */
-export async function generateCompactAsciiArt(logoPath?: string): Promise<string> {
+export async function generateCompactAsciiArt(
+  logoPath?: string
+): Promise<string> {
   const compactOptions: AsciiArtOptions = {
     width: 40,
     height: 12,
     colored: false,
-    chars: [' ', '.', ':', ';', '+', '*', '#', '@']
+    chars: [' ', '.', ':', ';', '+', '*', '#', '@'],
   };
 
   return generateLogoAsciiArt(logoPath, compactOptions);
@@ -190,12 +199,14 @@ export async function generateCompactAsciiArt(logoPath?: string): Promise<string
  * @param logoPath - Path to the logo PNG file
  * @returns Promise<string> - High-contrast ASCII art
  */
-export async function generateHighContrastAsciiArt(logoPath?: string): Promise<string> {
+export async function generateHighContrastAsciiArt(
+  logoPath?: string
+): Promise<string> {
   const highContrastOptions: AsciiArtOptions = {
     width: 50,
     height: 15,
     colored: true,
-    chars: [' ', '▌', '█']
+    chars: [' ', '▌', '█'],
   };
 
   return generateLogoAsciiArt(logoPath, highContrastOptions);

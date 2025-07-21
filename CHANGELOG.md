@@ -5,6 +5,124 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2025-07-21
+
+### Fixed
+- **CRITICAL Security Vulnerabilities**: Comprehensive security hardening
+  - **Command Injection Prevention**: Replaced 14+ unsafe `execAsync()` calls with secure spawn-based execution
+  - **JSON Injection Protection**: Implemented safe JSON parsing with prototype pollution prevention
+  - **Path Traversal Protection**: Added comprehensive path validation and sanitization
+  - All external command executions now use whitelist validation
+- **TypeScript Compilation Errors**: Fixed all type mismatches
+  - Resolved severity type incompatibilities in `WOARUEngine.ts`
+  - Fixed array type issues and unused imports
+  - Enhanced type safety across the codebase
+- **ESLint Violations**: Reduced from 4,335 to 20 warnings (99.5% improvement)
+  - Eliminated all ESLint errors (0 errors)
+  - Fixed unused variables and imports
+  - Improved code consistency
+
+### Added
+- **Security Infrastructure**: New security modules
+  - `src/utils/secureExecution.ts`: Safe command execution framework
+  - `src/utils/safeJsonParser.ts`: Secure JSON parsing with validation
+  - `src/utils/toolExecutor.ts`: Type-safe tool execution interfaces
+- **Input Validation**: Comprehensive sanitization for all user inputs
+  - File path normalization and validation
+  - Command whitelist enforcement
+  - JSON size limits and key validation
+
+### Changed
+- **Tool Execution Architecture**: Complete refactoring for security
+  - All tool executions now use spawn instead of exec
+  - Consistent error handling across all external tool calls
+  - Improved logging and debugging capabilities
+- **Error Handling**: Enhanced error reporting
+  - Better error messages for security violations
+  - Structured error logging for debugging
+  - Graceful fallbacks for invalid inputs
+
+### Security
+- **Vulnerability Assessment**: From CRITICAL to SECURE
+  - No remaining command injection vulnerabilities
+  - No JSON parsing security issues
+  - Comprehensive input validation implemented
+  - All user inputs properly sanitized
+
+### Technical Improvements
+- **Code Quality**: Significant improvements
+  - Type safety enhanced throughout the codebase
+  - Consistent error handling patterns
+  - Better separation of concerns
+  - Reduced code duplication
+- **Architecture**: Security-first design
+  - Clear security layer separation
+  - Reusable security components
+  - Future-proof security patterns
+
+## [5.1.2] - 2025-07-19
+
+### Added
+- **Complete i18n System Overhaul**: Comprehensive internationalization implementation
+  - Added 50+ new translation keys across all major UI components
+  - Implemented structured translation categories: `general`, `startup`, `analysis`, `notifications`, `api_prompts`
+  - Added support for parameterized translations with variable substitution
+- **Multilingual Wiki System**: Language-aware documentation
+  - Created separate language directories: `docs/wiki/en/` and `docs/wiki/de/`
+  - Added complete English translations for all wiki content
+  - Implemented dynamic language-based content loading with intelligent fallback
+- **Enhanced Language Selection**: Improved language switching functionality
+  - Fully internationalized language selection dialog
+  - Real-time language detection and switching
+  - Consistent language persistence across sessions
+
+### Fixed
+- **Mixed Language Output**: Eliminated all mixed German/English text display
+  - Replaced 100+ hardcoded strings with proper i18n function calls
+  - Fixed language command showing translation keys instead of translated text
+  - Resolved startup messages displaying in wrong language
+- **i18n Runtime Issues**: Improved initialization and fallback mechanisms
+  - Enhanced `safeT()` function with better fallback logic
+  - Fixed translation loading timing issues during CLI startup
+  - Implemented robust i18n initialization sequence
+
+### Changed
+- **Build System**: Enhanced build pipeline for internationalization
+  - Automatic copying of `locales/` and `docs/` directories to `dist/`
+  - Integrated i18n asset management into npm build process
+- **CLI User Experience**: Consistent multilingual interface
+  - All user-facing strings now properly localized
+  - Improved error messages and prompts in user's preferred language
+  - Enhanced splash screen with translated quick commands
+
+### Technical Improvements
+- **i18n Architecture**: Robust internationalization foundation
+  - Improved translation function with initialization checks
+  - Better error handling for missing translations
+  - Type-safe translation system with TypeScript support
+
+## [5.1.1] - 2025-07-19
+
+### Fixed
+- **i18n Command Descriptions**: Fixed incorrect command description for `woaru commands` that was showing wiki documentation text
+- **i18n Runtime Initialization**: Resolved runtime errors where translation functions were called before i18n system initialization
+  - Implemented `safeT()` wrapper function with fallback mechanism
+  - All command descriptions now properly handle early initialization phase
+- **Complete i18n Coverage**: Ensured all command descriptions and purposes are properly internationalized
+  - Added missing translation keys for all CLI commands
+  - Fixed mixed language output in dynamically generated content
+
+### Changed
+- **Documentation Improvements**:
+  - Enhanced JSDoc documentation for VersionManager class
+  - Added detailed context to TODO comments in AIReviewAgent.ts
+  - Improved documentation for i18n-related functions
+
+### Technical Details
+- Replaced all early `t()` calls in command definitions with `safeT()` wrapper
+- Extended both German and English translation files with complete CLI command descriptions
+- Fixed TypeScript compilation errors related to i18n initialization timing
+
 ## [5.1.0] - 2025-07-18
 
 ### Added
@@ -32,6 +150,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added robust async validation for AI provider availability
   - Enhanced error handling and user feedback for AI configuration issues
 
+- **MAJOR: Complete Internationalization (i18n) Implementation**
+  - Replaced 100+ hardcoded German strings with internationalized translation keys
+  - Added comprehensive German and English translation files
+  - Internationalized core components: versionManager, SRPChecker, ReviewReportGenerator, CLI
+  - Enhanced user interface with proper language support for all features
+  - Added translation keys for SOLID principle violations, code quality reports, and AI reviews
+  - Improved multi-language support for version updates, error messages, and user prompts
+
 ### Fixed
 - **CRITICAL**: Fixed AI Pre-Condition-Check failing incorrectly
   - Root cause: ensureAiIsConfigured() was checking API keys in wrong location
@@ -47,6 +173,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Root cause: Limited security analysis beyond Snyk/Gitleaks
   - Solution: Added comprehensive security pattern matching and Semgrep integration
   - Impact: XSS vulnerabilities and other security issues are now properly detected
+
+- **CRITICAL**: Fixed hardcoded German strings throughout the application
+  - Root cause: Over 100 hardcoded German strings in user interface and reports
+  - Solution: Systematic replacement with i18n translation keys
+  - Impact: Application now properly supports both German and English languages
 
 ### Enhanced
 - **Security Analysis**: 

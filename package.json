@@ -1,13 +1,13 @@
 {
   "name": "woaru",
-  "version": "5.1.0",
+  "version": "5.1.3",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {
     "woaru": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r locales dist/ && cp -r docs dist/",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "test": "jest",

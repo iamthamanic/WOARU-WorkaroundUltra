@@ -1,26 +1,31 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { ToolExecutor } from '../utils/toolExecutor';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { APP_CONFIG } from '../config/constants';
 import { NotificationManager } from '../supervisor/NotificationManager';
+import i18next from 'i18next';
 import {
   ToolsDatabaseManager,
-  CoreTool,
+  // CoreTool, // unused
   ExperimentalTool,
 } from '../database/ToolsDatabaseManager';
 import { EslintPlugin } from '../plugins/EslintPlugin';
 import {
   SecurityFinding,
   SecurityScanResult,
-  GitleaksResult,
   SecurityCheckOptions,
 } from '../types/security';
 import { SOLIDChecker } from '../solid/SOLIDChecker';
-import { SOLIDCheckResult, SOLIDViolation } from '../solid/types/solid-types';
+import { SOLIDCheckResult } from '../solid/types/solid-types';
 import { CodeSmellAnalyzer } from '../analyzer/CodeSmellAnalyzer';
 import { CodeSmellFinding } from '../types/code-smell';
 import { CodeIssue } from '../supervisor/types';
+import {
+  SnykVulnerability as ImportedSnykVulnerability,
+  SnykResult as ImportedSnykResult,
+} from '../types';
 
 const execAsync = promisify(exec);
 
@@ -83,7 +88,7 @@ export interface SnykResult {
 export class QualityRunner {
   private notificationManager: NotificationManager;
   private databaseManager: ToolsDatabaseManager;
-  private corePlugins: Map<string, any>;
+  private corePlugins: Map<string, Record<string, unknown>>;
   private solidChecker: SOLIDChecker;
   private codeSmellAnalyzer: CodeSmellAnalyzer;
 
@@ -103,7 +108,10 @@ export class QualityRunner {
    */
   private initializeCorePlugins(): void {
     // Only add verified, secure core plugins
-    this.corePlugins.set('EslintPlugin', new EslintPlugin());
+    this.corePlugins.set(
+      'EslintPlugin',
+      new EslintPlugin() as unknown as Record<string, unknown>
+    );
     // More core plugins would be added here as they're implemented
   }
 
@@ -138,7 +146,10 @@ export class QualityRunner {
       // Phase 3: Fallback to legacy hardcoded checks
       await this.runLegacyChecks(relativePath, ext);
     } catch (error) {
-      console.warn(`Quality check failed for ${relativePath}:`, error);
+      console.warn(
+        i18next.t('quality_runner.check_failed', { file: relativePath }),
+        error
+      );
     }
   }
 
@@ -157,35 +168,56 @@ export class QualityRunner {
       for (const coreTool of coreTools) {
         const plugin = this.corePlugins.get(coreTool.plugin_class);
 
-        if (plugin && (await plugin.canHandleFile(filePath))) {
+        const pluginWithMethods = plugin as Record<string, unknown> & {
+          canHandleFile?: (path: string) => Promise<boolean>;
+          runLinter?: (
+            path: string,
+            options: { fix: boolean }
+          ) => Promise<{
+            hasErrors: boolean;
+            hasWarnings: boolean;
+            output: string;
+          }>;
+        };
+
+        if (
+          pluginWithMethods.canHandleFile &&
+          (await pluginWithMethods.canHandleFile(filePath))
+        ) {
           console.log(
-            `🔧 Running core plugin: ${coreTool.name} on ${filePath}`
+            `🔧 ${i18next.t('quality_runner.core_plugin_running', { tool: coreTool.name, file: filePath })}`
           );
 
-          const result = await plugin.runLinter(filePath, { fix: false });
+          if (pluginWithMethods.runLinter) {
+            const result = await pluginWithMethods.runLinter(filePath, {
+              fix: false,
+            });
 
-          if (result.hasErrors) {
-            this.notificationManager.showCriticalQualityError(
-              filePath,
-              coreTool.name,
-              result.output
-            );
-          } else if (result.hasWarnings) {
-            console.log(`⚠️ ${coreTool.name} warnings in ${filePath}`);
-          } else {
-            this.notificationManager.showQualitySuccess(
-              filePath,
-              coreTool.name
-            );
+            if (result.hasErrors) {
+              this.notificationManager.showCriticalQualityError(
+                filePath,
+                coreTool.name,
+                result.output
+              );
+            } else if (result.hasWarnings) {
+              console.log(
+                `⚠️ ${i18next.t('quality_runner.tool_warnings', { tool: coreTool.name, file: filePath })}`
+              );
+            } else {
+              this.notificationManager.showQualitySuccess(
+                filePath,
+                coreTool.name
+              );
+            }
+
+            return true; // Successfully handled by core plugin
           }
-
-          return true; // Successfully handled by core plugin
         }
       }
 
       return false; // No core plugin could handle this file
     } catch (error) {
-      console.warn('Core plugin check failed:', error);
+      console.warn(i18next.t('quality_runner.core_plugin_failed'), error);
       return false;
     }
   }
@@ -207,7 +239,7 @@ export class QualityRunner {
       for (const experimentalTool of experimentalTools) {
         if (await this.canRunExperimentalTool(experimentalTool)) {
           console.log(
-            `🧪 Running experimental tool: ${experimentalTool.name} on ${filePath}`
+            `🧪 ${i18next.t('quality_runner.experimental_tool_running', { tool: experimentalTool.name, file: filePath })}`
           );
 
           const result = await this.executeExperimentalTool(
@@ -235,7 +267,7 @@ export class QualityRunner {
 
       return false; // No experimental tool could handle this file
     } catch (error) {
-      console.warn('Experimental tool check failed:', error);
+      console.warn(i18next.t('quality_runner.experimental_tool_failed'), error);
       return false;
     }
   }
@@ -248,7 +280,9 @@ export class QualityRunner {
     fileExtension: string
   ): Promise<void> {
     // Keep existing legacy logic for backward compatibility
-    console.log(`📦 Running legacy check for ${filePath}`);
+    console.log(
+      `📦 ${i18next.t('quality_runner.legacy_check_running', { file: filePath })}`
+    );
 
     // TypeScript/JavaScript files
     if (['.ts', '.tsx', '.js', '.jsx'].includes(fileExtension)) {
@@ -428,7 +462,7 @@ export class QualityRunner {
             );
             const fixes = codeSmellFindings
               .filter(finding => finding.suggestion)
-              .map(finding => finding.suggestion!);
+              .map(finding => finding.suggestion || 'No suggestion available');
             const criticalFindings = codeSmellFindings.filter(
               f => f.severity === 'error'
             );
@@ -512,31 +546,43 @@ export class QualityRunner {
 
   private async runESLintCheck(filePath: string): Promise<void> {
     try {
-      const eslintCommand = this.getContextSensitiveESLintCommand(filePath);
-      await execAsync(`${eslintCommand} "${filePath}"`);
+      await ToolExecutor.runESLint(filePath, {
+        cwd: path.dirname(filePath),
+      });
+
       this.notificationManager.showQualitySuccess(filePath, 'ESLint');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // ESLint failed - extract error output
-      const output = error.stdout || error.stderr || error.message;
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       this.notificationManager.showCriticalQualityError(
         filePath,
         'ESLint',
-        output
+        String(output)
       );
     }
   }
 
   private async runRuffCheck(filePath: string): Promise<void> {
     try {
-      await execAsync(`ruff check --fix --show-source "${filePath}"`);
+      await ToolExecutor.runRuff(filePath, true); // true = fix enabled
       this.notificationManager.showQualitySuccess(filePath, 'Ruff');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Ruff failed - extract error output
-      const output = error.stdout || error.stderr || error.message;
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       this.notificationManager.showCriticalQualityError(
         filePath,
         'Ruff',
-        output
+        String(output)
       );
     }
   }
@@ -544,7 +590,7 @@ export class QualityRunner {
   private async runGoCheck(filePath: string): Promise<void> {
     try {
       // First run gofmt to check formatting
-      const { stdout: gofmtOutput } = await execAsync(`gofmt -l "${filePath}"`);
+      const { stdout: gofmtOutput } = await ToolExecutor.runGoFmt(filePath);
 
       // If gofmt returns output, the file needs formatting
       if (gofmtOutput.trim()) {
@@ -561,19 +607,24 @@ export class QualityRunner {
       }
 
       // Also run go vet for additional checks
-      await execAsync(`go vet "${filePath}"`);
+      await ToolExecutor.runGoVet(filePath);
 
       this.notificationManager.showQualitySuccess(
         filePath,
         'Go (gofmt + go vet)'
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       // go vet failed - extract error output
-      const output = error.stdout || error.stderr || error.message;
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       this.notificationManager.showCriticalQualityError(
         filePath,
         'go vet',
-        output
+        String(output)
       );
     }
   }
@@ -584,17 +635,23 @@ export class QualityRunner {
 
     try {
       // First check formatting with rustfmt
-      const { stdout: fmtOutput } = await execAsync(
-        `rustfmt --check "${filePath}" 2>&1`
-      );
+      await ToolExecutor.runRustFmt(filePath);
 
       // rustfmt returns non-zero exit code if formatting is needed
       // We'll catch this in the error handler below
-    } catch (fmtError: any) {
-      if (fmtError.message.includes('Diff in')) {
+    } catch (fmtError: unknown) {
+      if (
+        (fmtError as Record<string, unknown>)?.message
+          ?.toString()
+          ?.includes('Diff in')
+      ) {
         hasErrors = true;
         errorOutput += `Formatting issues found. Run 'rustfmt ${filePath}' to fix.\n\n`;
-        errorOutput += fmtError.stdout || fmtError.stderr || fmtError.message;
+        errorOutput +=
+          (fmtError as Record<string, unknown>)?.stdout ||
+          (fmtError as Record<string, unknown>)?.stderr ||
+          (fmtError as Record<string, unknown>)?.message ||
+          'Unknown error';
       }
     }
 
@@ -610,10 +667,13 @@ export class QualityRunner {
           'Rust (rustfmt + clippy)'
         );
       }
-    } catch (clippyError: any) {
+    } catch (clippyError: unknown) {
       hasErrors = true;
       const clippyOutput =
-        clippyError.stdout || clippyError.stderr || clippyError.message;
+        (clippyError as Record<string, unknown>)?.stdout ||
+        (clippyError as Record<string, unknown>)?.stderr ||
+        (clippyError as Record<string, unknown>)?.message ||
+        'Unknown error';
 
       // Add separator if we already have formatting errors
       if (errorOutput) {
@@ -634,14 +694,19 @@ export class QualityRunner {
   private async runCSharpCheck(filePath: string): Promise<void> {
     try {
       // Run dotnet format to check and fix formatting
-      const { stdout } = await execAsync(
+      await execAsync(
         `dotnet format --verify-no-changes --include "${filePath}" 2>&1`
       );
 
       // If no output and success, file is properly formatted
       this.notificationManager.showQualitySuccess(filePath, 'dotnet format');
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
 
       // Check if it's a formatting issue
       if (
@@ -670,14 +735,18 @@ export class QualityRunner {
         `java -jar google-java-format.jar --dry-run --set-exit-if-changed "${filePath}" 2>&1`
       );
       this.notificationManager.showQualitySuccess(filePath, 'Java Format');
-    } catch (error: any) {
+    } catch {
       // If google-java-format is not available, try checkstyle
       try {
-        await execAsync(`checkstyle -c /google_checks.xml "${filePath}" 2>&1`);
+        await ToolExecutor.runCheckstyle(filePath);
         this.notificationManager.showQualitySuccess(filePath, 'Checkstyle');
-      } catch (checkstyleError: any) {
-        const output =
-          checkstyleError.stdout || checkstyleError.stderr || error.message;
+      } catch (checkstyleError: unknown) {
+        const output = String(
+          (checkstyleError as Record<string, unknown>)?.stdout ||
+            (checkstyleError as Record<string, unknown>)?.stderr ||
+            (checkstyleError as Record<string, unknown>)?.message ||
+            'Unknown error'
+        );
         this.notificationManager.showCriticalQualityError(
           filePath,
           'Java Quality',
@@ -690,10 +759,15 @@ export class QualityRunner {
   private async runPHPCheck(filePath: string): Promise<void> {
     try {
       // Run PHP_CodeSniffer
-      await execAsync(`phpcs --standard=PSR12 "${filePath}" 2>&1`);
+      await ToolExecutor.runPhpCs(filePath, 'PSR12');
       this.notificationManager.showQualitySuccess(filePath, 'PHP_CodeSniffer');
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
 
       // PHPCS returns non-zero exit code when issues are found
       if (output.includes('FOUND') && output.includes('ERROR')) {
@@ -715,10 +789,15 @@ export class QualityRunner {
   private async runRubyCheck(filePath: string): Promise<void> {
     try {
       // Run RuboCop with auto-correct in dry-run mode
-      await execAsync(`rubocop --format simple "${filePath}" 2>&1`);
+      await ToolExecutor.runRuboCop(filePath, 'simple');
       this.notificationManager.showQualitySuccess(filePath, 'RuboCop');
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
 
       // RuboCop returns non-zero exit when offenses are found
       if (output.includes('Offense')) {
@@ -743,11 +822,15 @@ export class QualityRunner {
   ): Promise<QualityCheckResult | null> {
     try {
       // Run ESLint with context-sensitive configuration
-      const eslintCommand = this.getContextSensitiveESLintCommand(filePath, true);
-      await execAsync(`${eslintCommand} "${filePath}"`);
+      await ToolExecutor.runESLint(filePath);
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       const issues = this.parseESLintOutput(output);
 
       // Determine severity based on output
@@ -770,10 +853,15 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`ruff check "${filePath}"`);
+      await ToolExecutor.runRuff(filePath, false); // false = no fix, just check
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       const issues = this.parseRuffOutput(output);
       return {
         filePath,
@@ -791,7 +879,7 @@ export class QualityRunner {
 
     try {
       // Check formatting
-      const { stdout: fmtOutput } = await execAsync(`gofmt -l "${filePath}"`);
+      const { stdout: fmtOutput } = await ToolExecutor.runGoFmt(filePath);
       if (fmtOutput.trim()) {
         // Get diff to show what needs to change
         const { stdout: diffOutput } = await execAsync(
@@ -808,15 +896,20 @@ export class QualityRunner {
             }
           });
       }
-    } catch (error: any) {
-      issues.push(`gofmt error: ${error.message}`);
+    } catch (error: unknown) {
+      issues.push(`gofmt error: ${(error as Error).message}`);
     }
 
     try {
       // Run go vet
-      await execAsync(`go vet "${filePath}"`);
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+      await ToolExecutor.runGoVet(filePath);
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       issues.push(`go vet: ${output.trim()}`);
     }
 
@@ -834,13 +927,18 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`rustfmt --check "${filePath}"`);
+      await ToolExecutor.runRustFmt(filePath);
       await execAsync(
         `cargo clippy --manifest-path "${path.dirname(filePath)}/Cargo.toml" -- -D warnings`
       );
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       return {
         filePath,
         tool: 'Rust (rustfmt + clippy)',
@@ -854,10 +952,15 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`dotnet format --verify-no-changes "${filePath}"`);
+      await ToolExecutor.runDotNetFormat(filePath);
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       return {
         filePath,
         tool: 'C# (dotnet format)',
@@ -871,10 +974,15 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`checkstyle -c /google_checks.xml "${filePath}"`);
+      await ToolExecutor.runCheckstyle(filePath);
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       return {
         filePath,
         tool: 'Java (Checkstyle)',
@@ -888,10 +996,15 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`phpcs --standard=PSR12 "${filePath}"`);
+      await ToolExecutor.runPhpCs(filePath, 'PSR12');
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       return {
         filePath,
         tool: 'PHP (PHPCS)',
@@ -905,10 +1018,15 @@ export class QualityRunner {
     filePath: string
   ): Promise<QualityCheckResult | null> {
     try {
-      await execAsync(`rubocop "${filePath}"`);
+      await ToolExecutor.runRuboCop(filePath);
       return null; // No issues found
-    } catch (error: any) {
-      const output = error.stdout || error.stderr || error.message;
+    } catch (error: unknown) {
+      const output = String(
+        (error as Record<string, unknown>)?.stdout ||
+          (error as Record<string, unknown>)?.stderr ||
+          (error as Record<string, unknown>)?.message ||
+          'Unknown error'
+      );
       return {
         filePath,
         tool: 'Ruby (RuboCop)',
@@ -927,7 +1045,7 @@ export class QualityRunner {
     lines.forEach(line => {
       // Match ESLint output pattern
       const match = line.match(
-        /^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+([a-z0-9\-\/]+)$/
+        /^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+([a-z0-9\-/]+)$/
       );
       if (match) {
         const [, lineNum, column, severity, message, rule] = match;
@@ -976,7 +1094,7 @@ export class QualityRunner {
     try {
       // First, check if Snyk is installed
       await execAsync('snyk --version');
-    } catch (error) {
+    } catch {
       return [
         {
           type: 'dependencies',
@@ -1023,7 +1141,7 @@ export class QualityRunner {
       };
 
       if (data.vulnerabilities && Array.isArray(data.vulnerabilities)) {
-        data.vulnerabilities.forEach((vuln: any) => {
+        data.vulnerabilities.forEach((vuln: ImportedSnykVulnerability) => {
           const severity = vuln.severity.toLowerCase() as
             | 'low'
             | 'medium'
@@ -1037,16 +1155,16 @@ export class QualityRunner {
             title: vuln.title,
             severity,
             packageName: vuln.packageName,
-            version: vuln.version,
-            from: vuln.from || [],
-            upgradePath: vuln.upgradePath,
-            isUpgradable: vuln.isUpgradable || false,
-            isPatchable: vuln.isPatchable || false,
-            description: vuln.description,
-            fixedIn: vuln.fixedIn,
-            exploit: vuln.exploit,
-            CVSSv3: vuln.CVSSv3,
-            semver: vuln.semver,
+            version: vuln.version as string,
+            from: (vuln.from as string[]) || [],
+            upgradePath: vuln.upgradePath as string[] | undefined,
+            isUpgradable: (vuln.isUpgradable as boolean) || false,
+            isPatchable: (vuln.isPatchable as boolean) || false,
+            description: vuln.description as string | undefined,
+            fixedIn: vuln.fixedIn as string[] | undefined,
+            exploit: vuln.exploit as string | undefined,
+            CVSSv3: vuln.CVSSv3 as string | undefined,
+            semver: vuln.semver as { vulnerable: string[] } | undefined,
           });
         });
       }
@@ -1056,13 +1174,13 @@ export class QualityRunner {
         vulnerabilities,
         summary,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If error contains JSON, it might be vulnerabilities found (non-zero exit)
-      if (error.stdout) {
+      if ((error as any).stdout) {
         try {
-          const data = JSON.parse(error.stdout);
+          const data = JSON.parse((error as any).stdout);
           if (data.vulnerabilities) {
-            return this.parseSnykErrorOutput(data);
+            return this.parseSnykErrorOutput(data) as any;
           }
         } catch {
           // Not JSON, actual error
@@ -1071,7 +1189,7 @@ export class QualityRunner {
 
       return {
         type: 'dependencies',
-        error: `Snyk dependency check failed: ${error.message}`,
+        error: `Snyk dependency check failed: ${(error as Error).message}`,
       };
     }
   }
@@ -1135,9 +1253,9 @@ export class QualityRunner {
         codeIssues,
         summary,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if Snyk Code is available
-      if (error.message.includes('snyk code is not supported')) {
+      if ((error as Error).message.includes('snyk code is not supported')) {
         return {
           type: 'code',
           error:
@@ -1147,7 +1265,7 @@ export class QualityRunner {
 
       return {
         type: 'code',
-        error: `Snyk Code check failed: ${error.message}`,
+        error: `Snyk Code check failed: ${(error as Error).message}`,
       };
     }
   }
@@ -1155,7 +1273,9 @@ export class QualityRunner {
   /**
    * Helper to parse Snyk error output that contains vulnerability data
    */
-  private parseSnykErrorOutput(data: any): SnykResult {
+  private parseSnykErrorOutput(data: {
+    vulnerabilities: ImportedSnykVulnerability[];
+  }): ImportedSnykResult {
     const vulnerabilities: SnykVulnerability[] = [];
     const summary = {
       total: 0,
@@ -1166,7 +1286,7 @@ export class QualityRunner {
     };
 
     if (data.vulnerabilities && Array.isArray(data.vulnerabilities)) {
-      data.vulnerabilities.forEach((vuln: any) => {
+      data.vulnerabilities.forEach((vuln: ImportedSnykVulnerability) => {
         const severity = vuln.severity.toLowerCase() as
           | 'low'
           | 'medium'
@@ -1180,25 +1300,28 @@ export class QualityRunner {
           title: vuln.title,
           severity,
           packageName: vuln.packageName,
-          version: vuln.version,
-          from: vuln.from || [],
-          upgradePath: vuln.upgradePath,
-          isUpgradable: vuln.isUpgradable || false,
-          isPatchable: vuln.isPatchable || false,
-          description: vuln.description,
-          fixedIn: vuln.fixedIn,
-          exploit: vuln.exploit,
-          CVSSv3: vuln.CVSSv3,
-          semver: vuln.semver,
+          version: vuln.version as string,
+          from: (vuln.from as string[]) || [],
+          upgradePath: vuln.upgradePath as string[] | undefined,
+          isUpgradable: (vuln.isUpgradable as boolean) || false,
+          isPatchable: (vuln.isPatchable as boolean) || false,
+          description: vuln.description as string | undefined,
+          fixedIn: vuln.fixedIn as string[] | undefined,
+          exploit: vuln.exploit as string | undefined,
+          CVSSv3: vuln.CVSSv3 as string | undefined,
+          semver: vuln.semver as { vulnerable: string[] } | undefined,
         });
       });
     }
 
     return {
-      type: 'dependencies',
-      vulnerabilities,
+      type: 'dependencies' as const,
+      tool: 'snyk',
+      totalVulnerabilities: vulnerabilities.length,
+      findings: [], // Will be populated if needed
       summary,
-    };
+      vulnerabilities,
+    } as any;
   }
 
   /**
@@ -1243,7 +1366,10 @@ export class QualityRunner {
     }
 
     // Run basic security analysis for XSS and other vulnerabilities
-    const basicSecurityResult = await this.runBasicSecurityAnalysis(filePaths, options);
+    const basicSecurityResult = await this.runBasicSecurityAnalysis(
+      filePaths,
+      options
+    );
     if (basicSecurityResult) {
       results.push(basicSecurityResult);
     }
@@ -1256,13 +1382,15 @@ export class QualityRunner {
    */
   private async runGitleaksCheck(
     filePaths: string[],
-    options: SecurityCheckOptions = {}
+    _options: SecurityCheckOptions = {}
   ): Promise<SecurityScanResult | null> {
     try {
       // Check if gitleaks is installed
       await execAsync('which gitleaks');
     } catch {
-      console.log('⚠️  Gitleaks not installed. Skipping secret detection.');
+      console.log(
+        `⚠️  ${i18next.t('security_analysis.gitleaks_not_installed')}`
+      );
       return null;
     }
 
@@ -1291,7 +1419,7 @@ export class QualityRunner {
       await fs.remove(tempFile);
 
       if (stdout) {
-        const results: GitleaksResult[] = JSON.parse(stdout);
+        const results: any[] = JSON.parse(stdout);
 
         results.forEach(result => {
           // Only include findings from our target files
@@ -1322,13 +1450,13 @@ export class QualityRunner {
         findings,
         summary,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         tool: 'gitleaks',
         scanTime: new Date(),
         findings: [],
         summary,
-        error: `Gitleaks check failed: ${error.message}`,
+        error: `Gitleaks check failed: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
@@ -1670,24 +1798,6 @@ export class QualityRunner {
       );
 
       if (codeSmellFindings.length > 0) {
-        // Convert code smell findings to quality check results
-        const issues = codeSmellFindings.map(
-          finding =>
-            `Line ${finding.line}:${finding.column} - ${finding.message}`
-        );
-
-        const fixes = codeSmellFindings
-          .filter(finding => finding.suggestion)
-          .map(finding => finding.suggestion!);
-
-        const criticalFindings = codeSmellFindings.filter(
-          f => f.severity === 'error'
-        );
-        const severity =
-          criticalFindings.length > 0
-            ? ('error' as const)
-            : ('warning' as const);
-
         // Convert code smell findings to CodeIssue format
         const codeIssues: CodeIssue[] = codeSmellFindings.map(finding => ({
           type: finding.type,
@@ -1708,7 +1818,7 @@ export class QualityRunner {
       }
     } catch (error) {
       console.warn(
-        `Internal code smell analysis failed for ${filePath}:`,
+        i18next.t('quality_runner.check_failed', { file: filePath }),
         error
       );
     }
@@ -1760,20 +1870,25 @@ export class QualityRunner {
    * Get context-sensitive ESLint command based on file extension
    * Implements Bug Fix 2: Context-sensitive linting for JS/TS files
    */
-  private getContextSensitiveESLintCommand(filePath: string, withFormat = false): string {
+  private getContextSensitiveESLintCommand(
+    filePath: string,
+    withFormat = false
+  ): string {
     const ext = path.extname(filePath).toLowerCase();
     const isTypeScript = ['.ts', '.tsx'].includes(ext);
     const isJavaScript = ['.js', '.jsx', '.mjs', '.cjs'].includes(ext);
 
     if (!isTypeScript && !isJavaScript) {
       // Fallback to default ESLint command
-      return withFormat ? APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT : APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE;
+      return withFormat
+        ? APP_CONFIG.TOOL_COMMANDS.ESLINT.WITH_FORMAT
+        : APP_CONFIG.TOOL_COMMANDS.ESLINT.BASE;
     }
 
     // Create temporary ESLint config for this file type
-    const baseCommand = withFormat ? 
-      'npx eslint --format stylish' : 
-      'npx eslint';
+    const baseCommand = withFormat
+      ? 'npx eslint --format stylish'
+      : 'npx eslint';
 
     if (isJavaScript) {
       // JavaScript-specific configuration (no TypeScript rules)
@@ -1812,7 +1927,7 @@ export class QualityRunner {
       // Fallback to pattern-based analysis
       for (const filePath of filePaths) {
         const ext = path.extname(filePath).toLowerCase();
-        
+
         // Only analyze JavaScript/TypeScript files for web vulnerabilities
         if (!['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'].includes(ext)) {
           continue;
@@ -1820,11 +1935,11 @@ export class QualityRunner {
 
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const lines = fileContent.split('\n');
-        
+
         // Check for XSS vulnerabilities
         const xssFindings = this.detectXSSVulnerabilities(filePath, lines);
         findings.push(...xssFindings);
-        
+
         // Check for other security issues
         const otherFindings = this.detectOtherSecurityIssues(filePath, lines);
         findings.push(...otherFindings);
@@ -1842,13 +1957,13 @@ export class QualityRunner {
         findings,
         summary,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         tool: 'woaru-security',
         scanTime: new Date(),
         findings: [],
         summary,
-        error: `Basic security analysis failed: ${error.message}`,
+        error: `Basic security analysis failed: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
@@ -1858,18 +1973,18 @@ export class QualityRunner {
    */
   private async runSemgrepAnalysis(
     filePaths: string[],
-    options: SecurityCheckOptions = {}
+    _options: SecurityCheckOptions = {}
   ): Promise<SecurityScanResult | null> {
     try {
       // Check if Semgrep is installed
       await execAsync('which semgrep', { timeout: 5000 });
-      
+
       // Run Semgrep with basic security rules
       const { stdout } = await execAsync(
         `semgrep --config=auto --json ${filePaths.join(' ')}`,
         { timeout: 30000, maxBuffer: 10 * 1024 * 1024 }
       );
-      
+
       const results = JSON.parse(stdout);
       const findings: SecurityFinding[] = [];
       const summary = {
@@ -1883,7 +1998,9 @@ export class QualityRunner {
 
       if (results.results && Array.isArray(results.results)) {
         results.results.forEach((result: any) => {
-          const severity = this.mapSemgrepSeverity(result.extra?.severity || 'INFO');
+          const severity = this.mapSemgrepSeverity(
+            result.extra?.severity || 'INFO'
+          );
           summary.total++;
           summary[severity]++;
 
@@ -1892,12 +2009,18 @@ export class QualityRunner {
             type: 'vulnerability',
             severity,
             title: result.check_id || 'Security Issue',
-            description: result.extra?.message || result.message || 'Security vulnerability detected',
+            description:
+              result.extra?.message ||
+              result.message ||
+              'Security vulnerability detected',
             file: result.path,
             line: result.start?.line,
             column: result.start?.col,
-            cwe: result.extra?.metadata?.cwe ? [result.extra.metadata.cwe] : undefined,
-            recommendation: result.extra?.fix || 'Review and fix the security issue',
+            cwe: result.extra?.metadata?.cwe
+              ? [result.extra.metadata.cwe]
+              : undefined,
+            recommendation:
+              result.extra?.fix || 'Review and fix the security issue',
             references: result.extra?.references || [],
           });
         });
@@ -1909,7 +2032,7 @@ export class QualityRunner {
         findings,
         summary,
       };
-    } catch (error) {
+    } catch {
       // Semgrep not available, return null to fallback to pattern matching
       return null;
     }
@@ -1918,17 +2041,22 @@ export class QualityRunner {
   /**
    * Detect XSS vulnerabilities using pattern matching
    */
-  private detectXSSVulnerabilities(filePath: string, lines: string[]): SecurityFinding[] {
+  private detectXSSVulnerabilities(
+    filePath: string,
+    lines: string[]
+  ): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
-    
+
     const xssPatterns = [
       {
         pattern: /\.innerHTML\s*=\s*([^;]+)/gi,
         title: 'Potential XSS vulnerability via innerHTML',
-        description: 'Direct assignment to innerHTML can lead to XSS attacks if user input is not sanitized',
+        description:
+          'Direct assignment to innerHTML can lead to XSS attacks if user input is not sanitized',
         severity: 'high' as const,
         cwe: ['CWE-79'],
-        recommendation: 'Use textContent instead of innerHTML, or sanitize user input with a library like DOMPurify'
+        recommendation:
+          'Use textContent instead of innerHTML, or sanitize user input with a library like DOMPurify',
       },
       {
         pattern: /document\.write\s*\(/gi,
@@ -1936,32 +2064,41 @@ export class QualityRunner {
         description: 'document.write can be exploited for XSS attacks',
         severity: 'high' as const,
         cwe: ['CWE-79'],
-        recommendation: 'Avoid document.write and use safer DOM manipulation methods'
+        recommendation:
+          'Avoid document.write and use safer DOM manipulation methods',
       },
       {
         pattern: /eval\s*\(/gi,
         title: 'Code injection vulnerability via eval()',
-        description: 'eval() can execute arbitrary JavaScript code and is a major security risk',
+        description:
+          'eval() can execute arbitrary JavaScript code and is a major security risk',
         severity: 'critical' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Replace eval() with safer alternatives like JSON.parse() for data or explicit function calls'
+        recommendation:
+          'Replace eval() with safer alternatives like JSON.parse() for data or explicit function calls',
       },
       {
         pattern: /setTimeout\s*\(\s*["'`][^"'`]*\+/gi,
-        title: 'Potential code injection via setTimeout with string concatenation',
-        description: 'setTimeout with string concatenation can lead to code injection',
+        title:
+          'Potential code injection via setTimeout with string concatenation',
+        description:
+          'setTimeout with string concatenation can lead to code injection',
         severity: 'high' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Use function references instead of string concatenation in setTimeout'
+        recommendation:
+          'Use function references instead of string concatenation in setTimeout',
       },
       {
         pattern: /setInterval\s*\(\s*["'`][^"'`]*\+/gi,
-        title: 'Potential code injection via setInterval with string concatenation',
-        description: 'setInterval with string concatenation can lead to code injection',
+        title:
+          'Potential code injection via setInterval with string concatenation',
+        description:
+          'setInterval with string concatenation can lead to code injection',
         severity: 'high' as const,
         cwe: ['CWE-94'],
-        recommendation: 'Use function references instead of string concatenation in setInterval'
-      }
+        recommendation:
+          'Use function references instead of string concatenation in setInterval',
+      },
     ];
 
     lines.forEach((line, index) => {
@@ -1992,34 +2129,43 @@ export class QualityRunner {
   /**
    * Detect other security issues using pattern matching
    */
-  private detectOtherSecurityIssues(filePath: string, lines: string[]): SecurityFinding[] {
+  private detectOtherSecurityIssues(
+    filePath: string,
+    lines: string[]
+  ): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
-    
+
     const securityPatterns = [
       {
         pattern: /SELECT\s+.*\s+FROM\s+.*\s+WHERE\s+.*\s*\+\s*/gi,
         title: 'Potential SQL injection vulnerability',
-        description: 'SQL query with string concatenation may be vulnerable to SQL injection',
+        description:
+          'SQL query with string concatenation may be vulnerable to SQL injection',
         severity: 'high' as const,
         cwe: ['CWE-89'],
-        recommendation: 'Use parameterized queries or prepared statements instead of string concatenation'
+        recommendation:
+          'Use parameterized queries or prepared statements instead of string concatenation',
       },
       {
         pattern: /fs\.(unlink|rmdir|remove).*\+/gi,
         title: 'Potential path traversal vulnerability',
-        description: 'File system operations with string concatenation may be vulnerable to path traversal',
+        description:
+          'File system operations with string concatenation may be vulnerable to path traversal',
         severity: 'medium' as const,
         cwe: ['CWE-22'],
-        recommendation: 'Validate and sanitize file paths, use path.join() and path.resolve()'
+        recommendation:
+          'Validate and sanitize file paths, use path.join() and path.resolve()',
       },
       {
         pattern: /process\.env\.[A-Z_]+\s*\+/gi,
         title: 'Potential environment variable exposure',
-        description: 'Environment variables should not be concatenated directly into strings',
+        description:
+          'Environment variables should not be concatenated directly into strings',
         severity: 'medium' as const,
         cwe: ['CWE-200'],
-        recommendation: 'Validate and sanitize environment variables before use'
-      }
+        recommendation:
+          'Validate and sanitize environment variables before use',
+      },
     ];
 
     lines.forEach((line, index) => {
@@ -2050,7 +2196,9 @@ export class QualityRunner {
   /**
    * Map Semgrep severity to our standard severity levels
    */
-  private mapSemgrepSeverity(severity: string): 'critical' | 'high' | 'medium' | 'low' | 'info' {
+  private mapSemgrepSeverity(
+    severity: string
+  ): 'critical' | 'high' | 'medium' | 'low' | 'info' {
     switch (severity.toUpperCase()) {
       case 'ERROR':
         return 'critical';

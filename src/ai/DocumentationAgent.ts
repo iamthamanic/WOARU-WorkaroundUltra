@@ -3,9 +3,9 @@ import * as path from 'path';
 import chalk from 'chalk';
 import {
   AIReviewConfig,
-  LLMProviderConfig,
   CodeContext,
   MultiLLMReviewResult,
+  PromptTemplate as AIPromptTemplate,
 } from '../types/ai-review';
 import { AIReviewAgent } from './AIReviewAgent';
 import { APP_CONFIG } from '../config/constants';
@@ -51,10 +51,13 @@ export class DocumentationAgent {
 
   constructor(
     aiConfig: AIReviewConfig,
-    promptTemplates: Record<string, PromptTemplate>
+    promptTemplates: Record<string, AIPromptTemplate>
   ) {
     this.aiReviewAgent = new AIReviewAgent(aiConfig, promptTemplates);
-    this.promptTemplates = promptTemplates;
+    this.promptTemplates = promptTemplates as unknown as Record<
+      string,
+      PromptTemplate
+    >;
   }
 
   /**
@@ -431,7 +434,7 @@ export class DocumentationAgent {
    */
   private extractBestDocumentation(
     aiResult: MultiLLMReviewResult,
-    documentationType: 'nopro' | 'pro' | 'ai'
+    _documentationType: 'nopro' | 'pro' | 'ai'
   ): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);
@@ -515,7 +518,10 @@ export class DocumentationAgent {
       if (!groups.has(result.filePath)) {
         groups.set(result.filePath, []);
       }
-      groups.get(result.filePath)!.push(result);
+      const group = groups.get(result.filePath);
+      if (group) {
+        group.push(result);
+      }
     }
 
     return groups;

@@ -4,6 +4,7 @@ import notifier from 'node-notifier';
 import axios from 'axios';
 import { ToolRecommendation, CodeIssue, SupervisorConfig } from './types';
 import { ProductionAudit } from '../auditor/ProductionReadinessAuditor';
+import { t } from '../config/i18n';
 
 export class NotificationManager extends EventEmitter {
   private config: SupervisorConfig['notifications'];
@@ -47,7 +48,9 @@ export class NotificationManager extends EventEmitter {
     const criticalIssues = issues.filter(i => i.severity === 'critical');
 
     if (criticalIssues.length > 0 && this.config.terminal) {
-      console.log(chalk.red('\n⚠️  Critical Issues Detected:'));
+      console.log(
+        chalk.red('\n' + t('notification_manager.critical_issues_detected'))
+      );
       criticalIssues.forEach(issue => {
         console.log(
           chalk.red(
@@ -63,10 +66,12 @@ export class NotificationManager extends EventEmitter {
     high: ToolRecommendation[],
     other: ToolRecommendation[]
   ): void {
-    console.log(chalk.cyan('\n📊 WOARU Recommendations Update:\n'));
+    console.log(
+      chalk.cyan('\n' + t('notification_manager.recommendations_update') + '\n')
+    );
 
     if (critical.length > 0) {
-      console.log(chalk.red('🔴 Critical:'));
+      console.log(chalk.red(t('notification_manager.critical_priority')));
       critical.forEach(rec => {
         console.log(chalk.red(`   ${rec.tool}: ${rec.reason}`));
         if (rec.setupCommand) {
@@ -77,7 +82,7 @@ export class NotificationManager extends EventEmitter {
     }
 
     if (high.length > 0) {
-      console.log(chalk.yellow('🟡 High Priority:'));
+      console.log(chalk.yellow(t('notification_manager.high_priority')));
       high.forEach(rec => {
         console.log(chalk.yellow(`   ${rec.tool}: ${rec.reason}`));
       });
@@ -85,14 +90,16 @@ export class NotificationManager extends EventEmitter {
     }
 
     if (other.length > 0) {
-      console.log(chalk.blue('🔵 Suggestions:'));
+      console.log(chalk.blue(t('notification_manager.suggestions_priority')));
       other.forEach(rec => {
         console.log(chalk.blue(`   ${rec.tool}: ${rec.reason}`));
       });
       console.log();
     }
 
-    console.log(chalk.gray('💡 Run "woaru recommendations" for details\n'));
+    console.log(
+      chalk.gray(t('notification_manager.run_recommendations_details') + '\n')
+    );
   }
 
   private async showDesktopNotification(
@@ -111,8 +118,8 @@ export class NotificationManager extends EventEmitter {
     const tools = critical.map(r => r.tool).join(', ');
 
     notifier.notify({
-      title: 'WOARU: Critical Tools Missing',
-      message: `Missing: ${tools}. Run "woaru setup" to fix.`,
+      title: t('notification_manager.desktop_critical_missing'),
+      message: t('notification_manager.desktop_missing_tools', { tools }),
       sound: true,
       wait: false,
     });
@@ -130,7 +137,7 @@ export class NotificationManager extends EventEmitter {
         data,
       });
     } catch (error) {
-      console.error('Failed to send webhook:', error);
+      console.error(t('ai_provider_utils.failed_webhook'), error);
     }
   }
 
@@ -153,7 +160,7 @@ export class NotificationManager extends EventEmitter {
 
     if (this.config.desktop) {
       notifier.notify({
-        title: 'WOARU Error',
+        title: t('notification_manager.desktop_error_title'),
         message,
         sound: true,
       });
@@ -166,16 +173,24 @@ export class NotificationManager extends EventEmitter {
     output: string
   ): void {
     if (this.config.terminal) {
-      console.log(chalk.red('\n🚨 CRITICAL QUALITY CHECK FAILED 🚨'));
-      console.log(chalk.red(`File: ${filePath}`));
-      console.log(chalk.red(`Tool: ${toolName}`));
+      console.log(
+        chalk.red('\n' + t('notification_manager.critical_quality_failed'))
+      );
+      console.log(
+        chalk.red(t('notification_manager.quality_file', { file: filePath }))
+      );
+      console.log(
+        chalk.red(t('notification_manager.quality_tool', { tool: toolName }))
+      );
       console.log(chalk.red('─'.repeat(50)));
       console.log(chalk.red(output));
       console.log(chalk.red('─'.repeat(50)));
       console.log(
-        chalk.yellow('💡 Fix these issues before continuing development')
+        chalk.yellow(t('notification_manager.fix_before_continuing'))
       );
-      console.log(chalk.gray('Run the tool manually to see detailed output\n'));
+      console.log(
+        chalk.gray(t('notification_manager.run_manually_detailed') + '\n')
+      );
     }
 
     if (this.config.desktop) {
@@ -190,7 +205,14 @@ export class NotificationManager extends EventEmitter {
 
   showQualitySuccess(filePath: string, toolName: string): void {
     if (this.config.terminal) {
-      console.log(chalk.green(`✅ ${toolName} passed: ${filePath}`));
+      console.log(
+        chalk.green(
+          t('notification_manager.quality_passed', {
+            tool: toolName,
+            file: filePath,
+          })
+        )
+      );
     }
   }
 
@@ -216,7 +238,11 @@ export class NotificationManager extends EventEmitter {
   }
 
   private showProductionAuditsTerminal(audits: ProductionAudit[]): void {
-    console.log(chalk.cyan('\n🏗️ Production-Readiness-Audit:\n'));
+    console.log(
+      chalk.cyan(
+        '\n' + t('notification_manager.production_readiness_audit') + '\n'
+      )
+    );
 
     // Group by priority
     const critical = audits.filter(a => a.priority === 'critical');
@@ -225,7 +251,7 @@ export class NotificationManager extends EventEmitter {
     const low = audits.filter(a => a.priority === 'low');
 
     if (critical.length > 0) {
-      console.log(chalk.red.bold('🔴 CRITICAL - Muss behoben werden:'));
+      console.log(chalk.red.bold(t('notification_manager.critical_must_fix')));
       critical.forEach(audit => {
         console.log(chalk.red(`   ${audit.message}`));
         console.log(chalk.gray(`     → ${audit.recommendation}`));
@@ -237,9 +263,7 @@ export class NotificationManager extends EventEmitter {
     }
 
     if (high.length > 0) {
-      console.log(
-        chalk.yellow.bold('🟡 HIGH PRIORITY - Sollte behoben werden:')
-      );
+      console.log(chalk.yellow.bold(t('notification_manager.high_should_fix')));
       high.forEach(audit => {
         console.log(chalk.yellow(`   ${audit.message}`));
         console.log(chalk.gray(`     → ${audit.recommendation}`));
@@ -251,7 +275,9 @@ export class NotificationManager extends EventEmitter {
     }
 
     if (medium.length > 0) {
-      console.log(chalk.blue.bold('🔵 MEDIUM - Verbesserung empfohlen:'));
+      console.log(
+        chalk.blue.bold(t('notification_manager.medium_improvement'))
+      );
       medium.forEach(audit => {
         console.log(chalk.blue(`   ${audit.message}`));
         console.log(chalk.gray(`     → ${audit.recommendation}`));
@@ -260,7 +286,7 @@ export class NotificationManager extends EventEmitter {
     }
 
     if (low.length > 0) {
-      console.log(chalk.gray.bold('⚪ LOW - Optional:'));
+      console.log(chalk.gray.bold(t('notification_manager.low_optional')));
       low.forEach(audit => {
         console.log(chalk.gray(`   ${audit.message}`));
         console.log(chalk.gray(`     → ${audit.recommendation}`));
@@ -268,11 +294,7 @@ export class NotificationManager extends EventEmitter {
       console.log();
     }
 
-    console.log(
-      chalk.cyan(
-        '💡 Run "woaru audit" for detailed production-readiness report\n'
-      )
-    );
+    console.log(chalk.cyan(t('notification_manager.run_audit_details') + '\n'));
   }
 
   private async showProductionAuditsDesktop(
@@ -291,8 +313,8 @@ export class NotificationManager extends EventEmitter {
     const issues = criticalAudits.map(a => a.check).join(', ');
 
     notifier.notify({
-      title: 'WOARU: Critical Production Issues',
-      message: `Missing: ${issues}. Check terminal for details.`,
+      title: t('notification_manager.desktop_production_issues'),
+      message: t('notification_manager.desktop_production_missing', { issues }),
       sound: true,
       wait: false,
     });
@@ -307,14 +329,21 @@ export class NotificationManager extends EventEmitter {
     const color =
       score >= 80 ? chalk.green : score >= 60 ? chalk.yellow : chalk.red;
 
-    let message = color(`Health Score: ${score}/100 ${bar}`);
+    let message = color(t('notification_manager.health_score', { score, bar }));
 
     if (previous !== undefined) {
       const diff = score - previous;
       if (diff > 0) {
-        message += chalk.green(` ↑${diff}`);
+        message += chalk.green(
+          ' ' + t('notification_manager.health_score_up', { diff })
+        );
       } else if (diff < 0) {
-        message += chalk.red(` ↓${Math.abs(diff)}`);
+        message += chalk.red(
+          ' ' +
+            t('notification_manager.health_score_down', {
+              diff: Math.abs(diff),
+            })
+        );
       }
     }
 
@@ -352,26 +381,42 @@ export class NotificationManager extends EventEmitter {
 
     if (severity === 'critical') {
       // Critical alerts get the most prominent display
-      console.log(chalk.bgRed.white.bold(' 🚨 SECURITY ALERT '));
+      console.log(
+        chalk.bgRed.white.bold(
+          ' ' + t('notification_manager.security_alert_title') + ' '
+        )
+      );
       console.log(chalk.red('═'.repeat(60)));
       console.log(chalk.red.bold(title));
       if (details) {
         console.log(chalk.red(details));
       }
       if (action) {
-        console.log(chalk.yellow.bold(`\n📌 Action Required: ${action}`));
+        console.log(
+          chalk.yellow.bold(
+            '\n' + t('notification_manager.action_required', { action })
+          )
+        );
       }
       console.log(chalk.red('═'.repeat(60)));
     } else {
       // High severity alerts
-      console.log(chalk.bgYellow.black.bold(' ⚠️  SECURITY WARNING '));
+      console.log(
+        chalk.bgYellow.black.bold(
+          ' ' + t('notification_manager.security_warning_title') + ' '
+        )
+      );
       console.log(chalk.yellow('─'.repeat(60)));
       console.log(chalk.yellow.bold(title));
       if (details) {
         console.log(chalk.yellow(details));
       }
       if (action) {
-        console.log(chalk.cyan(`\n💡 Recommended: ${action}`));
+        console.log(
+          chalk.cyan(
+            '\n' + t('notification_manager.recommended_action', { action })
+          )
+        );
       }
       console.log(chalk.yellow('─'.repeat(60)));
     }
@@ -389,7 +434,7 @@ export class NotificationManager extends EventEmitter {
           this.cooldownMinutes
       ) {
         notifier.notify({
-          title: '🚨 WOARU Security Alert',
+          title: t('notification_manager.desktop_security_alert'),
           message: title,
           sound: true,
           wait: false,
@@ -408,7 +453,7 @@ export class NotificationManager extends EventEmitter {
         action,
         timestamp: new Date().toISOString(),
       }).catch(error => {
-        console.error('Failed to send security webhook:', error);
+        console.error(t('notification_manager.failed_security_webhook'), error);
       });
     }
   }

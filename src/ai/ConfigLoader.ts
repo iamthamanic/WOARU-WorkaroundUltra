@@ -1,5 +1,4 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
+// Removed unused fs and path imports
 import { AIReviewConfig } from '../types/ai-review';
 import { ConfigManager } from '../config/ConfigManager';
 
@@ -19,7 +18,7 @@ export class ConfigLoader {
   /**
    * Load AI review configuration from global ~/.woaru/config/ai_config.json
    */
-  async loadConfig(projectPath?: string): Promise<AIReviewConfig | null> {
+  async loadConfig(_projectPath?: string): Promise<AIReviewConfig | null> {
     if (this.config) {
       return this.config;
     }
@@ -28,19 +27,28 @@ export class ConfigLoader {
       const configManager = ConfigManager.getInstance();
       const aiConfig = await configManager.loadAiConfig();
 
-      if (aiConfig && Object.keys(aiConfig).length > 1) { // More than just metadata
-        console.log(`📄 Loading AI config from: ${configManager.getAiConfigFilePath()}`);
+      if (aiConfig && Object.keys(aiConfig).length > 1) {
+        // More than just metadata
+        console.log(
+          `📄 Loading AI config from: ${configManager.getAiConfigFilePath()}`
+        );
 
         // Check Multi-AI Review configuration and log the mode
         const multiAiReviewEnabled = aiConfig.multi_ai_review_enabled || false;
         const primaryProvider = aiConfig.primary_review_provider_id || null;
-        
+
         if (multiAiReviewEnabled) {
-          console.log(`🔄 Multi-AI Review mode: All configured providers will be contacted`);
+          console.log(
+            `🔄 Multi-AI Review mode: All configured providers will be contacted`
+          );
         } else if (primaryProvider) {
-          console.log(`🎯 Single-AI Review mode: Only ${primaryProvider} will be contacted`);
+          console.log(
+            `🎯 Single-AI Review mode: Only ${primaryProvider} will be contacted`
+          );
         } else {
-          console.log(`⚠️ No primary provider set - all providers will be contacted`);
+          console.log(
+            `⚠️ No primary provider set - all providers will be contacted`
+          );
         }
 
         // Convert from global AI config to AIReviewConfig format
@@ -114,59 +122,90 @@ export class ConfigLoader {
    * Convert global AI config to AIReviewConfig format
    * Respects Multi-AI Review configuration settings
    */
-  private convertAiConfigToAIConfig(aiConfig: any): AIReviewConfig {
+  private convertAiConfigToAIConfig(
+    aiConfig: Record<string, unknown>
+  ): AIReviewConfig {
     const providers = [];
-    
+
     // Check Multi-AI Review configuration
     const multiAiReviewEnabled = aiConfig.multi_ai_review_enabled || false;
     const primaryProvider = aiConfig.primary_review_provider_id || null;
-    
+
     // Validate Single-AI Review mode configuration
     if (!multiAiReviewEnabled && primaryProvider) {
       const availableProviders = Object.keys(aiConfig).filter(
-        key => !['_metadata', 'multi_ai_review_enabled', 'primary_review_provider_id'].includes(key)
+        key =>
+          ![
+            '_metadata',
+            'multi_ai_review_enabled',
+            'primary_review_provider_id',
+          ].includes(key)
       );
-      
-      if (!availableProviders.includes(primaryProvider)) {
-        console.warn(`⚠️ Primary provider '${primaryProvider}' not found in configuration. Available providers: ${availableProviders.join(', ')}`);
+
+      if (!availableProviders.includes(primaryProvider as string)) {
+        console.warn(
+          `⚠️ Primary provider '${primaryProvider}' not found in configuration. Available providers: ${availableProviders.join(', ')}`
+        );
         console.log(`🔄 Falling back to Multi-AI Review mode`);
       }
     }
-    
+
     // Convert each configured AI provider to AI review format
     for (const [providerId, providerConfig] of Object.entries(aiConfig)) {
-      if (providerId === '_metadata' || providerId === 'multi_ai_review_enabled' || providerId === 'primary_review_provider_id') continue;
-      
-      const config = providerConfig as any;
-      
+      if (
+        providerId === '_metadata' ||
+        providerId === 'multi_ai_review_enabled' ||
+        providerId === 'primary_review_provider_id'
+      )
+        continue;
+
+      const config = providerConfig as Record<string, unknown>;
+
       // Determine if this provider should be enabled based on Multi-AI Review settings
       let shouldEnable = config.enabled !== false;
-      
+
       if (!multiAiReviewEnabled && primaryProvider) {
         // Single-AI Review mode: only enable the primary provider
-        shouldEnable = shouldEnable && (providerId === primaryProvider);
+        shouldEnable = shouldEnable && providerId === primaryProvider;
       } else if (!multiAiReviewEnabled && !primaryProvider) {
         // Single-AI Review mode but no primary provider set: enable all (fallback)
-        shouldEnable = shouldEnable;
+        // shouldEnable remains unchanged (all providers enabled in fallback)
       }
       // In Multi-AI Review mode: enable all configured providers (default behavior)
-      
+
       providers.push({
         id: providerId,
-        providerType: config.providerType || 'openai',
-        apiKeyEnvVar: config.apiKeyEnvVar || `${providerId.toUpperCase()}_API_KEY`,
-        baseUrl: config.baseUrl || 'https://api.openai.com/v1/chat/completions',
-        model: config.model || 'gpt-4',
-        headers: config.headers || {},
-        bodyTemplate: config.bodyTemplate || JSON.stringify({
-          model: '{model}',
-          messages: [{ role: 'user', content: '{prompt}\n\nCode to analyze:\n```{language}\n{code}\n```' }],
-          max_tokens: 4000,
-          temperature: 0.1,
-        }),
-        timeout: config.timeout || 30000,
-        maxTokens: config.maxTokens || 4000,
-        temperature: config.temperature || 0.1,
+        providerType: ((config.providerType as string) || 'openai') as
+          | 'openai'
+          | 'anthropic'
+          | 'google'
+          | 'custom-ollama'
+          | 'azure-openai',
+        apiKeyEnvVar:
+          (config.apiKeyEnvVar as string) ||
+          `${providerId.toUpperCase()}_API_KEY`,
+        baseUrl:
+          (config.baseUrl as string) ||
+          'https://api.openai.com/v1/chat/completions',
+        model: (config.model as string) || 'gpt-4',
+        headers: (config.headers as Record<string, string>) || {},
+        bodyTemplate:
+          (config.bodyTemplate as string) ||
+          JSON.stringify({
+            model: '{model}',
+            messages: [
+              {
+                role: 'user',
+                content:
+                  '{prompt}\n\nCode to analyze:\n```{language}\n{code}\n```',
+              },
+            ],
+            max_tokens: 4000,
+            temperature: 0.1,
+          }),
+        timeout: (config.timeout as number) || 30000,
+        maxTokens: (config.maxTokens as number) || 4000,
+        temperature: (config.temperature as number) || 0.1,
         enabled: shouldEnable,
       });
     }
@@ -184,22 +223,24 @@ export class ConfigLoader {
   /**
    * Validate configuration structure
    */
-  private validateConfig(config: any): config is AIReviewConfig {
+  private validateConfig(config: unknown): config is AIReviewConfig {
     if (!config || typeof config !== 'object') {
       return false;
     }
 
-    if (!Array.isArray(config.providers)) {
+    const configObj = config as Record<string, unknown>;
+    if (!Array.isArray(configObj.providers)) {
       console.warn('Config validation failed: providers must be an array');
       return false;
     }
 
-    for (const provider of config.providers) {
+    for (const provider of configObj.providers as unknown[]) {
+      const providerObj = provider as Record<string, unknown>;
       if (
-        !provider.id ||
-        !provider.providerType ||
-        !provider.baseUrl ||
-        !provider.model
+        !providerObj.id ||
+        !providerObj.providerType ||
+        !providerObj.baseUrl ||
+        !providerObj.model
       ) {
         console.warn(
           'Config validation failed: provider missing required fields',
@@ -215,47 +256,51 @@ export class ConfigLoader {
   /**
    * Check if AI features are available
    */
-  async isAIAvailable(projectPath?: string): Promise<boolean> {
-    const config = await this.loadConfig(projectPath);
+  async isAIAvailable(_projectPath?: string): Promise<boolean> {
+    const config = await this.loadConfig(_projectPath);
     return config !== null && config.providers.some(p => p.enabled);
   }
 
   /**
    * Get enabled providers
    */
-  async getEnabledProviders(projectPath?: string): Promise<string[]> {
-    const config = await this.loadConfig(projectPath);
+  async getEnabledProviders(_projectPath?: string): Promise<string[]> {
+    const config = await this.loadConfig(_projectPath);
     return config?.providers.filter(p => p.enabled).map(p => p.id) || [];
   }
 
   /**
    * Get Multi-AI Review configuration status
    */
-  async getMultiAiReviewConfig(): Promise<{ enabled: boolean; primaryProvider: string | null; mode: string }> {
+  async getMultiAiReviewConfig(): Promise<{
+    enabled: boolean;
+    primaryProvider: string | null;
+    mode: string;
+  }> {
     try {
       const configManager = ConfigManager.getInstance();
       const aiConfig = await configManager.loadAiConfig();
-      
+
       const multiAiReviewEnabled = aiConfig.multi_ai_review_enabled || false;
       const primaryProvider = aiConfig.primary_review_provider_id || null;
-      
+
       let mode = 'Multi-AI Review';
       if (!multiAiReviewEnabled && primaryProvider) {
         mode = `Single-AI Review (${primaryProvider})`;
       } else if (!multiAiReviewEnabled && !primaryProvider) {
         mode = 'Multi-AI Review (fallback)';
       }
-      
+
       return {
-        enabled: multiAiReviewEnabled,
-        primaryProvider,
-        mode
+        enabled: Boolean(multiAiReviewEnabled),
+        primaryProvider: (primaryProvider as string) || null,
+        mode,
       };
-    } catch (error) {
+    } catch {
       return {
         enabled: false,
         primaryProvider: null,
-        mode: 'Not configured'
+        mode: 'Not configured',
       };
     }
   }

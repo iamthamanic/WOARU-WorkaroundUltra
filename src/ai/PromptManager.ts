@@ -20,9 +20,9 @@ export interface PromptTemplate {
   output_format: {
     structure: string;
     sections: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -243,11 +243,11 @@ export class PromptManager {
   /**
    * Validate prompt template structure
    */
-  public validatePromptTemplate(template: any): boolean {
+  public validatePromptTemplate(template: unknown): boolean {
     const requiredFields = ['name', 'system_prompt', 'user_prompt'];
 
     for (const field of requiredFields) {
-      if (!template[field]) {
+      if (!(template as Record<string, unknown>)[field]) {
         console.error(
           chalk.red(`❌ Missing required field in prompt template: ${field}`)
         );

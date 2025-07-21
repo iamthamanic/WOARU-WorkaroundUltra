@@ -1,5 +1,6 @@
 import { BaseAction } from './BaseAction';
 import { SetupOptions, PackageJson } from '../types';
+import { t } from '../config/i18n';
 import * as path from 'path';
 
 export class PrettierAction extends BaseAction {
@@ -26,9 +27,9 @@ export class PrettierAction extends BaseAction {
       const prettierIgnorePath = path.join(projectPath, '.prettierignore');
 
       if (options.dryRun) {
-        console.log('Would install prettier packages');
-        console.log('Would create .prettierrc configuration');
-        console.log('Would create .prettierignore file');
+        console.log(t('actions.prettier.dry_run_install'));
+        console.log(t('actions.prettier.dry_run_create_config'));
+        console.log(t('actions.prettier.dry_run_create_ignore'));
         return true;
       }
 
@@ -56,7 +57,11 @@ export class PrettierAction extends BaseAction {
       );
 
       if (!installResult.success) {
-        throw new Error(`Failed to install packages: ${installResult.output}`);
+        throw new Error(
+          t('actions.failed_to_install_packages', {
+            output: installResult.output,
+          })
+        );
       }
 
       // Create .prettierrc configuration
@@ -106,10 +111,10 @@ Thumbs.db
         await this.writeJsonFile(packageJsonPath, packageJson);
       }
 
-      console.log('✅ Prettier installed and configured successfully');
+      console.log(t('actions.prettier.setup_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to setup Prettier:', error);
+      console.error(t('actions.prettier.setup_failed'), error);
       return false;
     }
   }
@@ -138,10 +143,10 @@ Thumbs.db
         }
       }
 
-      console.log('✅ Prettier setup rolled back successfully');
+      console.log(t('actions.prettier.rollback_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to rollback Prettier setup:', error);
+      console.error(t('actions.prettier.rollback_failed'), error);
       return false;
     }
   }

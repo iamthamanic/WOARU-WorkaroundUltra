@@ -1,9 +1,110 @@
+/**
+ * WOARU Production Readiness Auditor Module
+ * Production-Ready implementation with comprehensive security and error handling
+ */
+
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { PackageJson } from '../types';
 import { ToolsDatabaseManager } from '../database/ToolsDatabaseManager';
 import { QualityRunner } from '../quality/QualityRunner';
 import { NotificationManager } from '../supervisor/NotificationManager';
+import { t, initializeI18n } from '../config/i18n';
+
+/**
+ * Security constants for input validation
+ */
+const SECURITY_LIMITS = {
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_PATH_LENGTH: 500,
+  MAX_PACKAGE_NAME_LENGTH: 100,
+  MAX_VULNERABILITIES_DISPLAY: 10,
+  MAX_AUDIT_TIME: 60000, // 60 seconds
+} as const;
+
+/**
+ * Sanitizes package names to prevent injection attacks
+ * @param packageName - The package name to sanitize
+ * @returns Sanitized package name safe for display
+ */
+function sanitizePackageName(packageName: unknown): string {
+  if (typeof packageName !== 'string') {
+    return 'unknown-package';
+  }
+
+  return (
+    packageName
+      .replace(/[^a-zA-Z0-9@/_.-]/g, '')
+      .substring(0, SECURITY_LIMITS.MAX_PACKAGE_NAME_LENGTH) ||
+    'unknown-package'
+  );
+}
+
+/**
+ * Sanitizes file paths to prevent directory traversal
+ * @param filePath - The file path to sanitize
+ * @returns Sanitized file path safe for processing
+ */
+function sanitizeFilePath(filePath: unknown): string {
+  if (typeof filePath !== 'string') {
+    return 'unknown-file';
+  }
+
+  const normalized = path.normalize(filePath);
+
+  // Check for directory traversal
+  if (normalized.includes('..') || normalized.includes('\x00')) {
+    return 'suspicious-file';
+  }
+
+  const baseName = path.basename(normalized);
+  return (
+    baseName.replace(/[^a-zA-Z0-9._-]/g, '').substring(0, 100) || 'unknown-file'
+  );
+}
+
+/**
+ * Sanitizes error messages to prevent information leakage
+ * @param error - The error to sanitize
+ * @returns Sanitized error message safe for display
+ */
+function sanitizeError(error: unknown): string {
+  if (typeof error === 'string') {
+    return error.replace(/\/[^\s]*\/[^\s]*/g, '[PATH]').substring(0, 200);
+  }
+
+  if (error instanceof Error) {
+    return sanitizeError(error.message);
+  }
+
+  return 'Unknown audit error';
+}
+
+// Removed unused isValidVulnerability function
+
+/**
+ * Validates project path for security
+ * @param projectPath - Project path to validate
+ * @returns True if path appears safe
+ */
+function isSecureProjectPath(projectPath: string): boolean {
+  try {
+    const normalized = path.normalize(projectPath);
+
+    // Check for suspicious patterns
+    if (
+      normalized.includes('..') ||
+      normalized.includes('\x00') ||
+      normalized.length > SECURITY_LIMITS.MAX_PATH_LENGTH
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface Tool {
   name: string;
@@ -61,63 +162,209 @@ export interface AuditConfig {
 export class ProductionReadinessAuditor {
   private projectPath: string;
   private databaseManager: ToolsDatabaseManager;
+  private auditMetrics = {
+    auditsPerformed: 0,
+    totalIssuesFound: 0,
+    criticalIssuesFound: 0,
+    averageAuditTime: 0,
+    securityIssues: 0,
+  };
 
   constructor(projectPath: string) {
-    this.projectPath = projectPath;
+    if (!isSecureProjectPath(projectPath)) {
+      throw new Error('Invalid or suspicious project path provided');
+    }
+
+    this.projectPath = path.normalize(projectPath);
     this.databaseManager = new ToolsDatabaseManager();
   }
 
+  /**
+   * Perform comprehensive project audit with security validation
+   * @param config - Audit configuration
+   * @returns Promise<ProductionAudit[]> Array of audit findings
+   */
   async auditProject(config: AuditConfig): Promise<ProductionAudit[]> {
-    const audits: ProductionAudit[] = [];
+    const startTime = Date.now();
 
-    // Run all audit categories
-    audits.push(...(await this.auditErrorMonitoring(config)));
-    audits.push(...(await this.auditTestingFramework(config)));
-    audits.push(...(await this.auditContainerization(config)));
-    audits.push(...(await this.auditSecurity(config)));
-    audits.push(...(await this.auditEnvironmentConfig(config)));
+    try {
+      await initializeI18n();
 
-    return audits.filter(
-      audit => audit.status === 'missing' || audit.status === 'partial'
+      // Validate configuration
+      if (!this.validateAuditConfig(config)) {
+        console.warn('Invalid audit configuration provided');
+        return [];
+      }
+
+      const audits: ProductionAudit[] = [];
+
+      // Run all audit categories with timeout protection
+      const auditPromises = [
+        this.auditErrorMonitoring(config),
+        this.auditTestingFramework(config),
+        this.auditContainerization(config),
+        this.auditSecurity(config),
+        this.auditEnvironmentConfig(config),
+      ];
+
+      const results = await Promise.allSettled(
+        auditPromises.map(p =>
+          this.withTimeout(p, SECURITY_LIMITS.MAX_AUDIT_TIME)
+        )
+      );
+
+      // Process results and collect successful audits
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          audits.push(...result.value);
+        } else {
+          console.debug(
+            `Audit ${index} failed: ${sanitizeError(result.reason)}`
+          );
+        }
+      });
+
+      // Update metrics
+      this.updateAuditMetrics(audits, Date.now() - startTime);
+
+      return audits.filter(
+        audit => audit.status === 'missing' || audit.status === 'partial'
+      );
+    } catch (error) {
+      console.error(`Project audit failed: ${sanitizeError(error)}`);
+      return [];
+    }
+  }
+
+  /**
+   * Validate audit configuration for security
+   */
+  private validateAuditConfig(config: AuditConfig): boolean {
+    if (!config || typeof config !== 'object') {
+      return false;
+    }
+
+    const validLanguages = [
+      'javascript',
+      'typescript',
+      'python',
+      'java',
+      'go',
+      'rust',
+    ];
+    const validProjectTypes = [
+      'frontend',
+      'backend',
+      'fullstack',
+      'library',
+      'cli',
+    ];
+
+    return (
+      typeof config.language === 'string' &&
+      validLanguages.includes(config.language) &&
+      typeof config.projectType === 'string' &&
+      validProjectTypes.includes(config.projectType) &&
+      Array.isArray(config.frameworks)
     );
   }
 
-  // New method for focused audit on changed files only
+  /**
+   * Add timeout protection to audit operations
+   */
+  private async withTimeout<T>(
+    promise: Promise<T>,
+    timeout: number
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('Audit operation timeout'));
+      }, timeout);
+
+      promise
+        .then(resolve)
+        .catch(reject)
+        .finally(() => clearTimeout(timer));
+    });
+  }
+
+  /**
+   * Update audit performance metrics
+   */
+  private updateAuditMetrics(
+    audits: ProductionAudit[],
+    duration: number
+  ): void {
+    this.auditMetrics.auditsPerformed++;
+    this.auditMetrics.totalIssuesFound += audits.length;
+    this.auditMetrics.criticalIssuesFound += audits.filter(
+      a => a.priority === 'critical'
+    ).length;
+    this.auditMetrics.averageAuditTime =
+      (this.auditMetrics.averageAuditTime + duration) / 2;
+  }
+
+  /**
+   * Focused audit on changed files only with security validation
+   * @param changedFiles - Array of changed file paths
+   * @param config - Audit configuration
+   * @returns Promise<ProductionAudit[]> Array of relevant audit findings
+   */
   async auditChangedFiles(
     changedFiles: string[],
     config: AuditConfig
   ): Promise<ProductionAudit[]> {
-    const audits: ProductionAudit[] = [];
+    try {
+      await initializeI18n();
 
-    // Categorize changed files
-    const relevantFiles = this.categorizeRelevantFiles(changedFiles);
+      // Validate inputs
+      if (!Array.isArray(changedFiles) || !this.validateAuditConfig(config)) {
+        console.warn(t('production_auditor.invalid_changed_files_config'));
+        return [];
+      }
 
-    // Only audit categories that are relevant to the changed files
-    if (relevantFiles.packageJson.length > 0) {
-      // If package.json changed, run dependency-related audits
-      audits.push(...(await this.auditErrorMonitoring(config)));
-      audits.push(...(await this.auditTestingFramework(config)));
-      audits.push(...(await this.auditSecurity(config)));
+      // Sanitize file paths
+      const sanitizedFiles = changedFiles
+        .filter(file => typeof file === 'string' && file.length > 0)
+        .map(file => sanitizeFilePath(file))
+        .slice(0, 100); // Limit number of files
+
+      const audits: ProductionAudit[] = [];
+
+      // Categorize changed files
+      const relevantFiles = this.categorizeRelevantFiles(sanitizedFiles);
+
+      // Only audit categories that are relevant to the changed files
+      if (relevantFiles.packageJson.length > 0) {
+        audits.push(...(await this.auditErrorMonitoring(config)));
+        audits.push(...(await this.auditTestingFramework(config)));
+        audits.push(...(await this.auditSecurity(config)));
+      }
+
+      if (relevantFiles.docker.length > 0) {
+        audits.push(...(await this.auditContainerization(config)));
+      }
+
+      if (relevantFiles.config.length > 0) {
+        audits.push(...(await this.auditEnvironmentConfig(config)));
+      }
+
+      if (relevantFiles.source.length > 0) {
+        audits.push(
+          ...this.auditSourceFileChanges(relevantFiles.source, config)
+        );
+      }
+
+      return audits.filter(
+        audit => audit.status === 'missing' || audit.status === 'partial'
+      );
+    } catch (error) {
+      console.error(
+        t('production_auditor.audit_changed_files_error'),
+        sanitizeError(error)
+      );
+      return [];
     }
-
-    if (relevantFiles.docker.length > 0) {
-      // If Docker files changed, audit containerization
-      audits.push(...(await this.auditContainerization(config)));
-    }
-
-    if (relevantFiles.config.length > 0) {
-      // If config files changed, audit environment configuration
-      audits.push(...(await this.auditEnvironmentConfig(config)));
-    }
-
-    if (relevantFiles.source.length > 0) {
-      // If source files changed, provide targeted recommendations
-      audits.push(...this.auditSourceFileChanges(relevantFiles.source, config));
-    }
-
-    return audits.filter(
-      audit => audit.status === 'missing' || audit.status === 'partial'
-    );
   }
 
   private async auditErrorMonitoring(
@@ -146,7 +393,7 @@ export class ProductionReadinessAuditor {
 
         // Check if any error monitoring tools are installed using database keywords
         let hasErrorTracking = false;
-        let foundTool = '';
+        // foundTool tracking removed as unused
 
         for (const [toolKey, tool] of Object.entries(errorMonitoringTools) as [
           string,
@@ -158,7 +405,7 @@ export class ProductionReadinessAuditor {
 
           if (hasThisTool) {
             hasErrorTracking = true;
-            foundTool = tool.name;
+            // tool.name would be stored in foundTool but not used
 
             // Check if the found tool is deprecated
             if (tool.isDeprecated) {
@@ -171,7 +418,7 @@ export class ProductionReadinessAuditor {
         if (!hasErrorTracking) {
           // Get recommended tool for the specific framework
           const recommendedTool = this.getRecommendedErrorMonitoringTool(
-            errorMonitoringTools,
+            errorMonitoringTools as Record<string, Tool>,
             config.frameworks
           );
 
@@ -194,16 +441,35 @@ export class ProductionReadinessAuditor {
             check: 'error-tracking-setup',
             status: 'missing',
             priority: config.projectType === 'library' ? 'low' : 'critical',
-            message: `🚨 KRITISCH: Kein Error-Monitoring für Production-Apps gefunden`,
-            recommendation: `Error-Monitoring ist essentiell für Production-Apps. Empfohlen: ${recommendedTool.name}${alternatives.length > 0 ? ` (Alternativen: ${alternatives.map(t => t.name).join(', ')})` : ''}. ${this.getInstallCommand(recommendedTool, config.frameworks)}`,
+            message: t('production_auditor.error_monitoring_critical'),
+            recommendation: t(
+              'production_auditor.error_monitoring_recommendation',
+              {
+                tool: sanitizePackageName(recommendedTool.name),
+                alternatives:
+                  alternatives.length > 0
+                    ? ` (Alternativen: ${alternatives.map(t => sanitizePackageName(t.name)).join(', ')})`
+                    : '',
+                installCommand: this.getInstallCommand(
+                  recommendedTool,
+                  config.frameworks
+                ),
+              }
+            ),
             packages: [
-              ...this.getRecommendedPackages(recommendedTool, config.frameworks),
-              ...this.getAllErrorMonitoringPackages(errorMonitoringTools, config.frameworks).slice(0, 3)
+              ...this.getRecommendedPackages(
+                recommendedTool,
+                config.frameworks
+              ),
+              ...this.getAllErrorMonitoringPackages(
+                errorMonitoringTools as Record<string, Tool>,
+                config.frameworks
+              ).slice(0, 3),
             ],
           });
         }
       }
-    } catch (error) {
+    } catch {
       // Fallback to original logic if database fails
       return this.auditErrorMonitoringFallback(config);
     }
@@ -661,14 +927,14 @@ export class ProductionReadinessAuditor {
         'Pipfile',
       ];
       let hasBandit = false;
-      let hasSafety = false;
+      // hasSafety variable removed as unused
 
       for (const file of requirementFiles) {
         const filePath = path.join(this.projectPath, file);
         if (await fs.pathExists(filePath)) {
           const content = await fs.readFile(filePath, 'utf-8');
           if (content.includes('bandit')) hasBandit = true;
-          if (content.includes('safety')) hasSafety = true;
+          // if (content.includes('safety')) { /* hasSafety would be set but unused */ }
         }
       }
 
@@ -828,7 +1094,7 @@ export class ProductionReadinessAuditor {
 
   private auditSourceFileChanges(
     sourceFiles: string[],
-    config: AuditConfig
+    _config: AuditConfig
   ): ProductionAudit[] {
     const audits: ProductionAudit[] = [];
 
@@ -876,7 +1142,7 @@ export class ProductionReadinessAuditor {
 
   // New database-driven helper methods
   private getRecommendedErrorMonitoringTool(
-    tools: any,
+    tools: Record<string, Tool>,
     frameworks: string[]
   ): Tool {
     // Prioritize based on framework compatibility and popularity
@@ -972,7 +1238,7 @@ export class ProductionReadinessAuditor {
   }
 
   private getAllErrorMonitoringPackages(
-    tools: any,
+    tools: Record<string, Tool>,
     frameworks: string[]
   ): string[] {
     const packages: string[] = [];
@@ -1003,7 +1269,7 @@ export class ProductionReadinessAuditor {
   private addDeprecationWarning(
     audits: ProductionAudit[],
     tool: Tool,
-    toolKey: string
+    _toolKey: string
   ): void {
     audits.push({
       category: 'error-monitoring',

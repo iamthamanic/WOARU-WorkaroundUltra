@@ -3,6 +3,75 @@ import * as path from 'path';
 import { glob } from 'glob';
 import { CodeSmellAnalyzer } from './CodeSmellAnalyzer';
 import { CodeSmellFinding } from '../types/code-smell';
+import { t, initializeI18n } from '../config/i18n';
+
+/**
+ * Security constants for code analysis validation
+ */
+const SECURITY_LIMITS = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILES_ANALYZED: 1000,
+  MAX_PATH_LENGTH: 500,
+  MAX_ANALYSIS_TIME: 120000, // 2 minutes
+  MAX_INSIGHTS_PER_TYPE: 50,
+} as const;
+
+/**
+ * Sanitizes file paths to prevent information leakage
+ * @param filePath - The file path to sanitize
+ * @returns Sanitized file path safe for display
+ */
+function sanitizeFilePath(filePath: unknown): string {
+  if (typeof filePath !== 'string') {
+    return 'unknown-file';
+  }
+
+  const baseName = path.basename(filePath);
+  return (
+    baseName.replace(/[^a-zA-Z0-9._-]/g, '').substring(0, 100) || 'unknown-file'
+  );
+}
+
+/**
+ * Sanitizes project paths to prevent directory traversal
+ * @param projectPath - The project path to sanitize
+ * @returns Sanitized project path safe for processing
+ */
+function sanitizeProjectPath(projectPath: unknown): string {
+  if (typeof projectPath !== 'string') {
+    return process.cwd();
+  }
+
+  const normalized = path.normalize(projectPath);
+
+  // Check for directory traversal
+  if (normalized.includes('..') || normalized.includes('\x00')) {
+    return process.cwd();
+  }
+
+  if (normalized.length > SECURITY_LIMITS.MAX_PATH_LENGTH) {
+    return process.cwd();
+  }
+
+  return normalized;
+}
+
+/**
+ * Sanitizes error messages to prevent information leakage
+ * @param error - The error to sanitize
+ * @returns Sanitized error message safe for display
+ */
+function sanitizeError(error: unknown): string {
+  if (typeof error === 'string') {
+    return error.replace(/\/[^\s]*\/[^\s]*/g, '[PATH]').substring(0, 200);
+  }
+
+  if (error instanceof Error) {
+    return sanitizeError(error.message);
+  }
+
+  return 'Unknown analysis error';
+}
 
 export interface CodeInsight {
   reason: string;
@@ -14,17 +83,108 @@ export interface CodeInsight {
 
 export class CodeAnalyzer {
   private codeSmellAnalyzer: CodeSmellAnalyzer;
+  private analysisMetrics = {
+    filesAnalyzed: 0,
+    insightsGenerated: 0,
+    securityIssuesFound: 0,
+    averageAnalysisTime: 0,
+  };
 
   constructor() {
     this.codeSmellAnalyzer = new CodeSmellAnalyzer();
   }
 
+  /**
+   * Analyze codebase with comprehensive security validation
+   * @param projectPath - Path to the project to analyze
+   * @param language - Programming language of the project
+   * @returns Promise<Map<string, CodeInsight>> Map of analysis insights
+   */
   async analyzeCodebase(
     projectPath: string,
     language: string
   ): Promise<Map<string, CodeInsight>> {
-    const insights = new Map<string, CodeInsight>();
+    const startTime = Date.now();
 
+    try {
+      await initializeI18n();
+
+      // Validate inputs
+      const safePath = sanitizeProjectPath(projectPath);
+      if (!this.validateLanguage(language)) {
+        console.warn(
+          t('code_analyzer.unsupported_language', {
+            language: String(language),
+          })
+        );
+        return new Map();
+      }
+
+      const insights = new Map<string, CodeInsight>();
+
+      // Add timeout protection
+      const analysisPromise = this.performAnalysisWithTimeout(
+        safePath,
+        language,
+        insights
+      );
+      await analysisPromise;
+
+      // Update metrics
+      this.updateAnalysisMetrics(insights, Date.now() - startTime);
+
+      return insights;
+    } catch (error) {
+      console.error(t('code_analyzer.analysis_error'), sanitizeError(error));
+      return new Map();
+    }
+  }
+
+  /**
+   * Validate programming language
+   */
+  private validateLanguage(language: unknown): boolean {
+    if (typeof language !== 'string') {
+      return false;
+    }
+
+    const supportedLanguages = ['JavaScript', 'TypeScript', 'Python', 'C#'];
+    return supportedLanguages.includes(language);
+  }
+
+  /**
+   * Perform analysis with timeout protection
+   */
+  private async performAnalysisWithTimeout(
+    projectPath: string,
+    language: string,
+    insights: Map<string, CodeInsight>
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Code analysis timeout'));
+      }, SECURITY_LIMITS.MAX_ANALYSIS_TIME);
+
+      this.performAnalysis(projectPath, language, insights)
+        .then(() => {
+          clearTimeout(timeout);
+          resolve();
+        })
+        .catch(error => {
+          clearTimeout(timeout);
+          reject(error);
+        });
+    });
+  }
+
+  /**
+   * Main analysis method
+   */
+  private async performAnalysis(
+    projectPath: string,
+    language: string,
+    insights: Map<string, CodeInsight>
+  ): Promise<void> {
     switch (language) {
       case 'JavaScript':
       case 'TypeScript':
@@ -37,8 +197,19 @@ export class CodeAnalyzer {
         await this.analyzeCSharpProject(projectPath, insights);
         break;
     }
+  }
 
-    return insights;
+  /**
+   * Update analysis performance metrics
+   */
+  private updateAnalysisMetrics(
+    insights: Map<string, CodeInsight>,
+    duration: number
+  ): void {
+    this.analysisMetrics.filesAnalyzed++;
+    this.analysisMetrics.insightsGenerated += insights.size;
+    this.analysisMetrics.averageAnalysisTime =
+      (this.analysisMetrics.averageAnalysisTime + duration) / 2;
   }
 
   private async analyzeJavaScriptProject(
@@ -58,9 +229,8 @@ export class CodeAnalyzer {
       );
       if (formattingIssues.length > 0) {
         insights.set('prettier', {
-          reason:
-            'Inkonsistente Code-Formatierung gefunden. Unterschiedliche Einrückungen und Stile in mehreren Dateien.',
-          evidence: formattingIssues,
+          reason: t('code_analyzer.formatting_inconsistent'),
+          evidence: formattingIssues.map(issue => sanitizeFilePath(issue)),
           files: formattingIssues.map(f => f.split(':')[0]),
           severity: 'medium',
         });
@@ -78,11 +248,14 @@ export class CodeAnalyzer {
       );
       if (complexFiles.length > 0) {
         insights.set('typescript', {
-          reason:
-            'Komplexe JavaScript-Dateien ohne Typdefinitionen gefunden. TypeScript würde die Wartbarkeit verbessern.',
-          evidence: complexFiles.map(
-            f => `${f}: Komplexe Funktionen ohne Typen`
-          ),
+          reason: t('code_analyzer.typescript_missing'),
+          evidence: complexFiles
+            .map(f =>
+              t('code_analyzer.complex_file_without_types', {
+                file: sanitizeFilePath(f),
+              })
+            )
+            .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
           files: complexFiles,
           severity: 'high',
         });
@@ -96,10 +269,11 @@ export class CodeAnalyzer {
     );
     if (debugStatements.length > 0) {
       insights.set('eslint', {
-        reason:
-          'Debug-Statements (console.log) im Code gefunden. ESLint kann diese automatisch erkennen.',
-        evidence: debugStatements,
-        files: debugStatements.map(f => f.split(':')[0]),
+        reason: t('code_analyzer.debug_statements_found'),
+        evidence: debugStatements
+          .map(stmt => sanitizeFilePath(stmt))
+          .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
+        files: debugStatements.map(f => sanitizeFilePath(f.split(':')[0])),
         severity: 'medium',
       });
     }
@@ -126,8 +300,12 @@ export class CodeAnalyzer {
       ).length;
 
       insights.set('code-smells', {
-        reason: `WOARU Internal Analysis found ${codeSmellFindings.length} code quality issues (${criticalCount} critical, ${warningCount} warnings)`,
-        evidence: topIssues,
+        reason: t('code_analyzer.woaru_analysis_found', {
+          total: codeSmellFindings.length,
+          critical: criticalCount,
+          warnings: warningCount,
+        }),
+        evidence: topIssues.slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
         files: [...new Set(codeSmellFindings.map(f => f.file))],
         severity: criticalCount > 0 ? 'high' : 'medium',
         patterns: Object.keys(groupedFindings),
@@ -144,9 +322,12 @@ export class CodeAnalyzer {
 
     if (sourceFiles.length > 5 && testFiles.length === 0) {
       insights.set('jest', {
-        reason:
-          'Keine Tests gefunden bei über 5 Source-Dateien. Testing Framework würde Code-Qualität sichern.',
-        evidence: [`${sourceFiles.length} Source-Dateien ohne Tests`],
+        reason: t('code_analyzer.no_tests_found'),
+        evidence: [
+          t('code_analyzer.source_files_without_tests', {
+            count: sourceFiles.length,
+          }),
+        ],
         files: [],
         severity: 'high',
       });
@@ -158,9 +339,11 @@ export class CodeAnalyzer {
 
     if (hasGit && !hasHusky && jsFiles.length > 3) {
       insights.set('husky', {
-        reason:
-          'Git-Repository ohne Pre-Commit Hooks. Code-Qualität wird nicht vor Commits geprüft.',
-        evidence: ['Kein .husky Verzeichnis gefunden', 'Git-Repository aktiv'],
+        reason: t('code_analyzer.git_without_hooks'),
+        evidence: [
+          t('code_analyzer.no_husky_directory'),
+          t('code_analyzer.git_repository_active'),
+        ],
         files: [],
         severity: 'medium',
       });
@@ -181,10 +364,11 @@ export class CodeAnalyzer {
       const styleIssues = await this.checkPythonStyle(projectPath, pyFiles);
       if (styleIssues.length > 0) {
         insights.set('black', {
-          reason:
-            'PEP8 Style-Verletzungen gefunden. Black formatiert automatisch nach Python-Standards.',
-          evidence: styleIssues,
-          files: styleIssues.map(f => f.split(':')[0]),
+          reason: t('code_analyzer.pep8_violations'),
+          evidence: styleIssues
+            .map(issue => sanitizeFilePath(issue))
+            .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
+          files: styleIssues.map(f => sanitizeFilePath(f.split(':')[0])),
           severity: 'medium',
         });
       }
@@ -196,10 +380,11 @@ export class CodeAnalyzer {
       );
       if (missingTypes.length > 0) {
         insights.set('mypy', {
-          reason:
-            'Funktionen ohne Type Hints gefunden. Mypy kann Typ-Fehler zur Entwicklungszeit finden.',
-          evidence: missingTypes,
-          files: missingTypes.map(f => f.split(':')[0]),
+          reason: t('code_analyzer.missing_type_hints'),
+          evidence: missingTypes
+            .map(type => sanitizeFilePath(type))
+            .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
+          files: missingTypes.map(f => sanitizeFilePath(f.split(':')[0])),
           severity: 'medium',
         });
       }
@@ -211,59 +396,97 @@ export class CodeAnalyzer {
       );
       if (printStatements.length > 0) {
         insights.set('ruff', {
-          reason:
-            'Print-Statements im Code gefunden. Ruff kann diese und andere Code-Smells erkennen.',
-          evidence: printStatements,
-          files: printStatements.map(f => f.split(':')[0]),
+          reason: t('code_analyzer.print_statements_found'),
+          evidence: printStatements
+            .map(stmt => sanitizeFilePath(stmt))
+            .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
+          files: printStatements.map(f => sanitizeFilePath(f.split(':')[0])),
           severity: 'low',
         });
       }
     }
   }
 
+  /**
+   * Analyze C# project with security validation
+   */
   private async analyzeCSharpProject(
     projectPath: string,
     insights: Map<string, CodeInsight>
   ): Promise<void> {
-    const csFiles = await glob('**/*.cs', {
-      cwd: projectPath,
-      ignore: ['bin/**', 'obj/**'],
-    });
+    try {
+      const csFiles = await glob('**/*.cs', {
+        cwd: projectPath,
+        ignore: ['bin/**', 'obj/**'],
+      }).catch(() => []);
 
-    if (csFiles.length > 0) {
-      // Check for missing .editorconfig
-      const hasEditorConfig = await fs.pathExists(
-        path.join(projectPath, '.editorconfig')
-      );
-      if (!hasEditorConfig) {
-        insights.set('editorconfig', {
-          reason:
-            'Keine .editorconfig gefunden. Team-weite Code-Style Konsistenz fehlt.',
-          evidence: [
-            `${csFiles.length} C# Dateien ohne einheitliche Style-Konfiguration`,
-          ],
-          files: [],
-          severity: 'medium',
-        });
-      }
+      // Limit number of files analyzed
+      const limitedFiles = csFiles.slice(0, SECURITY_LIMITS.MAX_FILES_ANALYZED);
 
-      // Check for async issues
-      const asyncIssues = await this.checkCSharpAsyncPatterns(
-        projectPath,
-        csFiles
-      );
-      if (asyncIssues.length > 0) {
-        insights.set('sonaranalyzer', {
-          reason:
-            'Potenzielle async/await Probleme gefunden. SonarAnalyzer kann diese automatisch erkennen.',
-          evidence: asyncIssues,
-          files: asyncIssues.map(f => f.split(':')[0]),
-          severity: 'high',
-        });
+      if (limitedFiles.length > 0) {
+        // Check for missing .editorconfig
+        const hasEditorConfig = await fs.pathExists(
+          path.join(projectPath, '.editorconfig')
+        );
+        if (!hasEditorConfig) {
+          insights.set('editorconfig', {
+            reason: t('code_analyzer.no_editorconfig'),
+            evidence: [
+              t('code_analyzer.csharp_files_no_style', {
+                count: limitedFiles.length,
+              }),
+            ],
+            files: [],
+            severity: 'medium',
+          });
+        }
+
+        // Check for async issues
+        const asyncIssues = await this.checkCSharpAsyncPatterns(
+          projectPath,
+          limitedFiles
+        );
+        if (asyncIssues.length > 0) {
+          insights.set('sonaranalyzer', {
+            reason: t('code_analyzer.async_issues_found'),
+            evidence: asyncIssues
+              .map(issue => sanitizeFilePath(issue))
+              .slice(0, SECURITY_LIMITS.MAX_INSIGHTS_PER_TYPE),
+            files: asyncIssues.map(f => sanitizeFilePath(f.split(':')[0])),
+            severity: 'high',
+          });
+        }
       }
+    } catch (error) {
+      console.error(
+        t('code_analyzer.csharp_analysis_error'),
+        sanitizeError(error)
+      );
     }
   }
 
+  /**
+   * Get analysis metrics
+   */
+  public getAnalysisMetrics() {
+    return { ...this.analysisMetrics };
+  }
+
+  /**
+   * Reset analysis metrics
+   */
+  public resetMetrics(): void {
+    this.analysisMetrics = {
+      filesAnalyzed: 0,
+      insightsGenerated: 0,
+      securityIssuesFound: 0,
+      averageAnalysisTime: 0,
+    };
+  }
+
+  /**
+   * Check formatting consistency with security validation
+   */
   private async checkFormattingConsistency(
     projectPath: string,
     files: string[]
@@ -271,14 +494,24 @@ export class CodeAnalyzer {
     const issues: string[] = [];
     const indentations = new Set<string>();
 
-    for (const file of files.slice(0, 10)) {
-      // Check first 10 files
+    // Limit files analyzed for security
+    const limitedFiles = files.slice(
+      0,
+      Math.min(10, SECURITY_LIMITS.MAX_FILES_ANALYZED)
+    );
+
+    for (const file of limitedFiles) {
       try {
-        const content = await fs.readFile(
-          path.join(projectPath, file),
-          'utf-8'
-        );
-        const lines = content.split('\n');
+        const filePath = path.join(projectPath, file);
+
+        // Check file size before reading
+        const stats = await fs.stat(filePath).catch(() => null);
+        if (!stats || stats.size > SECURITY_LIMITS.MAX_FILE_SIZE) {
+          continue;
+        }
+
+        const content = await fs.readFile(filePath, 'utf-8');
+        const lines = content.split('\n').slice(0, 100); // Limit lines analyzed
 
         // Check indentation style
         for (const line of lines) {
@@ -307,7 +540,9 @@ export class CodeAnalyzer {
 
     if (indentations.size > 1) {
       issues.push(
-        'Inkonsistente Einrückung: ' + Array.from(indentations).join(', ')
+        t('code_analyzer.inconsistent_indentation', {
+          styles: Array.from(indentations).join(', '),
+        })
       );
     }
 

@@ -2,6 +2,12 @@ import { execSync, spawn } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
+import { t } from '../config/i18n';
+
+/**
+ * VersionManager handles version checking and updates for WOARU
+ * Now with full i18n support for internationalized messages
+ */
 
 export interface VersionInfo {
   current: string;
@@ -10,6 +16,17 @@ export interface VersionInfo {
   releaseDate?: string;
 }
 
+/**
+ * Manages version checking and updates for WOARU
+ *
+ * This class provides utilities for:
+ * - Checking the current installed version
+ * - Fetching the latest available version from npm
+ * - Comparing versions and displaying update notifications
+ * - Performing self-updates of the WOARU package
+ *
+ * All user-facing messages are internationalized using the i18n system.
+ */
 export class VersionManager {
   private static packageJsonPath = path.join(__dirname, '../../package.json');
 
@@ -21,7 +38,7 @@ export class VersionManager {
       const packageJson = fs.readJsonSync(this.packageJsonPath);
       return packageJson.version;
     } catch (error) {
-      console.error('Error reading package.json:', error);
+      console.error(t('version_manager.error_reading_package'), error);
       return 'unknown';
     }
   }
@@ -34,7 +51,7 @@ export class VersionManager {
       const result = execSync('npm view woaru version', { encoding: 'utf8' });
       return result.trim();
     } catch (error) {
-      console.error('Error fetching latest version:', error);
+      console.error(t('version_manager.error_fetching_latest'), error);
       return 'unknown';
     }
   }
@@ -50,7 +67,7 @@ export class VersionManager {
       const dateStr = result.trim();
       return new Date(dateStr).toLocaleDateString('de-DE');
     } catch (error) {
-      console.error('Error fetching release date:', error);
+      console.error(t('version_manager.error_fetching_release_date'), error);
       return undefined;
     }
   }
@@ -76,37 +93,43 @@ export class VersionManager {
    */
   static displayVersion(): void {
     const version = this.getCurrentVersion();
-    console.log(`${chalk.blue('WOARU')} Version: ${chalk.green(version)}`);
+    console.log(
+      chalk.blue(
+        t('version_manager.version_display', { version: chalk.green(version) })
+      )
+    );
   }
 
   /**
    * Display version check results
    */
   static async displayVersionCheck(): Promise<void> {
-    console.log(chalk.blue('🔍 Checking for updates...'));
+    console.log(chalk.blue(t('version_manager.checking_updates')));
 
     const versionInfo = await this.checkVersion();
 
     if (versionInfo.isUpToDate) {
       console.log(
         chalk.green(
-          `✅ Du verwendest die aktuellste Version (v${versionInfo.current})`
+          t('version_manager.up_to_date', { version: versionInfo.current })
         )
       );
     } else {
       console.log(
         chalk.yellow(
-          `📦 Eine neue Version (v${versionInfo.latest}) ist verfügbar!`
+          t('version_manager.new_version_available', {
+            version: versionInfo.latest,
+          })
         )
       );
       if (versionInfo.releaseDate) {
         console.log(
-          chalk.gray(`   Veröffentlicht am: ${versionInfo.releaseDate}`)
+          chalk.gray(
+            t('version_manager.released_on', { date: versionInfo.releaseDate })
+          )
         );
       }
-      console.log(
-        chalk.cyan('   Führe `woaru update` aus, um zu aktualisieren.')
-      );
+      console.log(chalk.cyan(t('version_manager.update_instruction')));
     }
   }
 
@@ -114,7 +137,7 @@ export class VersionManager {
    * Update WOARU to the latest version
    */
   static async updateToLatest(): Promise<void> {
-    console.log(chalk.blue('🚀 Updating WOARU to latest version...'));
+    console.log(chalk.blue(t('version_manager.updating')));
 
     return new Promise((resolve, reject) => {
       const updateProcess = spawn('npm', ['install', '-g', 'woaru@latest'], {
@@ -123,18 +146,18 @@ export class VersionManager {
 
       updateProcess.on('close', code => {
         if (code === 0) {
-          console.log(chalk.green('✅ Update erfolgreich abgeschlossen!'));
+          console.log(chalk.green(t('version_manager.update_success')));
           resolve();
         } else {
           console.error(
-            chalk.red(`❌ Update fehlgeschlagen (Exit Code: ${code})`)
+            chalk.red(t('version_manager.update_failed', { code }))
           );
           reject(new Error(`Update failed with exit code ${code}`));
         }
       });
 
       updateProcess.on('error', error => {
-        console.error(chalk.red('❌ Update fehlgeschlagen:'), error);
+        console.error(chalk.red(t('version_manager.update_error')), error);
         reject(error);
       });
     });

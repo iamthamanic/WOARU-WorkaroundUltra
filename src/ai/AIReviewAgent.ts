@@ -1,6 +1,7 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
+// Removed unused fs and path imports
 import axios, { AxiosResponse } from 'axios';
+import { safeJsonParse } from '../utils/safeJsonParser';
+import { PromptManager } from './PromptManager';
 import {
   LLMProviderConfig,
   AIReviewConfig,
@@ -16,12 +17,15 @@ import { getAILanguageInstruction } from '../config/i18n';
 export class AIReviewAgent {
   private config: AIReviewConfig;
   private promptTemplate: PromptTemplate;
-  private promptTemplates: Record<string, any>;
+  private promptTemplates: Record<string, PromptTemplate>;
   private enabledProviders: LLMProviderConfig[];
 
-  constructor(config: AIReviewConfig, promptTemplates?: Record<string, any>) {
+  constructor(
+    config: AIReviewConfig,
+    promptTemplates?: Record<string, PromptTemplate>
+  ) {
     this.config = config;
-    this.enabledProviders = config.providers.filter(p => p.enabled);
+    this.enabledProviders = config.providers?.filter(p => p?.enabled) || [];
     this.promptTemplates = promptTemplates || {};
     this.promptTemplate = this.createDefaultPromptTemplate();
 
@@ -151,6 +155,8 @@ export class AIReviewAgent {
         );
       }
 
+      const validApiKey = apiKey || '';
+
       // Call appropriate method based on provider type
       let response: LLMResponse;
       switch (provider.providerType) {
@@ -160,7 +166,7 @@ export class AIReviewAgent {
             prompt,
             code,
             context,
-            apiKey!
+            validApiKey
           );
           break;
         case 'openai':
@@ -169,7 +175,7 @@ export class AIReviewAgent {
             prompt,
             code,
             context,
-            apiKey!
+            validApiKey
           );
           break;
         case 'azure-openai':
@@ -178,7 +184,7 @@ export class AIReviewAgent {
             prompt,
             code,
             context,
-            apiKey!
+            validApiKey
           );
           break;
         case 'google':
@@ -187,7 +193,7 @@ export class AIReviewAgent {
             prompt,
             code,
             context,
-            apiKey!
+            validApiKey
           );
           break;
         case 'custom-ollama':
@@ -258,7 +264,7 @@ export class AIReviewAgent {
 
     const response: AxiosResponse = await axios.post(
       provider.baseUrl,
-      JSON.parse(body),
+      safeJsonParse(body) || {},
       {
         headers,
         timeout: provider.timeout || 30000,
@@ -310,7 +316,7 @@ export class AIReviewAgent {
 
     const response: AxiosResponse = await axios.post(
       provider.baseUrl,
-      JSON.parse(body),
+      safeJsonParse(body) || {},
       {
         headers,
         timeout: provider.timeout || 30000,
@@ -360,7 +366,7 @@ export class AIReviewAgent {
 
     const response: AxiosResponse = await axios.post(
       provider.baseUrl,
-      JSON.parse(body),
+      safeJsonParse(body) || {},
       {
         headers,
         timeout: provider.timeout || 30000,
@@ -405,7 +411,12 @@ export class AIReviewAgent {
       systemPrompt: this.promptTemplate.systemPrompt,
     });
 
-    const response: AxiosResponse = await axios.post(url, JSON.parse(body), {
+    const requestBody = safeJsonParse(body);
+    if (!requestBody) {
+      throw new Error('Failed to parse request body JSON');
+    }
+
+    const response: AxiosResponse = await axios.post(url, requestBody, {
       headers: {
         'Content-Type': 'application/json',
         ...provider.headers,
@@ -449,7 +460,7 @@ export class AIReviewAgent {
 
     const response: AxiosResponse = await axios.post(
       provider.baseUrl,
-      JSON.parse(body),
+      safeJsonParse(body) || {},
       {
         headers: {
           'Content-Type': 'application/json',
@@ -504,7 +515,7 @@ export class AIReviewAgent {
 
     if (customTemplate) {
       // Use custom template with variable interpolation
-      const { PromptManager } = require('./PromptManager');
+      // PromptManager imported at top level
       const promptManager = PromptManager.getInstance();
 
       const variables = {
@@ -522,7 +533,8 @@ export class AIReviewAgent {
 
       // Interpolate user prompt with variables
       const userPrompt = promptManager.interpolatePrompt(
-        customTemplate.user_prompt,
+        (customTemplate as unknown as Record<string, unknown>)
+          .user_prompt as string,
         variables
       );
 
@@ -538,13 +550,13 @@ export class AIReviewAgent {
    */
   private buildDefaultPrompt(code: string, context: CodeContext): string {
     let prompt = this.promptTemplate.userPromptTemplate;
-    
+
     // Add language instruction at the beginning
     let languageInstruction = '';
     try {
       languageInstruction = getAILanguageInstruction();
       prompt = `${languageInstruction}\n\n${prompt}`;
-    } catch (error) {
+    } catch {
       // If i18n is not initialized, default to English
       prompt = `Respond exclusively in English.\n\n${prompt}`;
     }
@@ -596,25 +608,39 @@ export class AIReviewAgent {
         return [];
       }
 
-      const findings = JSON.parse(jsonMatch[0]);
+      const findings = safeJsonParse(jsonMatch[0]);
+      if (!findings) {
+        console.warn('Failed to parse AI findings JSON');
+        return [];
+      }
 
-      return findings.map((finding: any) => ({
-        llmId,
-        severity: finding.severity || 'medium',
-        category: finding.category || 'code-smell',
-        message: finding.message || 'No message provided',
-        rationale:
-          finding.rationale || finding.reason || 'No rationale provided',
-        suggestion: finding.suggestion || 'No suggestion provided',
-        filePath: context.filePath,
-        lineNumber: finding.lineNumber || finding.line,
-        lineRange: finding.lineRange,
-        codeSnippet: finding.codeSnippet,
-        confidence: finding.confidence || 0.8,
-        tags: finding.tags || [],
-        estimatedFixTime: finding.estimatedFixTime,
-        businessImpact: finding.businessImpact || 'medium',
-      }));
+      return findings.map(
+        (finding: {
+          severity?: string;
+          category?: string;
+          message?: string;
+          rationale?: string;
+          reason?: string;
+          suggestion?: string;
+          [key: string]: unknown;
+        }) => ({
+          llmId,
+          severity: finding.severity || 'medium',
+          category: finding.category || 'code-smell',
+          message: finding.message || 'No message provided',
+          rationale:
+            finding.rationale || finding.reason || 'No rationale provided',
+          suggestion: finding.suggestion || 'No suggestion provided',
+          filePath: context.filePath,
+          lineNumber: finding.lineNumber || finding.line,
+          lineRange: finding.lineRange,
+          codeSnippet: finding.codeSnippet,
+          confidence: finding.confidence || 0.8,
+          tags: finding.tags || [],
+          estimatedFixTime: finding.estimatedFixTime,
+          businessImpact: finding.businessImpact || 'medium',
+        })
+      );
     } catch (error) {
       console.error(`Failed to parse ${llmId} response:`, error);
       return [];
@@ -674,6 +700,15 @@ export class AIReviewAgent {
 
     // For now, simple consensus based on similar messages
     // TODO: Implement more sophisticated similarity detection
+    // Current implementation uses simple string matching which may miss:
+    // - Similar findings with different wording
+    // - Findings that reference the same code issue from different perspectives
+    // - Semantically equivalent findings across different languages
+    // Consider implementing:
+    // - Embedding-based similarity using sentence transformers
+    // - AST-based comparison for code-related findings
+    // - Fuzzy matching with configurable thresholds
+    // Tracked in issue: #woaru-ai-similarity-enhancement
     for (const llmId of llmIds) {
       const findings = results[llmId];
       for (const finding of findings) {
@@ -804,7 +839,7 @@ export class AIReviewAgent {
     let languageInstruction = '';
     try {
       languageInstruction = getAILanguageInstruction();
-    } catch (error) {
+    } catch {
       // If i18n is not initialized, default to English
       languageInstruction = 'Respond exclusively in English.';
     }

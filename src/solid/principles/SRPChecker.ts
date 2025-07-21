@@ -4,9 +4,10 @@
  */
 
 import { BaseSOLIDChecker } from './BaseSOLIDChecker';
-import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
+import { SOLIDViolation, SOLIDPrinciple, ClassAnalysis, MethodAnalysis } from '../types/solid-types';
 import { TypeScriptParser } from '../parsers/TypeScriptParser';
 import { APP_CONFIG } from '../../config/constants';
+import { t } from '../../config/i18n';
 
 export class SRPChecker extends BaseSOLIDChecker {
   protected principle: SOLIDPrinciple = 'SRP';
@@ -58,7 +59,12 @@ export class SRPChecker extends BaseSOLIDChecker {
       violations.push(...this.checkFileClassCount(filePath, analysis.classes));
 
     } catch (error) {
-      console.warn(`SRP-Checker: Fehler beim Analysieren von ${filePath}:`, error);
+      // Log error with more context for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(t('solid.srp.analysis_error', { filePath }), {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
 
     return violations;
@@ -67,7 +73,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele Methoden in einer Klasse
    */
-  private checkMethodCount(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkMethodCount(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const methodCount = classAnalysis.methods.length;
 
@@ -81,10 +87,10 @@ export class SRPChecker extends BaseSOLIDChecker {
         file: filePath,
         line: classAnalysis.line,
         class: classAnalysis.name,
-        description: `Klasse ${classAnalysis.name} hat ${methodCount} Methoden`,
-        explanation: 'Klassen mit vielen Methoden haben oft mehrere Verantwortlichkeiten. Das Single Responsibility Principle besagt, dass eine Klasse nur einen Grund zur Änderung haben sollte.',
-        impact: 'Schwer zu testen, zu verstehen und zu warten. Hohe Wahrscheinlichkeit für Bugs bei Änderungen.',
-        suggestion: `Teile die Klasse ${classAnalysis.name} in kleinere, fokussierte Klassen auf. Gruppiere verwandte Methoden in separate Services oder Utility-Klassen.`,
+        description: t('solid.srp.method_count.description', { className: classAnalysis.name, count: methodCount }),
+        explanation: t('solid.srp.method_count.explanation'),
+        impact: t('solid.srp.method_count.impact'),
+        suggestion: t('solid.srp.method_count.suggestion', { className: classAnalysis.name }),
         severity,
         metrics: {
           methodCount: methodCount,
@@ -99,7 +105,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu hohe Klassen-Komplexität
    */
-  private checkComplexity(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkComplexity(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const complexity = classAnalysis.complexity;
 
@@ -113,10 +119,10 @@ export class SRPChecker extends BaseSOLIDChecker {
         file: filePath,
         line: classAnalysis.line,
         class: classAnalysis.name,
-        description: `Klasse ${classAnalysis.name} hat eine Komplexität von ${complexity}`,
-        explanation: 'Hohe zyklomatische Komplexität deutet auf zu viele verschiedene Logik-Pfade in einer Klasse hin, was gegen das SRP verstößt.',
-        impact: 'Schwer zu testen (viele Test-Cases nötig), fehleranfällig, schwer zu verstehen.',
-        suggestion: `Extrahiere komplexe Logik in separate Methoden oder Klassen. Verwende Design Patterns wie Strategy oder Command um Komplexität zu reduzieren.`,
+        description: t('solid.srp.complexity.description', { className: classAnalysis.name, complexity }),
+        explanation: t('solid.srp.complexity.explanation'),
+        impact: t('solid.srp.complexity.impact'),
+        suggestion: t('solid.srp.complexity.suggestion'),
         severity,
         metrics: {
           complexity: complexity,
@@ -131,7 +137,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele verschiedene Concerns (Verantwortlichkeiten)
    */
-  private checkConcernDiversity(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkConcernDiversity(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const concernCount = classAnalysis.concerns.length;
 
@@ -145,10 +151,10 @@ export class SRPChecker extends BaseSOLIDChecker {
         file: filePath,
         line: classAnalysis.line,
         class: classAnalysis.name,
-        description: `Klasse ${classAnalysis.name} importiert aus ${concernCount} verschiedenen Bereichen: ${classAnalysis.concerns.join(', ')}`,
-        explanation: 'Imports aus verschiedenen Bereichen (Database, HTTP, Filesystem, Email, etc.) deuten darauf hin, dass die Klasse multiple Verantwortlichkeiten hat.',
-        impact: 'Hohe Kopplung, schwere Testbarkeit (viele Mocks nötig), Änderungen in einem Bereich können andere beeinflussen.',
-        suggestion: `Separiere die verschiedenen Concerns in eigene Services: ${classAnalysis.concerns.map((c: string) => `${c}Service`).join(', ')}. Verwende Dependency Injection um diese Services zu koordinieren.`,
+        description: t('solid.srp.concern_diversity.description', { className: classAnalysis.name, concernCount, concerns: classAnalysis.concerns.join(', ') }),
+        explanation: t('solid.srp.concern_diversity.explanation'),
+        impact: t('solid.srp.concern_diversity.impact'),
+        suggestion: t('solid.srp.concern_diversity.suggestion', { concernServices: classAnalysis.concerns.map((c: string) => `${c}Service`).join(', ') }),
         severity,
         metrics: {
           dependencies: concernCount,
@@ -163,7 +169,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu große Klassen (Lines of Code)
    */
-  private checkClassSize(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkClassSize(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const linesOfCode = classAnalysis.linesOfCode;
 
@@ -177,10 +183,10 @@ export class SRPChecker extends BaseSOLIDChecker {
         file: filePath,
         line: classAnalysis.line,
         class: classAnalysis.name,
-        description: `Klasse ${classAnalysis.name} hat ${linesOfCode} Zeilen Code`,
-        explanation: 'Sehr große Klassen sind oft ein Indikator für multiple Verantwortlichkeiten und verletzen das Single Responsibility Principle.',
-        impact: 'Schwer zu navigieren, zu verstehen und zu warten. Hohe Wahrscheinlichkeit für Merge-Konflikte.',
-        suggestion: `Refaktoriere die Klasse ${classAnalysis.name} in kleinere, kohäsive Einheiten. Identifiziere logische Gruppen von Methoden und extrahiere sie in separate Klassen.`,
+        description: t('solid.srp.class_size.description', { className: classAnalysis.name, linesOfCode }),
+        explanation: t('solid.srp.class_size.explanation'),
+        impact: t('solid.srp.class_size.impact'),
+        suggestion: t('solid.srp.class_size.suggestion', { className: classAnalysis.name }),
         severity,
         metrics: {
           linesOfCode: linesOfCode,
@@ -195,10 +201,10 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf Methoden mit zu vielen Parametern
    */
-  private checkMethodParameters(filePath: string, classAnalysis: any): SOLIDViolation[] {
+  private checkMethodParameters(filePath: string, classAnalysis: ClassAnalysis): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     
-    classAnalysis.methods.forEach((method: any) => {
+    classAnalysis.methods.forEach((method: MethodAnalysis) => {
       // Thresholds für Parameter Count
       const thresholds = APP_CONFIG.SOLID_THRESHOLDS.METHODS_PER_INTERFACE;
       
@@ -210,10 +216,10 @@ export class SRPChecker extends BaseSOLIDChecker {
           line: method.line,
           class: classAnalysis.name,
           method: method.name,
-          description: `Methode ${method.name} hat ${method.parameters} Parameter`,
-          explanation: 'Methoden mit vielen Parametern deuten oft darauf hin, dass sie zu viele verschiedene Dinge tun und gegen das SRP verstoßen.',
-          impact: 'Schwer zu nutzen, fehleranfällig (Parameter-Reihenfolge), schwer zu testen.',
-          suggestion: `Fasse verwandte Parameter in ein Objekt zusammen oder teile die Methode ${method.name} in kleinere, spezifischere Methoden auf.`,
+          description: t('solid.srp.method_parameters.description', { methodName: method.name, parameterCount: method.parameters }),
+          explanation: t('solid.srp.method_parameters.explanation'),
+          impact: t('solid.srp.method_parameters.impact'),
+          suggestion: t('solid.srp.method_parameters.suggestion', { methodName: method.name }),
           severity,
           metrics: {
             parameters: method.parameters,
@@ -229,7 +235,7 @@ export class SRPChecker extends BaseSOLIDChecker {
   /**
    * Prüft auf zu viele Klassen in einer Datei
    */
-  private checkFileClassCount(filePath: string, classes: any[]): SOLIDViolation[] {
+  private checkFileClassCount(filePath: string, classes: ClassAnalysis[]): SOLIDViolation[] {
     const violations: SOLIDViolation[] = [];
     const classCount = classes.length;
 
@@ -241,10 +247,10 @@ export class SRPChecker extends BaseSOLIDChecker {
       
       violations.push(this.createViolation({
         file: filePath,
-        description: `Datei enthält ${classCount} Klassen: ${classes.map(c => c.name).join(', ')}`,
-        explanation: 'Dateien mit vielen Klassen deuten oft darauf hin, dass verwandte aber unterschiedliche Verantwortlichkeiten in einer Datei gemischt werden.',
-        impact: 'Schwer zu navigieren, unklare Struktur, Merge-Konflikte wahrscheinlicher.',
-        suggestion: `Teile die Datei ${this.getFileName(filePath)} auf: eine Datei pro Klasse oder gruppiere nur wirklich eng verwandte Klassen zusammen.`,
+        description: t('solid.srp.file_class_count.description', { classCount, classList: classes.map(c => c.name).join(', ') }),
+        explanation: t('solid.srp.file_class_count.explanation'),
+        impact: t('solid.srp.file_class_count.impact'),
+        suggestion: t('solid.srp.file_class_count.suggestion', { fileName: this.getFileName(filePath) }),
         severity,
         metrics: {
           classCount: classCount

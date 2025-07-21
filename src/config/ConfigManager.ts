@@ -38,7 +38,7 @@ export class ConfigManager {
     try {
       // Ensure .woaru directory exists
       await fs.ensureDir(this.woaruDir);
-      
+
       // Ensure config subdirectory exists
       await fs.ensureDir(this.configDir);
 
@@ -217,12 +217,14 @@ export class ConfigManager {
   /**
    * Store AI configuration in global config file
    */
-  async storeAiConfig(config: any): Promise<void> {
+  async storeAiConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
       await fs.writeFile(this.aiConfigFile, JSON.stringify(config, null, 2));
       await this.setSecurePermissions();
-      console.log(chalk.green(`✅ AI configuration stored in ${this.aiConfigFile}`));
+      console.log(
+        chalk.green(`✅ AI configuration stored in ${this.aiConfigFile}`)
+      );
     } catch (error) {
       throw new Error(
         `Failed to store AI config: ${error instanceof Error ? error.message : error}`
@@ -233,7 +235,7 @@ export class ConfigManager {
   /**
    * Load AI configuration from global config file
    */
-  async loadAiConfig(): Promise<any> {
+  async loadAiConfig(): Promise<Record<string, unknown>> {
     try {
       if (!(await fs.pathExists(this.aiConfigFile))) {
         return {};
@@ -257,19 +259,27 @@ export class ConfigManager {
     try {
       const config = await this.loadAiConfig();
       const providers = [];
-      
+
       for (const [key, value] of Object.entries(config)) {
         // Skip metadata and configuration entries
-        if (key === '_metadata' || key === 'multi_ai_review_enabled' || key === 'primary_review_provider_id') {
+        if (
+          key === '_metadata' ||
+          key === 'multi_ai_review_enabled' ||
+          key === 'primary_review_provider_id'
+        ) {
           continue;
         }
-        
+
         // Only include actual provider objects
-        if (value && typeof value === 'object' && value.hasOwnProperty('enabled')) {
+        if (
+          value &&
+          typeof value === 'object' &&
+          Object.prototype.hasOwnProperty.call(value, 'enabled')
+        ) {
           providers.push(key);
         }
       }
-      
+
       return providers;
     } catch (error) {
       console.warn(
@@ -293,7 +303,7 @@ export class ConfigManager {
    * @deprecated Use storeAiConfig() instead
    * Backward compatibility alias for storing AI configuration
    */
-  async storeLlmConfig(config: any): Promise<void> {
+  async storeLlmConfig(config: Record<string, unknown>): Promise<void> {
     return this.storeAiConfig(config);
   }
 
@@ -301,7 +311,7 @@ export class ConfigManager {
    * @deprecated Use loadAiConfig() instead
    * Backward compatibility alias for loading AI configuration
    */
-  async loadLlmConfig(): Promise<any> {
+  async loadLlmConfig(): Promise<Record<string, unknown>> {
     return this.loadAiConfig();
   }
 
@@ -331,18 +341,24 @@ export class ConfigManager {
   /**
    * Get Multi-AI Review configuration
    */
-  async getMultiAiReviewConfig(): Promise<{ enabled: boolean; primaryProvider: string | null }> {
+  async getMultiAiReviewConfig(): Promise<{
+    enabled: boolean;
+    primaryProvider: string | null;
+  }> {
     const config = await this.loadAiConfig();
     return {
-      enabled: config.multi_ai_review_enabled || false,
-      primaryProvider: config.primary_review_provider_id || null
+      enabled: Boolean(config.multi_ai_review_enabled) || false,
+      primaryProvider: (config.primary_review_provider_id as string) || null,
     };
   }
 
   /**
    * Update Multi-AI Review configuration
    */
-  async updateMultiAiReviewConfig(enabled: boolean, primaryProvider: string | null = null): Promise<void> {
+  async updateMultiAiReviewConfig(
+    enabled: boolean,
+    primaryProvider: string | null = null
+  ): Promise<void> {
     const config = await this.loadAiConfig();
     config.multi_ai_review_enabled = enabled;
     config.primary_review_provider_id = primaryProvider;
@@ -355,19 +371,28 @@ export class ConfigManager {
   async getEnabledAiProviders(): Promise<string[]> {
     const config = await this.loadAiConfig();
     const enabledProviders = [];
-    
+
     for (const [providerId, providerConfig] of Object.entries(config)) {
       // Skip metadata and configuration entries
-      if (providerId === '_metadata' || providerId === 'multi_ai_review_enabled' || providerId === 'primary_review_provider_id') {
+      if (
+        providerId === '_metadata' ||
+        providerId === 'multi_ai_review_enabled' ||
+        providerId === 'primary_review_provider_id'
+      ) {
         continue;
       }
-      
+
       // Only include actual provider objects that are enabled
-      if (providerConfig && typeof providerConfig === 'object' && providerConfig.hasOwnProperty('enabled') && (providerConfig as any).enabled) {
+      if (
+        providerConfig &&
+        typeof providerConfig === 'object' &&
+        Object.prototype.hasOwnProperty.call(providerConfig, 'enabled') &&
+        (providerConfig as Record<string, unknown>).enabled
+      ) {
         enabledProviders.push(providerId);
       }
     }
-    
+
     return enabledProviders;
   }
 
@@ -377,19 +402,27 @@ export class ConfigManager {
   async getConfiguredProviderCount(): Promise<number> {
     const config = await this.loadAiConfig();
     let count = 0;
-    
+
     for (const [providerId, providerConfig] of Object.entries(config)) {
       // Skip metadata and configuration entries
-      if (providerId === '_metadata' || providerId === 'multi_ai_review_enabled' || providerId === 'primary_review_provider_id') {
+      if (
+        providerId === '_metadata' ||
+        providerId === 'multi_ai_review_enabled' ||
+        providerId === 'primary_review_provider_id'
+      ) {
         continue;
       }
-      
+
       // Only count actual provider objects
-      if (providerConfig && typeof providerConfig === 'object' && providerConfig.hasOwnProperty('enabled')) {
+      if (
+        providerConfig &&
+        typeof providerConfig === 'object' &&
+        Object.prototype.hasOwnProperty.call(providerConfig, 'enabled')
+      ) {
         count++;
       }
     }
-    
+
     return count;
   }
 
@@ -410,14 +443,17 @@ export class ConfigManager {
    */
   private async createEmptyAiConfigFile(): Promise<void> {
     const defaultConfig = {
-      "_metadata": {
-        "created": new Date().toISOString(),
-        "description": "WOARU Global AI Configuration - Managed by ConfigManager"
+      _metadata: {
+        created: new Date().toISOString(),
+        description: 'WOARU Global AI Configuration - Managed by ConfigManager',
       },
-      "multi_ai_review_enabled": false,
-      "primary_review_provider_id": null
+      multi_ai_review_enabled: false,
+      primary_review_provider_id: null,
     };
-    await fs.writeFile(this.aiConfigFile, JSON.stringify(defaultConfig, null, 2));
+    await fs.writeFile(
+      this.aiConfigFile,
+      JSON.stringify(defaultConfig, null, 2)
+    );
   }
 
   /**
@@ -488,7 +524,8 @@ export class ConfigManager {
 
       for (const entry of ignoreEntries) {
         if (!content.includes(entry)) {
-          newContent += (newContent.endsWith('\n') ? '' : '\n') + 
+          newContent +=
+            (newContent.endsWith('\n') ? '' : '\n') +
             `\n# WOARU configuration protection\n${entry}\n`;
           hasChanges = true;
         }
@@ -516,23 +553,29 @@ export class ConfigManager {
   private async migrateLegacyConfiguration(): Promise<void> {
     try {
       const legacyConfigFile = path.join(this.configDir, 'llm_config.json');
-      
+
       // Check conditions for migration:
       // a. Legacy llm_config.json exists
       // b. New ai_config.json does NOT exist
       const legacyExists = await fs.pathExists(legacyConfigFile);
       const newExists = await fs.pathExists(this.aiConfigFile);
-      
+
       if (legacyExists && !newExists) {
         // Perform automatic migration
         await fs.move(legacyConfigFile, this.aiConfigFile);
-        
+
         // Inform user about the migration
         console.log(
-          chalk.cyan('ℹ️ WOARU-Konfiguration wurde automatisch auf das neue \'ai\'-Format migriert.')
+          chalk.cyan(
+            "ℹ️ WOARU-Konfiguration wurde automatisch auf das neue 'ai'-Format migriert."
+          )
         );
-        console.log(chalk.gray(`   ${legacyConfigFile} → ${this.aiConfigFile}`));
-        console.log(chalk.gray('   Alle bestehenden Einstellungen bleiben erhalten.'));
+        console.log(
+          chalk.gray(`   ${legacyConfigFile} → ${this.aiConfigFile}`)
+        );
+        console.log(
+          chalk.gray('   Alle bestehenden Einstellungen bleiben erhalten.')
+        );
       }
     } catch (error) {
       console.warn(
@@ -546,7 +589,7 @@ export class ConfigManager {
   /**
    * Load user configuration from global user config file
    */
-  async loadUserConfig(): Promise<any> {
+  async loadUserConfig(): Promise<Record<string, unknown>> {
     try {
       if (!(await fs.pathExists(this.userConfigFile))) {
         return {};
@@ -566,7 +609,7 @@ export class ConfigManager {
   /**
    * Store user configuration in global user config file
    */
-  async storeUserConfig(config: any): Promise<void> {
+  async storeUserConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
       await fs.writeFile(this.userConfigFile, JSON.stringify(config, null, 2));
@@ -593,7 +636,7 @@ export class ConfigManager {
    */
   async getUserLanguage(): Promise<string | null> {
     const config = await this.loadUserConfig();
-    return config.language || null;
+    return (config.language as string) || null;
   }
 
   /**

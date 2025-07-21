@@ -24,7 +24,7 @@ export abstract class HybridBasePlugin {
    */
   abstract runLinter(
     filePath: string,
-    options?: any
+    options?: Record<string, unknown>
   ): Promise<{
     success: boolean;
     output: string;
@@ -35,7 +35,9 @@ export abstract class HybridBasePlugin {
   /**
    * Get framework-specific configuration
    */
-  abstract getFrameworkSpecificConfig(framework: string): Promise<any>;
+  abstract getFrameworkSpecificConfig(
+    framework: string
+  ): Promise<Record<string, unknown>>;
 
   /**
    * Check for deprecation warnings
@@ -50,7 +52,9 @@ export abstract class HybridBasePlugin {
   /**
    * Get recommended packages for installation
    */
-  abstract getRecommendedPackages(projectContext: any): Promise<string[]>;
+  abstract getRecommendedPackages(
+    projectContext: Record<string, unknown>
+  ): Promise<string[]>;
 
   // ========== UTILITY METHODS ==========
 
@@ -81,16 +85,20 @@ export abstract class HybridBasePlugin {
   /**
    * Get file extension
    */
-  protected getFileExtension(filePath: string): string {
-    const path = require('path');
+  protected async getFileExtension(filePath: string): Promise<string> {
+    const pathModule = await import('path');
+    const path = pathModule.default || pathModule;
     return path.extname(filePath);
   }
 
   /**
    * Check if file has specific extension
    */
-  protected hasExtension(filePath: string, extensions: string[]): boolean {
-    const ext = this.getFileExtension(filePath);
+  protected async hasExtension(
+    filePath: string,
+    extensions: string[]
+  ): Promise<boolean> {
+    const ext = await this.getFileExtension(filePath);
     return extensions.includes(ext);
   }
 
@@ -113,14 +121,14 @@ export abstract class HybridBasePlugin {
   /**
    * Validate file path for security
    */
-  protected isValidFilePath(filePath: string): boolean {
+  protected async isValidFilePath(filePath: string): Promise<boolean> {
     // Basic path traversal protection
     if (filePath.includes('..') || filePath.includes('~')) {
       return false;
     }
 
     // Must be a reasonable file extension
-    const ext = this.getFileExtension(filePath);
+    const ext = await this.getFileExtension(filePath);
     const allowedExtensions = [
       '.js',
       '.jsx',

@@ -1,5 +1,6 @@
 import { BaseAction } from './BaseAction';
 import { SetupOptions, PackageJson } from '../types';
+import { t } from '../config/i18n';
 import * as path from 'path';
 
 export class EslintAction extends BaseAction {
@@ -24,8 +25,8 @@ export class EslintAction extends BaseAction {
       const eslintrcPath = path.join(projectPath, '.eslintrc.json');
 
       if (options.dryRun) {
-        console.log('Would install ESLint packages');
-        console.log('Would create .eslintrc.json configuration');
+        console.log(t('actions.eslint.dry_run_install'));
+        console.log(t('actions.eslint.dry_run_create_config'));
         return true;
       }
 
@@ -73,11 +74,15 @@ export class EslintAction extends BaseAction {
       );
 
       if (!installResult.success) {
-        throw new Error(`Failed to install packages: ${installResult.output}`);
+        throw new Error(
+          t('actions.failed_to_install_packages', {
+            output: installResult.output,
+          })
+        );
       }
 
       // Create ESLint configuration
-      const eslintConfig: Record<string, any> = {
+      const eslintConfig: Record<string, unknown> = {
         env: {
           browser: true,
           es2021: true,
@@ -141,10 +146,10 @@ export class EslintAction extends BaseAction {
         await this.writeJsonFile(packageJsonPath, packageJson);
       }
 
-      console.log('✅ ESLint installed and configured successfully');
+      console.log(t('actions.eslint.setup_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to setup ESLint:', error);
+      console.error(t('actions.eslint.setup_failed'), error);
       return false;
     }
   }
@@ -173,10 +178,10 @@ export class EslintAction extends BaseAction {
         }
       }
 
-      console.log('✅ ESLint setup rolled back successfully');
+      console.log(t('actions.eslint.rollback_success'));
       return true;
     } catch (error) {
-      console.error('❌ Failed to rollback ESLint setup:', error);
+      console.error(t('actions.eslint.rollback_failed'), error);
       return false;
     }
   }
