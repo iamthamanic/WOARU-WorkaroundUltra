@@ -7,13 +7,13 @@ export interface SafeJsonOptions {
   maxSize?: number;
   allowedKeys?: string[];
   prohibitedKeys?: string[];
-  validateFunction?: (obj: any) => boolean;
+  validateFunction?: (obj: unknown) => boolean;
 }
 
 /**
  * Safely parse JSON with size limits and validation
  */
-export function safeJsonParse<T = any>(
+export function safeJsonParse<T = unknown>(
   jsonString: string,
   options: SafeJsonOptions = {}
 ): T | null {
@@ -68,7 +68,7 @@ export function safeJsonParse<T = any>(
  * Safely stringify JSON with size limits
  */
 export function safeJsonStringify(
-  obj: any,
+  obj: unknown,
   options: { maxSize?: number; space?: number } = {}
 ): string {
   const { maxSize = 10 * 1024 * 1024, space } = options;
@@ -94,7 +94,7 @@ export function safeJsonStringify(
  * Validate that an object has expected structure
  */
 export function validateJsonStructure<T>(
-  obj: any,
+  obj: unknown,
   expectedKeys: (keyof T)[],
   requiredKeys?: (keyof T)[]
 ): obj is T {
@@ -130,7 +130,7 @@ export function createJsonValidator<T>(
   requiredKeys?: (keyof T)[]
 ) {
   return (jsonString: string): T | null => {
-    const parsed = safeJsonParse(jsonString, {
+    const parsed = safeJsonParse<T>(jsonString, {
       validateFunction: obj =>
         validateJsonStructure<T>(obj, expectedKeys, requiredKeys),
     });

@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as path from 'path';
+import { t } from '../config/i18n';
 import { StateManager } from './StateManager';
 import { FileWatcher } from './FileWatcher';
 import { NotificationManager } from './NotificationManager';
@@ -128,7 +129,9 @@ export class WOARUSupervisor extends EventEmitter {
     );
 
     const handleToolDetected = (tool: string) => {
-      this.notificationManager.showSuccess(`Tool detected: ${tool}`);
+      this.notificationManager.showSuccess(
+        t('supervisor.tool_detected', { tool })
+      );
     };
     this.stateManager.on('tool_detected', handleToolDetected);
     this.cleanupHandlers.push(() =>
@@ -239,7 +242,7 @@ export class WOARUSupervisor extends EventEmitter {
       await this.stateManager.destroy();
 
       this.isRunning = false;
-      this.notificationManager.showSuccess('WOARU Supervisor stopped');
+      this.notificationManager.showSuccess(t('supervisor.stopped'));
 
       this.emit('stopped');
     } catch (error) {
@@ -279,7 +282,9 @@ export class WOARUSupervisor extends EventEmitter {
         `Project analyzed: ${language} ${frameworks.length > 0 ? `(${frameworks.join(', ')})` : ''}`
       );
     } catch (error) {
-      this.notificationManager.showError(`Analysis failed: ${error}`);
+      this.notificationManager.showError(
+        t('supervisor.analysis_failed', { error })
+      );
     }
   }
 
@@ -465,7 +470,9 @@ export class WOARUSupervisor extends EventEmitter {
           this.notificationManager.showProgress(`Setting up ${rec.tool}...`);
           // await exec(rec.setupCommand, { cwd: this.projectPath });
           this.stateManager.addDetectedTool(rec.tool);
-          this.notificationManager.showSuccess(`${rec.tool} setup completed`);
+          this.notificationManager.showSuccess(
+            t('supervisor.setup_completed', { tool: rec.tool })
+          );
         }
       } catch (error) {
         this.notificationManager.showError(
@@ -502,7 +509,9 @@ export class WOARUSupervisor extends EventEmitter {
   addIgnoredTool(tool: string): void {
     if (!this.config.ignoreTools.includes(tool)) {
       this.config.ignoreTools.push(tool);
-      this.notificationManager.showSuccess(`Tool ${tool} added to ignore list`);
+      this.notificationManager.showSuccess(
+        t('supervisor.tool_ignored', { tool })
+      );
     }
   }
 
@@ -594,7 +603,9 @@ export class WOARUSupervisor extends EventEmitter {
         await this.notificationManager.notifyProductionAudits(audits);
       }
     } catch (error) {
-      this.notificationManager.showError(`Production audit failed: ${error}`);
+      this.notificationManager.showError(
+        t('supervisor.audit_failed', { error })
+      );
     }
   }
 

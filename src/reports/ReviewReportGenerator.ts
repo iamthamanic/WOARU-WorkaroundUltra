@@ -61,7 +61,7 @@ function sanitizeFilePath(filePath: unknown): string {
  */
 function sanitizeCommitMessage(message: unknown): string {
   if (typeof message !== 'string') {
-    return 'Invalid commit message';
+    return t('report_generator.invalid_commit_message');
   }
 
   return message
@@ -172,7 +172,7 @@ export class ReviewReportGenerator {
   generateJsonReport(data: ReviewReportData): string {
     try {
       if (!this.validateReportData(data)) {
-        throw new Error('Invalid report data provided');
+        throw new Error(t('report_generator.invalid_report_data'));
       }
       const securitySummary = this.getSecuritySummaryFromResults(
         data.securityResults || []
@@ -205,21 +205,53 @@ export class ReviewReportGenerator {
 
       // Add AI review data if available
       if (data.aiReviewResults) {
-        const resultSummary = result.summary as any;
+        interface ResultSummaryExtended {
+          reviewType: string;
+          description: string;
+          baseBranch: string;
+          currentBranch: string;
+          totalChangedFiles: number;
+          totalQualityIssues: number;
+          totalSecurityIssues: number;
+          criticalVulnerabilities: number;
+          highVulnerabilities: number;
+          totalProductionIssues: number;
+          commits: number;
+          aiReviewEnabled?: boolean;
+          aiFilesAnalyzed?: number;
+          aiTotalFindings?: number;
+          aiEstimatedCost?: number;
+        }
+        const resultSummary = result.summary as ResultSummaryExtended;
         resultSummary.aiReviewEnabled = true;
-        const aiResults = data.aiReviewResults as any;
-        resultSummary.aiFilesAnalyzed = aiResults.summary?.filesAnalyzed || 0;
-        resultSummary.aiTotalFindings = aiResults.summary?.totalFindings || 0;
-        resultSummary.aiEstimatedCost = aiResults.summary?.estimatedCost || 0;
+        const aiResults = data.aiReviewResults as MultiLLMReviewResult;
+        const aiSummary =
+          'summary' in aiResults
+            ? (aiResults.summary as {
+                filesAnalyzed?: number;
+                totalFindings?: number;
+                estimatedCost?: number;
+              })
+            : undefined;
+        resultSummary.aiFilesAnalyzed = aiSummary?.filesAnalyzed || 0;
+        resultSummary.aiTotalFindings = aiSummary?.totalFindings || 0;
+        resultSummary.aiEstimatedCost = aiSummary?.estimatedCost || 0;
         result.aiReview = data.aiReviewResults;
       } else {
-        (result.summary as any).aiReviewEnabled = false;
+        interface ResultSummaryBase {
+          aiReviewEnabled?: boolean;
+        }
+        (result.summary as ResultSummaryBase).aiReviewEnabled = false;
       }
 
       return JSON.stringify(result, null, 2);
     } catch (error) {
       console.error('Error generating JSON report:', this.sanitizeError(error));
-      return JSON.stringify({ error: 'Failed to generate report' }, null, 2);
+      return JSON.stringify(
+        { error: t('report_generator.failed_to_generate') },
+        null,
+        2
+      );
     }
   }
 
@@ -315,7 +347,7 @@ export class ReviewReportGenerator {
    */
   private sanitizeAuditMessage(message: unknown): string {
     if (typeof message !== 'string') {
-      return 'Invalid audit message';
+      return t('report_generator.invalid_audit_message');
     }
 
     return message
@@ -413,7 +445,15 @@ export class ReviewReportGenerator {
     );
 
     // Add AI Review summary if available
-    const aiResults = data.aiReviewResults as any;
+    interface AIResultsWithSummary {
+      summary?: {
+        filesAnalyzed: number;
+        totalFindings: number;
+        estimatedCost: number;
+        timestamp: string;
+      };
+    }
+    const aiResults = data.aiReviewResults as AIResultsWithSummary | undefined;
     if (aiResults && aiResults.summary) {
       const aiSummary = aiResults.summary;
       lines.push(
@@ -488,12 +528,16 @@ export class ReviewReportGenerator {
 
           // Add explanation if available
           if (result.explanation) {
-            lines.push(`💡 **Problem:** ${result.explanation}`);
+            lines.push(
+              t('report_generator.problem_label', {
+                explanation: result.explanation,
+              })
+            );
             lines.push('');
           }
 
           // List all issues with better formatting
-          lines.push('📋 **Gefundene Probleme:**');
+          lines.push(t('report_generator.found_problems'));
           result.issues.forEach((issue, index) => {
             lines.push(`${index + 1}. ${issue}`);
           });
@@ -530,15 +574,8 @@ export class ReviewReportGenerator {
     this.addCodeSmellAnalysisSection(lines, data.qualityResults);
 
     // AI Code Review Analysis
-    const aiReviewResults = data.aiReviewResults as any;
-    if (
-      aiReviewResults &&
-      aiReviewResults.results &&
-      (Array.isArray(aiReviewResults.results)
-        ? aiReviewResults.results.length > 0
-        : Object.keys(aiReviewResults.results).length > 0)
-    ) {
-      this.addAIReviewSection(lines, aiReviewResults);
+    if (data.aiReviewResults) {
+      this.addAIReviewSection(lines, data.aiReviewResults);
     }
 
     // Production Audits
@@ -683,7 +720,7 @@ export class ReviewReportGenerator {
       securitySummary.high === 0 &&
       highPriorityAudits === 0
     ) {
-      return '✅ Keine kritischen Probleme gefunden - bereit für Review!';
+      return t('report_generator.no_critical_issues');
     }
 
     const issues = [];
@@ -805,7 +842,7 @@ export class ReviewReportGenerator {
         Object.entries(bySeverity).forEach(([severity, findings]) => {
           if (findings.length > 0) {
             lines.push(
-              `#### ${this.getSeverityEmoji(severity as any)} ${severity.toUpperCase()} (${findings.length})`
+              `#### ${this.getSeverityEmoji(severity as 'critical' | 'high' | 'medium' | 'low' | 'info')} ${severity.toUpperCase()} (${findings.length})`
             );
             lines.push('');
             findings.forEach(finding => {
@@ -1105,7 +1142,7 @@ export class ReviewReportGenerator {
     });
 
     // Add general SOLID recommendations
-    lines.push('### 💡 SOLID-Empfehlungen');
+    lines.push(t('report_generator.solid_recommendations'));
     lines.push('');
 
     const recommendations = this.generateSOLIDRecommendations(solidResults);
@@ -1290,17 +1327,17 @@ export class ReviewReportGenerator {
       const infoFindings = findings.filter(f => f.severity === 'info');
 
       if (criticalFindings.length > 0) {
-        lines.push('#### 🔴 Kritische Probleme:');
+        lines.push(t('report_generator.critical_problems'));
         this.addCodeSmellFindingsList(lines, criticalFindings);
       }
 
       if (warningFindings.length > 0) {
-        lines.push('#### 🟡 Warnungen:');
+        lines.push(t('report_generator.warnings'));
         this.addCodeSmellFindingsList(lines, warningFindings);
       }
 
       if (infoFindings.length > 0) {
-        lines.push('#### 🔵 Informationen:');
+        lines.push(t('report_generator.information'));
         this.addCodeSmellFindingsList(lines, infoFindings);
       }
 
@@ -1308,7 +1345,7 @@ export class ReviewReportGenerator {
     });
 
     // Recommendations
-    lines.push('### 💡 Code Smell Empfehlungen:');
+    lines.push(t('report_generator.code_smell_recommendations'));
     const recommendations =
       this.generateCodeSmellRecommendations(findingsByType);
     recommendations.forEach(rec => {
@@ -1329,7 +1366,11 @@ export class ReviewReportGenerator {
   ): void {
     findings.forEach(finding => {
       lines.push(
-        `- **Zeile ${finding.line}:${finding.column}** - ${finding.message}`
+        t('report_generator.code_smell_line', {
+          line: finding.line,
+          column: finding.column,
+          message: finding.message,
+        })
       );
       if (finding.suggestion) {
         lines.push(`  💡 *${finding.suggestion}*`);
@@ -1429,148 +1470,129 @@ export class ReviewReportGenerator {
     lines.push('## 🧠 AI Code Review Analysis');
     lines.push('');
 
-    const aiResults = aiReviewResults as any;
-    const summary = aiResults.summary || {};
-    const results = aiResults.results || {};
+    const codeContext = aiReviewResults.codeContext;
+    const aggregation = aiReviewResults.aggregation;
+    const meta = aiReviewResults.meta;
+    const results = aiReviewResults.results;
 
     // Overview
     lines.push(
-      `🤖 **Analysiert durch Multi-LLM System** - ${summary.filesAnalyzed} Dateien, ${summary.totalFindings} Befunde`
+      `🤖 **Analysiert durch Multi-LLM System** - 1 Datei, ${aggregation.totalFindings} Befunde`
     );
-    if (summary.estimatedCost > 0) {
+    if (meta.totalEstimatedCost > 0) {
       lines.push(
-        `💰 **Geschätzte Kosten:** $${summary.estimatedCost.toFixed(4)}`
+        `💰 **Geschätzte Kosten:** $${meta.totalEstimatedCost.toFixed(4)}`
       );
     }
-    lines.push(
-      `⏰ **Zeitstempel:** ${new Date(summary.timestamp).toLocaleString('de-DE')}`
-    );
+    lines.push(`⏰ **Analysedauer:** ${meta.totalDuration}ms`);
     lines.push('');
 
-    if (results.length === 0) {
+    if (Object.keys(results).length === 0) {
       lines.push('✅ Keine AI-basierten Befunde gefunden.');
       lines.push('');
       return;
     }
 
-    // Process each file's AI review result
-    results.forEach(
-      (
-        fileResult: { filePath: string; findings: AIReviewFinding[] },
-        _index: number
-      ) => {
-        const fileResultAny = fileResult as any;
-        const context = fileResultAny.codeContext || {
-          filePath: fileResultAny.filePath,
-          language: 'unknown',
-        };
-        const aggregation = fileResultAny.aggregation || { totalFindings: 0 };
-        const meta = fileResultAny.meta || {};
+    // Process file results
+    lines.push(`### 📄 \`${codeContext.filePath}\` (${codeContext.language})`);
+    lines.push('');
 
-        lines.push(`### 📄 \`${context.filePath}\` (${context.language})`);
-        lines.push('');
-
-        // File-level summary
-        lines.push(
-          `📊 **${aggregation.totalFindings} Befunde gefunden** | **Analysedauer:** ${meta.totalDuration}ms | **LLM Übereinstimmung:** ${(aggregation.llmAgreementScore * 100).toFixed(1)}%`
-        );
-        lines.push('');
-
-        // Show findings by severity
-        if (
-          aggregation.findingsBySeverity &&
-          Object.keys(aggregation.findingsBySeverity).length > 0
-        ) {
-          lines.push('#### 📈 Befunde nach Schweregrad:');
-          Object.entries(aggregation.findingsBySeverity).forEach(
-            ([severity, count]) => {
-              const icon = this.getAISeverityIcon(severity);
-              lines.push(`- ${icon} **${severity.toUpperCase()}**: ${count}`);
-            }
-          );
-          lines.push('');
-        }
-
-        // Show findings by category
-        if (
-          aggregation.findingsByCategory &&
-          Object.keys(aggregation.findingsByCategory).length > 0
-        ) {
-          lines.push('#### 🏷️ Befunde nach Kategorie:');
-          Object.entries(aggregation.findingsByCategory).forEach(
-            ([category, count]) => {
-              const icon = this.getAICategoryIcon(category);
-              lines.push(`- ${icon} **${category}**: ${count}`);
-            }
-          );
-          lines.push('');
-        }
-
-        // Show consensus findings (issues found by multiple LLMs)
-        if (
-          aggregation.consensusFindings &&
-          aggregation.consensusFindings.length > 0
-        ) {
-          lines.push('#### 🤝 Konsens-Befunde (mehrere LLMs sind sich einig):');
-          this.addAIFindingsList(lines, aggregation.consensusFindings, true);
-        }
-
-        // Show unique findings per LLM
-        if (
-          aggregation.uniqueFindings &&
-          Object.keys(aggregation.uniqueFindings).length > 0
-        ) {
-          lines.push('#### 🔍 Spezifische LLM-Befunde:');
-          Object.entries(aggregation.uniqueFindings || {}).forEach(
-            ([llmId, findings]: [string, any]) => {
-              if (findings.length > 0) {
-                lines.push(
-                  `**${llmId}** (${findings.length} einzigartige Befunde):`
-                );
-                this.addAIFindingsList(lines, findings.slice(0, 3), false); // Show max 3 per LLM
-                if (findings.length > 3) {
-                  lines.push(
-                    `  *... und ${findings.length - 3} weitere Befunde*`
-                  );
-                  lines.push('');
-                }
-              }
-            }
-          );
-        }
-
-        // Show LLM performance details
-        if (
-          meta.llmResponseTimes &&
-          Object.keys(meta.llmResponseTimes).length > 1
-        ) {
-          lines.push('#### ⚡ LLM Performance:');
-          Object.entries(meta.llmResponseTimes).forEach(
-            ([llmId, responseTime]) => {
-              const cost = meta.estimatedCost[llmId] || 0;
-              const tokens = meta.tokensUsed[llmId] || 0;
-              const error = meta.llmErrors[llmId];
-
-              if (error) {
-                lines.push(`- ❌ **${llmId}**: Fehler - ${error}`);
-              } else {
-                lines.push(
-                  `- ✅ **${llmId}**: ${responseTime}ms, ${tokens} Tokens, $${cost.toFixed(4)}`
-                );
-              }
-            }
-          );
-          lines.push('');
-        }
-
-        lines.push('---');
-        lines.push('');
-      }
+    // File-level summary
+    lines.push(
+      `📊 **${aggregation.totalFindings} Befunde gefunden** | **Analysedauer:** ${meta.totalDuration}ms | **LLM Übereinstimmung:** ${(aggregation.llmAgreementScore * 100).toFixed(1)}%`
     );
+    lines.push('');
+
+    // Show findings by severity
+    if (
+      aggregation.findingsBySeverity &&
+      Object.keys(aggregation.findingsBySeverity).length > 0
+    ) {
+      lines.push('#### 📈 Befunde nach Schweregrad:');
+      Object.entries(aggregation.findingsBySeverity).forEach(
+        ([severity, count]) => {
+          const icon = this.getAISeverityIcon(severity);
+          lines.push(`- ${icon} **${severity.toUpperCase()}**: ${count}`);
+        }
+      );
+      lines.push('');
+    }
+
+    // Show findings by category
+    if (
+      aggregation.findingsByCategory &&
+      Object.keys(aggregation.findingsByCategory).length > 0
+    ) {
+      lines.push('#### 🏷️ Befunde nach Kategorie:');
+      Object.entries(aggregation.findingsByCategory).forEach(
+        ([category, count]) => {
+          const icon = this.getAICategoryIcon(category);
+          lines.push(`- ${icon} **${category}**: ${count}`);
+        }
+      );
+      lines.push('');
+    }
+
+    // Show consensus findings (issues found by multiple LLMs)
+    if (
+      aggregation.consensusFindings &&
+      aggregation.consensusFindings.length > 0
+    ) {
+      lines.push('#### 🤝 Konsens-Befunde (mehrere LLMs sind sich einig):');
+      this.addAIFindingsList(lines, aggregation.consensusFindings, true);
+    }
+
+    // Show unique findings per LLM
+    if (
+      aggregation.uniqueFindings &&
+      Object.keys(aggregation.uniqueFindings).length > 0
+    ) {
+      lines.push('#### 🔍 Spezifische LLM-Befunde:');
+      Object.entries(aggregation.uniqueFindings).forEach(
+        ([llmId, findings]) => {
+          if (findings.length > 0) {
+            lines.push(
+              `**${llmId}** (${findings.length} einzigartige Befunde):`
+            );
+            this.addAIFindingsList(lines, findings.slice(0, 3), false); // Show max 3 per LLM
+            if (findings.length > 3) {
+              lines.push(`  *... und ${findings.length - 3} weitere Befunde*`);
+              lines.push('');
+            }
+          }
+        }
+      );
+    }
+
+    // Show LLM performance details
+    if (
+      meta.llmResponseTimes &&
+      Object.keys(meta.llmResponseTimes).length > 1
+    ) {
+      lines.push('#### ⚡ LLM Performance:');
+      Object.entries(meta.llmResponseTimes).forEach(([llmId, responseTime]) => {
+        const cost = meta.estimatedCost[llmId] || 0;
+        const tokens = meta.tokensUsed[llmId] || 0;
+        const error = meta.llmErrors[llmId];
+
+        if (error) {
+          lines.push(`- ❌ **${llmId}**: Fehler - ${error}`);
+        } else {
+          lines.push(
+            `- ✅ **${llmId}**: ${responseTime}ms, ${tokens} Tokens, $${cost.toFixed(4)}`
+          );
+        }
+      });
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('');
 
     // Overall AI Review recommendations
-    lines.push('### 💡 AI Review Empfehlungen:');
-    const aiRecommendations = this.generateAIReviewRecommendations(results);
+    lines.push(t('report_generator.ai_review_recommendations'));
+    const aiRecommendations =
+      this.generateAIReviewRecommendations(aiReviewResults);
     aiRecommendations.forEach(rec => {
       lines.push(`- ${rec}`);
     });
@@ -1594,20 +1616,32 @@ export class ReviewReportGenerator {
 
       lines.push(`- ${severityIcon} **${finding.message}**`);
       lines.push(
-        `  ${categoryIcon} *${finding.category}*${finding.lineNumber ? ` | Zeile ${finding.lineNumber}` : ''}`
+        t('report_generator.ai_finding_category', {
+          categoryIcon,
+          category: finding.category,
+          lineNumber: finding.lineNumber || '',
+        })
       );
 
       if (finding.rationale) {
-        lines.push(`  💭 **Begründung:** ${finding.rationale}`);
+        lines.push(
+          t('report_generator.ai_rationale', { rationale: finding.rationale })
+        );
       }
 
       if (finding.suggestion) {
-        lines.push(`  💡 **Empfehlung:** ${finding.suggestion}`);
+        lines.push(
+          t('report_generator.ai_suggestion', {
+            suggestion: finding.suggestion,
+          })
+        );
       }
 
       if (showConfidence && finding.confidence) {
         lines.push(
-          `  🎯 **Vertrauen:** ${(finding.confidence * 100).toFixed(0)}%`
+          t('report_generator.ai_confidence', {
+            confidence: (finding.confidence * 100).toFixed(0),
+          })
         );
       }
 
@@ -1653,16 +1687,12 @@ export class ReviewReportGenerator {
    * Generate AI review recommendations
    */
   private generateAIReviewRecommendations(
-    results: {
-      findings: AIReviewFinding[];
-      aggregation?: { llmAgreementScore: number };
-      meta?: { totalEstimatedCost: number };
-    }[]
+    aiReviewResults: MultiLLMReviewResult
   ): string[] {
     const recommendations: string[] = [];
 
-    // Aggregate all findings across files
-    const allFindings = results.flatMap(r => r.findings);
+    // Aggregate all findings across LLMs
+    const allFindings = Object.values(aiReviewResults.results).flat();
 
     const criticalFindings = allFindings.filter(
       (f: AIReviewFinding) => f.severity === 'critical'
@@ -1701,33 +1731,18 @@ export class ReviewReportGenerator {
       );
     }
 
-    // Check LLM agreement (if available)
-    const resultsWithAggregation = results.filter(r => r.aggregation);
-    if (resultsWithAggregation.length > 0) {
-      const avgAgreement =
-        resultsWithAggregation.reduce(
-          (sum, r) => sum + (r.aggregation?.llmAgreementScore || 0),
-          0
-        ) / resultsWithAggregation.length;
-      if (avgAgreement < 0.5) {
-        recommendations.push(
-          '🤔 Niedrige LLM-Übereinstimmung - manuelle Überprüfung empfohlen'
-        );
-      }
+    // Check LLM agreement
+    if (aiReviewResults.aggregation.llmAgreementScore < 0.5) {
+      recommendations.push(
+        '🤔 Niedrige LLM-Übereinstimmung - manuelle Überprüfung empfohlen'
+      );
     }
 
-    // Cost considerations (if available)
-    const resultsWithCost = results.filter(r => r.meta?.totalEstimatedCost);
-    if (resultsWithCost.length > 0) {
-      const totalCost = resultsWithCost.reduce(
-        (sum, r) => sum + (r.meta?.totalEstimatedCost || 0),
-        0
+    // Cost considerations
+    if (aiReviewResults.meta.totalEstimatedCost > 0.1) {
+      recommendations.push(
+        '💰 Hohe AI-Kosten - erwäge Batch-Processing für große Codebasen'
       );
-      if (totalCost > 0.1) {
-        recommendations.push(
-          '💰 Hohe AI-Kosten - erwäge Batch-Processing für große Codebasen'
-        );
-      }
     }
 
     if (recommendations.length === 0) {

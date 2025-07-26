@@ -2064,7 +2064,7 @@ ${chalk.gray('   • Verwende --preview um Änderungen vorher zu sehen')}`;
 
 // Helper functions for file discovery
 async function getUncommittedFiles(projectPath: string): Promise<string[]> {
-  const { spawn } = require('child_process');
+  const { spawn } = await import('child_process');
   
   return new Promise((resolve, reject) => {
     const gitProcess = spawn('git', ['status', '--porcelain'], { cwd: projectPath });
@@ -2093,7 +2093,7 @@ async function getUncommittedFiles(projectPath: string): Promise<string[]> {
 }
 
 async function getGitDiffFiles(projectPath: string, branch: string): Promise<string[]> {
-  const { spawn } = require('child_process');
+  const { spawn } = await import('child_process');
   
   return new Promise((resolve, reject) => {
     const gitProcess = spawn('git', ['diff', '--name-only', `${branch}...HEAD`], { cwd: projectPath });
@@ -2651,7 +2651,7 @@ const gitCommand = reviewCommand
       );
 
       // Get list of changed files using git diff
-      const { spawn } = require('child_process');
+      const { spawn } = await import('child_process');
       const gitProcess = spawn(
         'git',
         ['diff', '--name-only', `${(options as any).branch}...HEAD`],
@@ -2739,7 +2739,7 @@ gitCommand
       );
 
       // Get list of changed files using git diff
-      const { spawn } = require('child_process');
+      const { spawn } = await import('child_process');
       const gitProcess = spawn(
         'git',
         ['diff', '--name-only', `${(options as any).branch}...HEAD`],
@@ -2897,7 +2897,7 @@ localCommand
       console.log(chalk.blue('🔍 Analyzing uncommitted changes...'));
 
       // Get list of uncommitted files using git status
-      const { spawn } = require('child_process');
+      const { spawn } = await import('child_process');
       const gitProcess = spawn('git', ['status', '--porcelain'], {
         cwd: projectPath,
         stdio: 'pipe',
@@ -3203,7 +3203,7 @@ reviewAiCommand
       );
 
       // Get list of changed files using git diff
-      const { spawn } = require('child_process');
+      const { spawn } = await import('child_process');
       const gitProcess = spawn(
         'git',
         ['diff', '--name-only', `${(options as any).branch}...HEAD`],

@@ -10,7 +10,9 @@
       "Bash(npm test:*)",
       "Bash(grep:*)",
       "Bash(npm run lint)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(tail:*)"
     ],
     "deny": []
   }

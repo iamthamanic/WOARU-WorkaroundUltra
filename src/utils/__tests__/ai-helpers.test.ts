@@ -55,8 +55,8 @@ import {
   ActiveProvider
 } from '../ai-helpers';
 
-const { ConfigManager } = require('../config/ConfigManager');
-const { t, initializeI18n } = require('../config/i18n');
+import { ConfigManager } from '../../config/ConfigManager';
+import { t, initializeI18n } from '../../config/i18n';
 
 describe('ai-helpers - Production Quality Tests', () => {
   let mockConfigManager: any;

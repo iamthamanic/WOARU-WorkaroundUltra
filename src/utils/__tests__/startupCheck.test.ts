@@ -55,7 +55,7 @@ const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
 const mockedFs = fs as jest.Mocked<typeof fs>;
 const mockedInquirer = inquirer as jest.Mocked<typeof inquirer>;
 const mockedVersionManager = VersionManager as jest.Mocked<typeof VersionManager>;
-const { t, initializeI18n } = require('../../config/i18n');
+import { t, initializeI18n } from '../../config/i18n';
 
 describe('StartupCheck - Production Quality Tests', () => {
   let consoleLogSpy: jest.MockedFunction<typeof console.log>;
