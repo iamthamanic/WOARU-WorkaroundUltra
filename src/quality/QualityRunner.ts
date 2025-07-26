@@ -1176,11 +1176,25 @@ export class QualityRunner {
       };
     } catch (error: unknown) {
       // If error contains JSON, it might be vulnerabilities found (non-zero exit)
-      if ((error as any).stdout) {
+      const errorWithStdout = error as { stdout?: string };
+      if (errorWithStdout.stdout) {
         try {
-          const data = JSON.parse((error as any).stdout);
+          const data = JSON.parse(errorWithStdout.stdout);
           if (data.vulnerabilities) {
-            return this.parseSnykErrorOutput(data) as any;
+            const importedResult = this.parseSnykErrorOutput(data);
+            return {
+              type: 'dependencies' as const,
+              vulnerabilities:
+                (importedResult as { vulnerabilities?: SnykVulnerability[] })
+                  .vulnerabilities || [],
+              summary: importedResult.summary || {
+                total: 0,
+                critical: 0,
+                high: 0,
+                medium: 0,
+                low: 0,
+              },
+            };
           }
         } catch {
           // Not JSON, actual error
@@ -1221,7 +1235,20 @@ export class QualityRunner {
       const changedFilesSet = new Set(filePaths.map(fp => path.resolve(fp)));
 
       if (data.runs && data.runs[0] && data.runs[0].results) {
-        data.runs[0].results.forEach((result: any) => {
+        interface SnykCodeResult {
+          locations: Array<{
+            physicalLocation: {
+              artifactLocation: { uri: string };
+              region: { startLine: number; startColumn?: number };
+            };
+          }>;
+          level: string;
+          message: { text: string };
+          ruleId: string;
+          properties?: { categories?: string[] };
+        }
+
+        data.runs[0].results.forEach((result: SnykCodeResult) => {
           if (result.locations && result.locations[0]) {
             const location = result.locations[0].physicalLocation;
             const filePath = location.artifactLocation.uri;
@@ -1321,7 +1348,7 @@ export class QualityRunner {
       findings: [], // Will be populated if needed
       summary,
       vulnerabilities,
-    } as any;
+    } as ImportedSnykResult;
   }
 
   /**
@@ -1419,7 +1446,15 @@ export class QualityRunner {
       await fs.remove(tempFile);
 
       if (stdout) {
-        const results: any[] = JSON.parse(stdout);
+        interface GitleaksResult {
+          File: string;
+          RuleID: string;
+          Description: string;
+          StartLine: number;
+          StartColumn: number;
+        }
+
+        const results: GitleaksResult[] = JSON.parse(stdout);
 
         results.forEach(result => {
           // Only include findings from our target files
@@ -1996,8 +2031,22 @@ export class QualityRunner {
         info: 0,
       };
 
+      interface SemgrepResult {
+        check_id?: string;
+        path: string;
+        start?: { line: number; col: number };
+        extra?: {
+          severity?: string;
+          message?: string;
+          metadata?: { cwe?: string };
+          fix?: string;
+          references?: string[];
+        };
+        message?: string;
+      }
+
       if (results.results && Array.isArray(results.results)) {
-        results.results.forEach((result: any) => {
+        results.results.forEach((result: SemgrepResult) => {
           const severity = this.mapSemgrepSeverity(
             result.extra?.severity || 'INFO'
           );

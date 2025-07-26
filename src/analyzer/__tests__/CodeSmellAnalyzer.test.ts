@@ -59,7 +59,7 @@ jest.mock('../../config/i18n', () => ({
 }));
 
 const mockedFs = fs as jest.Mocked<typeof fs>;
-const { t, initializeI18n } = require('../../config/i18n');
+import { t, initializeI18n } from '../../config/i18n';
 
 describe('CodeSmellAnalyzer - Production Quality Tests', () => {
   let analyzer: CodeSmellAnalyzer;

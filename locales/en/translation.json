@@ -1011,5 +1011,48 @@
     "recommended_action": "💡 Recommended: {{action}}",
     "desktop_security_alert": "🚨 WOARU Security Alert",
     "failed_security_webhook": "Failed to send security webhook:"
+  },
+  "usage_tracker": {
+    "failed_to_initialize": "⚠️ Failed to initialize UsageTracker, creating fallback instance",
+    "file_empty": "⚠️ Usage statistics file is empty, initializing with empty stats",
+    "invalid_format": "⚠️ Invalid usage statistics format, initializing with empty stats",
+    "invalid_json": "⚠️ Usage statistics file contains invalid JSON, recreating with empty stats",
+    "failed_to_load": "⚠️ Failed to load usage statistics (file may be corrupted):",
+    "could_not_recreate": "⚠️ Could not recreate usage statistics file:",
+    "failed_to_save": "⚠️ Failed to save usage statistics:",
+    "failed_ensure_load": "⚠️ Failed to ensure stats are loaded, using empty stats"
+  },
+  "report_generator": {
+    "invalid_commit_message": "Invalid commit message",
+    "invalid_audit_message": "Invalid audit message",
+    "invalid_report_data": "Invalid report data provided",
+    "failed_to_generate": "Failed to generate report",
+    "found_problems": "📋 **Found Problems:**",
+    "problem_label": "💡 **Problem:** {{explanation}}",
+    "no_critical_issues": "✅ No critical issues found - ready for review!",
+    "solid_recommendations": "### 💡 SOLID Recommendations",
+    "critical_problems": "#### 🔴 Critical Problems:",
+    "warnings": "#### 🟡 Warnings:",
+    "information": "#### 🔵 Information:",
+    "code_smell_recommendations": "### 💡 Code Smell Recommendations:",
+    "code_smell_line": "- **Line {{line}}:{{column}}** - {{message}}",
+    "ai_review_recommendations": "### 💡 AI Review Recommendations:",
+    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Line ${lineNumber}` : ''}}",
+    "ai_rationale": "  💭 **Rationale:** {{rationale}}",
+    "ai_suggestion": "  💡 **Recommendation:** {{suggestion}}",
+    "ai_confidence": "  🎯 **Confidence:** {{confidence}}%"
+  },
+  "supervisor": {
+    "tool_detected": "Tool detected: {{tool}}",
+    "stopped": "WOARU Supervisor stopped",
+    "analysis_failed": "Analysis failed: {{error}}",
+    "setup_completed": "{{tool}} setup completed",
+    "tool_ignored": "Tool {{tool}} added to ignore list",
+    "audit_failed": "Production audit failed: {{error}}"
+  },
+  "ui": {
+    "command_analyze_desc": "  • woaru analyze    - Analyze project",
+    "command_commands_desc": "  • woaru commands   - Show all commands",
+    "fallback_title": "🤖 WOARU - Code Quality Tool"
   }
 }

@@ -177,9 +177,9 @@ async function displayCommandsSection(): Promise<void> {
     console.log(chalk.yellow(`💡 ${t('ui.run_commands_help')}`));
   } catch {
     // Fallback commands display
-    console.log(chalk.white('Quick Commands'));
-    console.log(chalk.gray('  • woaru analyze    - Analyze project'));
-    console.log(chalk.gray('  • woaru commands   - Show all commands'));
+    console.log(chalk.white(t('ui.quick_commands')));
+    console.log(chalk.gray(t('ui.command_analyze_desc')));
+    console.log(chalk.gray(t('ui.command_commands_desc')));
   }
 }
 
@@ -202,17 +202,17 @@ async function displayFallbackSplash(config: SplashConfig): Promise<void> {
     console.log();
 
     if (config.showCommands) {
-      console.log(chalk.white('Quick Commands'));
-      console.log(chalk.gray('  • woaru analyze    - Analyze project'));
-      console.log(chalk.gray('  • woaru commands   - Show all commands'));
+      console.log(chalk.white(t('ui.quick_commands')));
+      console.log(chalk.gray(t('ui.command_analyze_desc')));
+      console.log(chalk.gray(t('ui.command_commands_desc')));
       console.log();
-      console.log(chalk.yellow('💡 Run "woaru commands" for detailed help'));
+      console.log(chalk.yellow(t('ui.run_commands_help')));
     }
 
     console.log();
   } catch {
     // Final fallback - minimal safe output
-    console.log('🤖 WOARU - Code Quality Tool');
+    console.log(t('ui.fallback_title'));
   }
 }
 

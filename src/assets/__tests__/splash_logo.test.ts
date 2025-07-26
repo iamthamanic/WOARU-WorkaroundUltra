@@ -44,7 +44,7 @@ jest.mock('../../config/i18n', () => ({
 import { displaySplashScreen, WOARU_COMPACT_LOGO, WOARU_MINI_LOGO } from '../splash_logo';
 
 const mockedFs = fs as jest.Mocked<typeof fs>;
-const { t, initializeI18n } = require('../../config/i18n');
+import { t, initializeI18n } from '../../config/i18n';
 
 describe('splash_logo - Production Quality Tests', () => {
   let consoleLogSpy: jest.SpyInstance;
@@ -394,8 +394,9 @@ describe('splash_logo - Production Quality Tests', () => {
   describe('Security Tests', () => {
     it('should sanitize all file paths', async () => {
       // Arrange - Mock path.resolve to return dangerous path
-      const originalPathResolve = require('path').resolve;
-      require('path').resolve = jest.fn(() => '../../etc/passwd');
+      const pathModule = await import('path');
+      const originalPathResolve = pathModule.resolve;
+      (pathModule as any).resolve = jest.fn(() => '../../etc/passwd');
 
       // Act
       await displaySplashScreen();
@@ -404,7 +405,7 @@ describe('splash_logo - Production Quality Tests', () => {
       expect(consoleDebugSpy).toHaveBeenCalledWith('Invalid package.json path detected');
       
       // Restore
-      require('path').resolve = originalPathResolve;
+      (pathModule as any).resolve = originalPathResolve;
     });
 
     it('should prevent XSS in version display', async () => {

@@ -609,8 +609,10 @@ export class AIReviewAgent {
       }
 
       const findings = safeJsonParse(jsonMatch[0]);
-      if (!findings) {
-        console.warn('Failed to parse AI findings JSON');
+      if (!findings || !Array.isArray(findings)) {
+        console.warn(
+          'Failed to parse AI findings JSON or result is not an array'
+        );
         return [];
       }
 
@@ -625,20 +627,33 @@ export class AIReviewAgent {
           [key: string]: unknown;
         }) => ({
           llmId,
-          severity: finding.severity || 'medium',
-          category: finding.category || 'code-smell',
+          severity:
+            (finding.severity as 'critical' | 'high' | 'medium' | 'low') ||
+            'medium',
+          category:
+            (finding.category as
+              | 'security'
+              | 'performance'
+              | 'maintainability'
+              | 'architecture'
+              | 'code-smell'
+              | 'best-practice') || 'code-smell',
           message: finding.message || 'No message provided',
           rationale:
             finding.rationale || finding.reason || 'No rationale provided',
           suggestion: finding.suggestion || 'No suggestion provided',
           filePath: context.filePath,
-          lineNumber: finding.lineNumber || finding.line,
-          lineRange: finding.lineRange,
-          codeSnippet: finding.codeSnippet,
-          confidence: finding.confidence || 0.8,
-          tags: finding.tags || [],
-          estimatedFixTime: finding.estimatedFixTime,
-          businessImpact: finding.businessImpact || 'medium',
+          lineNumber:
+            (finding.lineNumber as number) || (finding.line as number),
+          lineRange: finding.lineRange as
+            | { start: number; end: number }
+            | undefined,
+          codeSnippet: finding.codeSnippet as string | undefined,
+          confidence: (finding.confidence as number) || 0.8,
+          tags: (finding.tags as string[]) || [],
+          estimatedFixTime: finding.estimatedFixTime as string | undefined,
+          businessImpact:
+            (finding.businessImpact as 'low' | 'medium' | 'high') || 'medium',
         })
       );
     } catch (error) {

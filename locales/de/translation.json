@@ -1011,5 +1011,48 @@
     "recommended_action": "💡 Empfohlen: {{action}}",
     "desktop_security_alert": "🚨 WOARU Sicherheitswarnung",
     "failed_security_webhook": "Sicherheits-Webhook senden fehlgeschlagen:"
+  },
+  "usage_tracker": {
+    "failed_to_initialize": "⚠️ UsageTracker konnte nicht initialisiert werden, erstelle Fallback-Instanz",
+    "file_empty": "⚠️ Nutzungsstatistik-Datei ist leer, initialisiere mit leeren Statistiken",
+    "invalid_format": "⚠️ Ungültiges Nutzungsstatistik-Format, initialisiere mit leeren Statistiken",
+    "invalid_json": "⚠️ Nutzungsstatistik-Datei enthält ungültiges JSON, erstelle neu mit leeren Statistiken",
+    "failed_to_load": "⚠️ Nutzungsstatistiken konnten nicht geladen werden (Datei möglicherweise beschädigt):",
+    "could_not_recreate": "⚠️ Nutzungsstatistik-Datei konnte nicht neu erstellt werden:",
+    "failed_to_save": "⚠️ Nutzungsstatistiken konnten nicht gespeichert werden:",
+    "failed_ensure_load": "⚠️ Statistiken konnten nicht geladen werden, verwende leere Statistiken"
+  },
+  "report_generator": {
+    "invalid_commit_message": "Ungültige Commit-Nachricht",
+    "invalid_audit_message": "Ungültige Audit-Nachricht",
+    "invalid_report_data": "Ungültige Berichtsdaten bereitgestellt",
+    "failed_to_generate": "Bericht konnte nicht generiert werden",
+    "found_problems": "📋 **Gefundene Probleme:**", 
+    "problem_label": "💡 **Problem:** {{explanation}}",
+    "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
+    "solid_recommendations": "### 💡 SOLID-Empfehlungen",
+    "critical_problems": "#### 🔴 Kritische Probleme:",
+    "warnings": "#### 🟡 Warnungen:",
+    "information": "#### 🔵 Informationen:",
+    "code_smell_recommendations": "### 💡 Code Smell Empfehlungen:",
+    "code_smell_line": "- **Zeile {{line}}:{{column}}** - {{message}}",
+    "ai_review_recommendations": "### 💡 AI Review Empfehlungen:",
+    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Zeile ${lineNumber}` : ''}}",
+    "ai_rationale": "  💭 **Begründung:** {{rationale}}",
+    "ai_suggestion": "  💡 **Empfehlung:** {{suggestion}}",
+    "ai_confidence": "  🎯 **Vertrauen:** {{confidence}}%"
+  },
+  "supervisor": {
+    "tool_detected": "Tool erkannt: {{tool}}",
+    "stopped": "WOARU Supervisor gestoppt",
+    "analysis_failed": "Analyse fehlgeschlagen: {{error}}",
+    "setup_completed": "{{tool}} Setup abgeschlossen",
+    "tool_ignored": "Tool {{tool}} zur Ignorierliste hinzugefügt",
+    "audit_failed": "Produktions-Audit fehlgeschlagen: {{error}}"
+  },
+  "ui": {
+    "command_analyze_desc": "  • woaru analyze    - Projekt analysieren",
+    "command_commands_desc": "  • woaru commands   - Alle Befehle anzeigen",
+    "fallback_title": "🤖 WOARU - Code Quality Tool"
   }
 }

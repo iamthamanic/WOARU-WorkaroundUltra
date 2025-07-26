@@ -57,7 +57,7 @@ import {
 } from '../languageSetup';
 
 const mockedInquirer = inquirer as jest.Mocked<typeof inquirer>;
-const { setUserLanguage, isFirstRun, t, initializeI18n, getUserLanguage } = require('../i18n');
+import { setUserLanguage, isFirstRun, t, initializeI18n, getUserLanguage } from '../i18n';
 
 describe('languageSetup - Production Quality Tests', () => {
   let consoleLogSpy: jest.SpyInstance;

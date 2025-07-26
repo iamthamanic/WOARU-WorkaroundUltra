@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
+import { t } from '../config/i18n';
 
 export interface LLMUsageData {
   totalRequests: number;
@@ -36,9 +37,7 @@ export class UsageTracker {
       try {
         UsageTracker.instance = new UsageTracker();
       } catch {
-        console.warn(
-          '⚠️ Failed to initialize UsageTracker, creating fallback instance'
-        );
+        console.warn(t('usage_tracker.failed_to_initialize'));
         // Create a fallback instance with basic functionality
         UsageTracker.instance = Object.create(UsageTracker.prototype);
         UsageTracker.instance.stats = {};
@@ -61,9 +60,7 @@ export class UsageTracker {
         // Check if file is empty first
         const fileStats = await fs.stat(this.usageFile);
         if (fileStats.size === 0) {
-          console.warn(
-            '⚠️ Usage statistics file is empty, initializing with empty stats'
-          );
+          console.warn(t('usage_tracker.file_empty'));
           this.stats = {};
           return;
         }
@@ -71,9 +68,7 @@ export class UsageTracker {
         // Try to read the file content manually first
         const fileContent = await fs.readFile(this.usageFile, 'utf-8');
         if (!fileContent.trim()) {
-          console.warn(
-            '⚠️ Usage statistics file is empty, initializing with empty stats'
-          );
+          console.warn(t('usage_tracker.file_empty'));
           this.stats = {};
           return;
         }
@@ -85,20 +80,16 @@ export class UsageTracker {
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           this.stats = data;
         } else {
-          console.warn(
-            '⚠️ Invalid usage statistics format, initializing with empty stats'
-          );
+          console.warn(t('usage_tracker.invalid_format'));
           this.stats = {};
         }
       }
     } catch (error) {
       if (error instanceof SyntaxError) {
-        console.warn(
-          '⚠️ Usage statistics file contains invalid JSON, recreating with empty stats'
-        );
+        console.warn(t('usage_tracker.invalid_json'));
       } else {
         console.warn(
-          '⚠️ Failed to load usage statistics (file may be corrupted):',
+          t('usage_tracker.failed_to_load'),
           error instanceof Error ? error.message : error
         );
       }
@@ -112,7 +103,7 @@ export class UsageTracker {
         await fs.writeJson(this.usageFile, {}, { spaces: 2 });
       } catch (writeError) {
         console.warn(
-          '⚠️ Could not recreate usage statistics file:',
+          t('usage_tracker.could_not_recreate'),
           writeError instanceof Error ? writeError.message : writeError
         );
       }
@@ -127,7 +118,7 @@ export class UsageTracker {
       await fs.ensureDir(path.dirname(this.usageFile));
       await fs.writeJson(this.usageFile, this.stats, { spaces: 2 });
     } catch (error) {
-      console.warn('⚠️ Failed to save usage statistics:', error);
+      console.warn(t('usage_tracker.failed_to_save'), error);
     }
   }
 
@@ -187,7 +178,7 @@ export class UsageTracker {
     try {
       await this.loadStats();
     } catch {
-      console.warn('⚠️ Failed to ensure stats are loaded, using empty stats');
+      console.warn(t('usage_tracker.failed_ensure_load'));
       this.stats = {};
     }
   }
