@@ -1,5 +1,50 @@
 {
   "welcome_message": "Welcome to WOARU - Your Universal Development Companion",
+  "cli": {
+    "main": {
+      "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language"
+    }
+  },
+  "commands": {
+    "version": {
+      "description": "Show version information",
+      "purpose": "Display current WOARU version and system information",
+      "check": {
+        "description": "Check for updates",
+        "purpose": "Check if newer versions of WOARU are available"
+      }
+    },
+    "commands": {
+      "description": "Show detailed command reference documentation",
+      "purpose": "Browse all available WOARU commands with detailed explanations",
+      "title": "📚 WOARU Command Reference"
+    },
+    "wiki": {
+      "description": "Show comprehensive WOARU documentation and concept guide",
+      "purpose": "Access complete documentation and learn WOARU concepts",
+      "title": "📖 WOARU Documentation & Wiki",
+      "no_docs_found": "No documentation found for language: {{lang}}",
+      "error": "Error loading documentation:"
+    },
+    "purpose_label": "Purpose"
+  },
+  "version": {
+    "display": "WOARU Version: {{version}}",
+    "checking_updates": "🔍 Checking for updates...",
+    "up_to_date": "✅ You are using the latest version ({{version}})"
+  },
+  "splash_screen": {
+    "main_title": "🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE",
+    "version_display": "Version {{version}}",
+    "usage_hint": "Type \"woaru --help\" to see all available commands",
+    "main_commands": "Main Commands:",
+    "commands_desc": "Show all commands",
+    "analyze_desc": "Analyze project",
+    "watch_desc": "Start monitoring",
+    "ai_desc": "AI control center",
+    "language_desc": "Language selection",
+    "setup_desc": "Setup tools"
+  },
   "language_selection": {
     "prompt": "Please select your preferred language:",
     "english": "🇺🇸 English",
@@ -259,7 +304,8 @@
     },
     "commands": {
       "description": "Show detailed command reference documentation",
-      "purpose": "Browse all available WOARU commands with detailed explanations"
+      "purpose": "Browse all available WOARU commands with detailed explanations",
+      "title": "📚 WOARU Command Reference"
     },
     "wiki": {
       "description": "Show comprehensive WOARU documentation and concept guide",
@@ -308,7 +354,26 @@
     "language": {
       "description": "Interactive language selection",
       "purpose": "Change the language used by WOARU interface"
-    }
+    },
+    "purpose_label": "Purpose"
+  },
+  "command_not_implemented": {
+    "quick_analyze": "Quick analyze not implemented yet. Use \"woaru analyze\" instead.",
+    "setup": "Setup command not implemented yet.",
+    "ai": "AI command not implemented yet.",
+    "update_db": "Update database command not implemented yet.",
+    "watch": "Watch command not implemented yet.",
+    "status": "Status command not implemented yet.",
+    "update": "Update command not implemented yet.",
+    "stop": "Stop command not implemented yet.",
+    "logs": "Logs command not implemented yet.",
+    "recommendations": "Recommendations command not implemented yet.",
+    "helpers": "Helpers command not implemented yet.",
+    "docu": "Documentation command not implemented yet.",
+    "review": "Review command not implemented yet.",
+    "analyze": "Analyze command not implemented yet.",
+    "message": "Message command not implemented yet.",
+    "config": "Config command not implemented yet."
   },
   "ui": {
     "available_commands": "Available Commands",
@@ -329,10 +394,6 @@
     "api_key_missing_for_provider": "API key missing for provider: {{provider}}",
     "configuration_validation_passed": "AI configuration validation passed",
     "graceful_shutdown": "Shutting down gracefully due to AI configuration error"
-  },
-  "splash_screen": {
-    "main_title": "🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE",
-    "version_display": "Version {{version}}"
   },
   "startup_check": {
     "git_not_available": "Git is not available in your system PATH",

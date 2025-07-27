@@ -1,0 +1,88 @@
+📚 WOARU Command Reference
+
+• version
+  Show version information
+  Purpose: Display current WOARU version and system information
+
+• commands
+  Show detailed command reference documentation
+  Purpose: Browse all available WOARU commands with detailed explanations
+
+• wiki
+  Show comprehensive WOARU documentation and concept guide
+  Purpose: Access complete documentation and learn WOARU concepts
+
+• quick-analyze
+  Quick analysis for project setup recommendations
+
+• setup
+  Setup tools and AI integrations
+  Purpose: Configure development tools and AI providers for optimal workflow
+
+• ai
+  Manage AI providers for code analysis
+  Purpose: Configure and manage AI-powered code analysis capabilities
+
+• update-db
+  Update the tools database from remote source
+
+• watch
+  Start WOARU supervisor to continuously monitor the project
+  Purpose: Enable real-time monitoring and automated improvements for your project
+
+• status
+  Show WOARU supervisor status and project health
+  Purpose: View current monitoring status and project health metrics
+
+• update
+  Updates WOARU to the latest version from npm
+  Purpose: Keep WOARU up-to-date with the latest features and improvements
+
+• stop
+  Stop the WOARU supervisor
+  Purpose: Disable project monitoring and background processes
+
+• logs
+  Show supervisor logs
+  Purpose: View detailed logs from the WOARU supervisor
+
+• recommendations
+  Show current tool recommendations
+  Purpose: Display personalized tool suggestions for your project
+
+• helpers
+  Show all detected/activated development tools and helpers
+  Purpose: View all currently active development tools and configurations
+
+• docu
+  AI-powered code documentation generator
+  Purpose: Generate comprehensive documentation for your codebase
+
+• ignore
+  Add a tool to the ignore list
+  Purpose: Exclude specific tools from recommendations and monitoring
+
+• review
+  Code review and analysis tools
+  Purpose: Comprehensive code quality and security analysis
+
+• analyze
+  Comprehensive project analysis including security audit
+  Purpose: Perform deep analysis of your project's health and security
+
+• rollback
+  Rollback changes made by a specific tool
+  Purpose: Undo changes made by WOARU tools and configurations
+
+• message
+  Send reports from history to configured message channels
+  Purpose: Share analysis reports via configured communication channels
+
+• config
+  Configure WOARU settings
+  Purpose: Manage WOARU configuration and preferences
+
+• language
+  Interactive language selection
+  Purpose: Change the language used by WOARU interface
+

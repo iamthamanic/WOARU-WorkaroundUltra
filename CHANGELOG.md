@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.9] - 2025-07-27
+
+### Fixed
+- **i18n Translation Issues**: Fixed critical internationalization problems after Cursor crash
+  - Fixed splash screen showing translation keys instead of translated text (e.g., "splash_screen.main_commands" → "Main Commands:")
+  - Fixed `woaru commands` command showing incomplete command list - now displays all 22 commands including docu, setup, ai, analyze, etc.
+  - Fixed translation keys showing instead of translated text in commands output (e.g., "commands.commands.title" → "📚 WOARU Command Reference")
+  - Added missing translation keys `commands.commands.title` and `commands.purpose_label` to both English and German translation files
+  - Fixed `woaru language` command implementation - now provides interactive language selection instead of "not implemented" message
+
+### Added
+- **Complete Command Implementation**: Added proper command definitions for all missing commands
+  - All commands now appear in `woaru commands` output with proper descriptions and purpose labels
+  - Language command now supports interactive language switching between English and German
+  - Improved command structure with proper translation key resolution
+
+### Changed
+- **Improved i18n System**: Enhanced internationalization reliability
+  - Fixed locales path resolution for both development and production environments
+  - Converted from async i18next backend to synchronous file loading for better reliability
+  - Removed duplicate translation sections that were causing key overwrites
+
 ## [5.1.4] - 2025-07-26
 
 ### Fixed

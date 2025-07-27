@@ -1,5 +1,50 @@
 {
   "welcome_message": "Willkommen bei WOARU - Ihrem universellen Entwicklungsbegleiter",
+  "cli": {
+    "main": {
+      "description": "Universeller Projekt-Setup-Autopilot - Analysiert und konfiguriert automatisch Entwicklungstools für JEDE Programmiersprache"
+    }
+  },
+  "commands": {
+    "version": {
+      "description": "Versionsinformationen anzeigen",
+      "purpose": "Aktuelle WOARU-Version und Systeminformationen anzeigen",
+      "check": {
+        "description": "Nach Updates suchen",
+        "purpose": "Prüfen, ob neuere Versionen von WOARU verfügbar sind"
+      }
+    },
+    "commands": {
+      "description": "Detaillierte Befehlsreferenz-Dokumentation anzeigen",
+      "purpose": "Alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen durchsuchen",
+      "title": "📚 WOARU Befehlsreferenz"
+    },
+    "wiki": {
+      "description": "Umfassende WOARU-Dokumentation und Konzeptleitfaden anzeigen",
+      "purpose": "Vollständige Dokumentation einsehen und WOARU-Konzepte erlernen",
+      "title": "📖 WOARU Dokumentation & Wiki",
+      "no_docs_found": "Keine Dokumentation für Sprache gefunden: {{lang}}",
+      "error": "Fehler beim Laden der Dokumentation:"
+    },
+    "purpose_label": "Zweck"
+  },
+  "version": {
+    "display": "WOARU Version: {{version}}",
+    "checking_updates": "🔍 Suche nach Updates...",
+    "up_to_date": "✅ Sie verwenden die neueste Version ({{version}})"
+  },
+  "splash_screen": {
+    "main_title": "🤖 WOARU - HILFT IHNEN, DEN BESTEN CODE ZU SCHREIBEN",
+    "version_display": "Version {{version}}",
+    "usage_hint": "Geben Sie \"woaru --help\" ein, um alle verfügbaren Befehle anzuzeigen",
+    "main_commands": "Hauptbefehle:",
+    "commands_desc": "Alle Befehle anzeigen",
+    "analyze_desc": "Projekt analysieren",
+    "watch_desc": "Überwachung starten",
+    "ai_desc": "AI-Kontrollzentrum",
+    "language_desc": "Sprachauswahl",
+    "setup_desc": "Tools einrichten"
+  },
   "language_selection": {
     "prompt": "Bitte wählen Sie Ihre bevorzugte Sprache:",
     "english": "🇺🇸 English",
@@ -259,7 +304,8 @@
     },
     "commands": {
       "description": "Zeigt detaillierte Befehlsreferenz-Dokumentation",
-      "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen"
+      "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen",
+      "title": "📚 WOARU Befehlsreferenz"
     },
     "wiki": {
       "description": "Zeigt umfassende WOARU-Dokumentation und Konzeptführer",
@@ -308,7 +354,26 @@
     "language": {
       "description": "Interaktive Sprachauswahl",
       "purpose": "Ändert die von WOARU-Interface verwendete Sprache"
-    }
+    },
+    "purpose_label": "Zweck"
+  },
+  "command_not_implemented": {
+    "quick_analyze": "Schnellanalyse noch nicht implementiert. Verwenden Sie stattdessen \"woaru analyze\".",
+    "setup": "Setup-Befehl noch nicht implementiert.",
+    "ai": "AI-Befehl noch nicht implementiert.",
+    "update_db": "Datenbank-Update-Befehl noch nicht implementiert.",
+    "watch": "Watch-Befehl noch nicht implementiert.",
+    "status": "Status-Befehl noch nicht implementiert.",
+    "update": "Update-Befehl noch nicht implementiert.",
+    "stop": "Stop-Befehl noch nicht implementiert.",
+    "logs": "Logs-Befehl noch nicht implementiert.",
+    "recommendations": "Empfehlungen-Befehl noch nicht implementiert.",
+    "helpers": "Helfer-Befehl noch nicht implementiert.",
+    "docu": "Dokumentations-Befehl noch nicht implementiert.",
+    "review": "Review-Befehl noch nicht implementiert.",
+    "analyze": "Analyse-Befehl noch nicht implementiert.",
+    "message": "Nachrichten-Befehl noch nicht implementiert.",
+    "config": "Konfigurations-Befehl noch nicht implementiert."
   },
   "ui": {
     "available_commands": "Verfügbare Befehle",
@@ -329,10 +394,6 @@
     "api_key_missing_for_provider": "API-Schlüssel fehlt für Provider: {{provider}}",
     "configuration_validation_passed": "AI-Konfigurationsvalidierung erfolgreich",
     "graceful_shutdown": "Beende Anwendung aufgrund von AI-Konfigurationsfehler"
-  },
-  "splash_screen": {
-    "main_title": "🤖 WOARU - HILFT IHNEN, IHREN BESTEN CODE ZU SCHREIBEN",
-    "version_display": "Version {{version}}"
   },
   "startup_check": {
     "git_not_available": "Git ist nicht in deinem System-PATH verfügbar",

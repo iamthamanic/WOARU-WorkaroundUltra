@@ -29,16 +29,29 @@ export async function initializeI18n(): Promise<void> {
 
   // Get the locales directory path (relative to the built JS files in dist/)
   const localesPath = getLocalesPath();
-
   try {
-    await i18next.use(Backend).init({
+    // Load translation files directly and synchronously
+    const englishPath = path.join(localesPath, 'en/translation.json');
+    const germanPath = path.join(localesPath, 'de/translation.json');
+    
+    let englishTranslations: any = {};
+    let germanTranslations: any = {};
+    
+    try {
+      if (fs.existsSync(englishPath)) {
+        englishTranslations = JSON.parse(fs.readFileSync(englishPath, 'utf-8'));
+      }
+      if (fs.existsSync(germanPath)) {
+        germanTranslations = JSON.parse(fs.readFileSync(germanPath, 'utf-8'));
+      }
+    } catch (error) {
+      console.error('[i18n] Error loading translation files:', error);
+    }
+    
+    await i18next.init({
       lng: userLanguage,
       fallbackLng: 'en',
-      debug: false, // Debug disabled
-
-      backend: {
-        loadPath: path.join(localesPath, '{{lng}}/{{ns}}.json'),
-      },
+      debug: false,
 
       // Namespace configuration
       ns: ['translation'],
@@ -46,11 +59,18 @@ export async function initializeI18n(): Promise<void> {
 
       // Interpolation options
       interpolation: {
-        escapeValue: false, // Not needed for server-side usage
+        escapeValue: false,
       },
 
-      // Resource configuration
-      resources: undefined, // Will be loaded from files
+      // Preload resources synchronously
+      resources: {
+        en: {
+          translation: englishTranslations
+        },
+        de: {
+          translation: germanTranslations
+        }
+      }
     });
   } catch (error) {
     console.error(`[i18n] Failed to initialize i18next:`, error);
@@ -107,14 +127,14 @@ function getLocalesPath(): string {
 
   // Multiple path attempts for robustness
   const pathAttempts = [
+    // When running via npx from dist: dist/config/i18n.js -> ../locales
+    path.resolve(currentDir, '../locales'),
     // In production: dist/config/i18n.js -> ../../locales (from dist root)
     path.resolve(currentDir, '../../locales'),
-    // Alternative: from dist/ directory
-    path.resolve(currentDir, '../locales'),
-    // From process working directory
-    path.resolve(process.cwd(), 'locales'),
     // From dist directory if we're running from dist
     path.resolve(process.cwd(), 'dist/locales'),
+    // From process working directory
+    path.resolve(process.cwd(), 'locales'),
     // Development path: src/config -> ../../locales
     path.resolve(currentDir, '../../locales'),
   ];

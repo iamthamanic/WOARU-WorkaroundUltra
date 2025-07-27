@@ -1,8 +1,7 @@
 {
   "name": "woaru",
-  "version": "5.1.4",
+  "version": "5.1.9",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
-  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "woaru": "dist/cli.js"
