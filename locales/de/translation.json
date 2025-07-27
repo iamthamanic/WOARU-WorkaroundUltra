@@ -133,15 +133,6 @@
     "new_api_key_for": "Neuer API-Key für {{provider}}:",
     "select_new_model": "Wähle ein neues Modell für {{provider}}:"
   },
-  "commands": {
-    "analyze": "Projekt auf Code-Qualität und Sicherheit analysieren",
-    "review": "Code-Änderungen überprüfen und Feedback geben",
-    "watch": "Kontinuierliche Qualitätsüberwachung starten",
-    "setup": "Tools und AI-Provider konfigurieren",
-    "status": "Aktuellen WOARU-Status anzeigen",
-    "version": "Versionsinformationen anzeigen",
-    "help": "Hilfe-Informationen anzeigen"
-  },
   "analysis": {
     "starting": "Starte Analyse...",
     "complete": "Analyse abgeschlossen",
@@ -306,10 +297,6 @@
       "description": "Zeigt detaillierte Befehlsreferenz-Dokumentation",
       "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen",
       "title": "📚 WOARU Befehlsreferenz"
-    },
-    "wiki": {
-      "description": "Zeigt umfassende WOARU-Dokumentation und Konzeptführer",
-      "purpose": "Zugriff auf vollständige Dokumentation und WOARU-Konzepte lernen"
     },
     "message": {
       "description": "Sendet Berichte aus Historie an konfigurierte Nachrichten-Kanäle",
@@ -750,10 +737,6 @@
       "commands": {
         "description": "Zeigt detaillierte Befehlsreferenz-Dokumentation",
         "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen"
-      },
-      "wiki": {
-        "description": "Zeigt umfassende WOARU-Dokumentation und Konzeptführer",
-        "purpose": "Zugriff auf vollständige Dokumentation und WOARU-Konzepte lernen"
       },
       "message": {
         "description": "Sendet Berichte aus Historie an konfigurierte Nachrichten-Kanäle",

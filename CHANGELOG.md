@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.10] - 2025-07-27
+
+### Fixed
+- **Wiki Command Translation**: Fixed `commands.wiki.title` showing as translation key instead of "📖 WOARU Documentation & Wiki"
+- **NPM Distribution**: Ensured all translation fixes are properly included in the NPM package
+
 ## [5.1.9] - 2025-07-27
 
 ### Fixed
