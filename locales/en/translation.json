@@ -163,7 +163,7 @@
   "command_not_implemented": {
     "quick_analyze": "Quick analyze not implemented yet. Use \"woaru analyze\" instead.",
     "setup": "Setup command not implemented yet.",
-    "ai": "AI command not implemented yet.",
+    "ai": "AI-powered code analysis and review system",
     "update_db": "Update database command not implemented yet.",
     "watch": "Watch command not implemented yet.",
     "status": "Status command not implemented yet.",
@@ -173,7 +173,7 @@
     "recommendations": "Recommendations command not implemented yet.",
     "helpers": "Helpers command not implemented yet.",
     "docu": "Documentation command not implemented yet.",
-    "review": "Review command not implemented yet.",
+    "review": "AI-powered code review and analysis system",
     "analyze": "Analyze command not implemented yet.",
     "message": "Message command not implemented yet.",
     "config": "Config command not implemented yet."

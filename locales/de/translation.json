@@ -357,7 +357,7 @@
     "recommendations": "Empfehlungen-Befehl noch nicht implementiert.",
     "helpers": "Helfer-Befehl noch nicht implementiert.",
     "docu": "Dokumentations-Befehl noch nicht implementiert.",
-    "review": "Review-Befehl noch nicht implementiert.",
+    "review": "KI-gestütztes Code-Review und Analyse-System",
     "analyze": "Analyse-Befehl noch nicht implementiert.",
     "message": "Nachrichten-Befehl noch nicht implementiert.",
     "config": "Konfigurations-Befehl noch nicht implementiert."
