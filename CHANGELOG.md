@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2025-07-28
+
+### Added
+- **Enhanced Translation System**: Complete overhaul of internationalization infrastructure
+  - Improved German translations with native grammatical structures
+  - Better translation key organization and consistency
+  - Enhanced translation bundle generation pipeline
+
+### Fixed
+- **Translation Key Resolution**: Fixed remaining translation key display issues
+  - All CLI commands now show proper translated text instead of keys
+  - Improved fallback handling for missing translations
+  - Fixed edge cases in i18n system initialization
+
+### Changed
+- **CLI Architecture**: Improved command structure and execution
+  - Better error handling and user feedback
+  - Enhanced command organization and help system
+  - Improved internationalization support across all commands
+
+## [5.1.11] - 2025-07-27
+
+### Fixed
+- **CLI Command Implementation**: Replaced placeholder "not implemented yet" messages with actual functionality
+  - `woaru analyze` now performs real project analysis using WOARUEngine
+  - `woaru setup` now provides interactive setup with dry-run option
+  - `woaru ai` now checks AI configuration and provides status
+  - `woaru watch` now starts the WOARU supervisor for real-time monitoring
+  - `woaru status` now shows actual project status and recommendations
+  - `woaru review` now performs code review with optional AI integration
+  - `woaru update-db` now updates the tools database
+
+### Added
+- **Enhanced Command Options**: Added proper CLI options and arguments
+  - `woaru analyze --path <path>` to specify analysis path
+  - `woaru setup --dry-run` to preview changes
+  - `woaru watch --daemon` for background monitoring
+  - `woaru review --ai` for AI-powered reviews
+  - `woaru review --git` for git change reviews
+
 ## [5.1.10] - 2025-07-27
 
 ### Fixed

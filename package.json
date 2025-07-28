@@ -1,13 +1,13 @@
 {
   "name": "woaru",
-  "version": "5.1.10",
+  "version": "5.2.0",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {
     "woaru": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/copy-assets.js",
+    "build": "node scripts/bundle-translations.js && tsc && node scripts/copy-assets.js",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "test": "jest",
@@ -52,7 +52,6 @@
     "fs-extra": "^11.1.1",
     "glob": "^10.3.10",
     "i18next": "^25.3.2",
-    "i18next-fs-backend": "^2.6.0",
     "inquirer": "^9.2.12",
     "jimp": "^1.6.0",
     "js-yaml": "^4.1.0",
