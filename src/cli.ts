@@ -837,6 +837,33 @@ async function main() {
   }
 }
 
+// Helper function to calculate visual width accounting for emojis
+function getVisualWidth(text: string): number {
+  return Array.from(text).reduce((width, char) => {
+    // Simple emoji detection - Unicode ranges for most emojis
+    const codePoint = char.codePointAt(0);
+    if (codePoint && (
+      (codePoint >= 0x1F600 && codePoint <= 0x1F64F) || // Emoticons
+      (codePoint >= 0x1F300 && codePoint <= 0x1F5FF) || // Misc Symbols
+      (codePoint >= 0x1F680 && codePoint <= 0x1F6FF) || // Transport
+      (codePoint >= 0x2600 && codePoint <= 0x26FF) ||   // Misc symbols
+      (codePoint >= 0x2700 && codePoint <= 0x27BF)      // Dingbats
+    )) {
+      return width + 2; // Emojis are roughly 2 characters wide
+    }
+    return width + 1;
+  }, 0);
+}
+
+// Helper function to center text in the ASCII box
+function centerText(text: string, availableWidth: number): string {
+  const visualWidth = getVisualWidth(text);
+  const padding = Math.max(0, Math.floor((availableWidth - visualWidth) / 2));
+  const rightPadding = availableWidth - visualWidth - padding;
+  
+  return ' '.repeat(padding) + text + ' '.repeat(Math.max(0, rightPadding));
+}
+
 // Splash Screen Funktion
 function displaySplashScreen() {
   // Alle Übersetzungen VOR dem Template-String auflösen
@@ -853,24 +880,27 @@ function displaySplashScreen() {
   const setupDesc = t('splash_screen.setup_desc');
   const usageHint = t('splash_screen.usage_hint');
 
-  console.log(
-    chalk.cyan(`
-╔══════════════════════════════════════════════════════════════════╗
-║                                                                  ║
-║     ██╗    ██╗ ██████╗  █████╗ ██████╗ ██╗   ██╗               ║
-║     ██║    ██║██╔═══██╗██╔══██╗██╔══██╗██║   ██║               ║
-║     ██║ █╗ ██║██║   ██║███████║██████╔╝██║   ██║               ║
-║     ██║███╗██║██║   ██║██╔══██║██╔══██╗██║   ██║               ║
-║     ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██║╚██████╔╝               ║
-║      ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝                ║
-║                                                                  ║
-║          ${chalk.yellow(mainTitle)}          ║
-║                                                                  ║
-║                    ${chalk.green(versionDisplay)}                    ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
-`)
-  );
+  // Build the splash screen with proper centering
+  const availableWidth = 66; // Width inside the box (68 - 2 border characters)
+  
+  // Center the title and version text
+  const centeredTitle = centerText(mainTitle, availableWidth);
+  const centeredVersion = centerText(versionDisplay, availableWidth);
+  
+  console.log(chalk.cyan('╔══════════════════════════════════════════════════════════════════╗'));
+  console.log(chalk.cyan('║                                                                  ║'));
+  console.log(chalk.cyan('║     ██╗    ██╗ ██████╗  █████╗ ██████╗ ██╗   ██╗               ║'));
+  console.log(chalk.cyan('║     ██║    ██║██╔═══██╗██╔══██╗██╔══██╗██║   ██║               ║'));
+  console.log(chalk.cyan('║     ██║ █╗ ██║██║   ██║███████║██████╔╝██║   ██║               ║'));
+  console.log(chalk.cyan('║     ██║███╗██║██║   ██║██╔══██║██╔══██╗██║   ██║               ║'));
+  console.log(chalk.cyan('║     ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██║╚██████╔╝               ║'));
+  console.log(chalk.cyan('║      ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝                ║'));
+  console.log(chalk.cyan('║                                                                  ║'));
+  console.log(chalk.cyan('║') + chalk.yellow(centeredTitle) + chalk.cyan('║'));
+  console.log(chalk.cyan('║                                                                  ║'));
+  console.log(chalk.cyan('║') + chalk.green(centeredVersion) + chalk.cyan('║'));
+  console.log(chalk.cyan('║                                                                  ║'));
+  console.log(chalk.cyan('╚══════════════════════════════════════════════════════════════════╝'));
 
   // Verfügbare Hauptbefehle anzeigen
   console.log(chalk.cyan(mainCommands));
