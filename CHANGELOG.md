@@ -5,6 +5,108 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.2] - 2025-07-29
+
+### Fixed
+- **Splash Screen Frame Rendering**: Fixed visual display issues in the ASCII splash screen
+  - Fixed right border interruption in splash screen frame - borders now fully closed
+  - Improved text centering logic to avoid emoji width calculation issues that caused misalignment
+  - Added proper `WOARU_FRAMED_SPLASH` constant for consistent frame rendering across all platforms
+  - Centered ASCII art logo properly within frame boundaries for perfect visual alignment
+  - Enhanced fallback splash screen with proper framing for better user experience
+
+### Enhanced
+- **User Interface Improvements**: Better visual consistency and professional appearance
+  - ASCII art splash screen now renders consistently across different terminal environments
+  - Improved text alignment algorithms for better cross-platform compatibility
+  - Added missing 'review' command description in splash screen quick commands section
+  - Enhanced visual padding and spacing for optimal readability
+
+### Technical Improvements
+- **Code Quality**: Improved maintainability and consistency
+  - Simplified text width calculation logic to prevent emoji-related rendering issues
+  - Updated translations timestamp for build consistency and cache invalidation
+  - Better error handling in splash screen fallback mechanisms
+  - Improved code documentation for splash screen rendering functions
+
+## [5.2.1] - 2025-07-28
+
+### Fixed
+- **Translation System Issues**: Fixed critical translation key display problems
+  - Fixed duplicate top-level 'commands' objects in translation files that were overwriting wiki title translations
+  - Removed duplicate 'wiki' definitions from both English and German translation files
+  - Wiki command now correctly displays "📖 WOARU Documentation & Wiki" instead of "commands.wiki.title"
+  - Fixed issue where JSON parsing was causing later command objects to override earlier ones containing wiki.title
+  - Improved translation file structure to prevent key conflicts and ensure proper key resolution
+
+### Enhanced
+- **Translation Architecture**: Improved internationalization stability
+  - Better handling of nested translation objects to prevent key overwrites
+  - Enhanced error resilience in translation bundling system
+  - Improved structure validation for translation files
+- **Code Quality**: Fixed integration test expectations for test data consistency
+- **Developer Experience**: Enhanced debugging capabilities for translation key resolution
+
+### Technical Improvements
+- **Translation File Structure**: Reorganized translation files to prevent JSON object overwrites
+  - Eliminated duplicate command sections that were causing key conflicts
+  - Improved nested object handling in translation bundling
+  - Better error reporting for missing or conflicting translation keys
+- **Build System**: Enhanced translation bundling stability with conflict detection
+- **Testing**: Updated integration test expectations for better reliability
+
+## [5.2.0] - 2025-07-28
+
+### Fixed
+- **Translation Issues**: Fixed critical translation key display issues
+  - Fixed "AI command not implemented yet" showing as placeholder text instead of proper description
+  - AI command now shows "AI-powered code analysis and review system" 
+  - Fixed "Review command not implemented yet" displaying as translation key instead of actual functionality description
+  - All command descriptions now display properly translated text instead of implementation status messages
+
+### Added
+- **Synchronous i18n Bundling System**: Enhanced internationalization with build-time translation bundling
+  - Added `scripts/bundle-translations.js` for build-time translation embedding
+  - Translations are now pre-bundled into TypeScript code for better performance
+  - Eliminated runtime translation loading issues and improved startup performance
+  - Added support for automatic translation compilation during build process
+
+### Enhanced
+- **Build System Improvements**: 
+  - Translation bundling integrated into main build pipeline
+  - Improved error handling for missing translations
+  - Better fallback mechanisms for translation loading
+- **Code Quality**: Fixed all ESLint/Prettier formatting violations
+- **Test Infrastructure**: Improved StateManager test mocks for better reliability
+
+### Technical Improvements
+- **Translation Architecture**: Complete refactor from runtime to build-time translation loading
+  - Pre-bundled translations reduce application startup time
+  - Improved memory usage with embedded translation resources
+  - Better error handling for missing translation keys
+- **Build Performance**: Optimized build process with parallel translation bundling
+- **Developer Experience**: Enhanced debugging capabilities for translation issues
+
+## [5.1.11] - 2025-07-27
+
+### Fixed
+- **CLI Command Implementation**: Replaced placeholder "not implemented yet" messages with actual functionality
+  - `woaru analyze` now performs real project analysis using WOARUEngine
+  - `woaru setup` now provides interactive setup with dry-run option
+  - `woaru ai` now checks AI configuration and provides status
+  - `woaru watch` now starts the WOARU supervisor for real-time monitoring
+  - `woaru status` now shows actual project status and recommendations
+  - `woaru review` now performs code review with optional AI integration
+  - `woaru update-db` now updates the tools database
+
+### Added
+- **Enhanced Command Options**: Added proper CLI options and arguments
+  - `woaru analyze --path <path>` to specify analysis path
+  - `woaru setup --dry-run` to preview changes
+  - `woaru watch --daemon` for background monitoring
+  - `woaru review --ai` for AI-powered reviews
+  - `woaru review --git` for git change reviews
+
 ## [5.1.10] - 2025-07-27
 
 ### Fixed

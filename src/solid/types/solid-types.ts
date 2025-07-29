@@ -14,9 +14,9 @@ export interface SOLIDViolation {
   class?: string;
   method?: string;
   description: string;
-  explanation: string;      // Warum ist das ein SOLID-Verstoß?
-  impact: string;          // Was sind die Konsequenzen?
-  suggestion: string;      // Wie kann es behoben werden?
+  explanation: string; // Warum ist das ein SOLID-Verstoß?
+  impact: string; // Was sind die Konsequenzen?
+  suggestion: string; // Wie kann es behoben werden?
   metrics?: {
     complexity?: number;
     methodCount?: number;
@@ -24,6 +24,7 @@ export interface SOLIDViolation {
     parameters?: number;
     linesOfCode?: number;
     importConcerns?: string[];
+    classCount?: number;
   };
 }
 
@@ -36,7 +37,7 @@ export interface SOLIDCheckResult {
     methodCount: number;
     avgComplexity: number;
     maxComplexity: number;
-    solidScore: number;      // 0-100 SOLID compliance score
+    solidScore: number; // 0-100 SOLID compliance score
     concernDiversity: number; // Number of different concerns detected
   };
   suggestions: string[];
@@ -80,7 +81,15 @@ export interface MethodAnalysis {
 }
 
 export interface ImportConcern {
-  type: 'database' | 'http' | 'filesystem' | 'email' | 'validation' | 'ui' | 'business' | 'utility';
+  type:
+    | 'database'
+    | 'http'
+    | 'filesystem'
+    | 'email'
+    | 'validation'
+    | 'ui'
+    | 'business'
+    | 'utility';
   evidence: string[];
   confidence: number; // 0-1
 }

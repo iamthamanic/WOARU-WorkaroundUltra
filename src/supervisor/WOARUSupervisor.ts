@@ -139,7 +139,12 @@ export class WOARUSupervisor extends EventEmitter {
     );
 
     const handleCriticalIssues = (issues: CodeIssue[]) => {
-      this.notificationManager.notifyIssues(issues);
+      try {
+        this.notificationManager.notifyIssues(issues);
+      } catch (error) {
+        // Don't crash supervisor on notification errors
+        console.warn('Failed to notify issues:', error);
+      }
     };
     this.stateManager.on('critical_issues', handleCriticalIssues);
     this.cleanupHandlers.push(() =>
@@ -154,6 +159,14 @@ export class WOARUSupervisor extends EventEmitter {
     this.stateManager.on('health_score_updated', handleHealthScoreUpdated);
     this.cleanupHandlers.push(() =>
       this.stateManager.off('health_score_updated', handleHealthScoreUpdated)
+    );
+
+    const handleRecommendation = (recommendation: ToolRecommendation) => {
+      this.emit('recommendation', recommendation);
+    };
+    this.stateManager.on('recommendation', handleRecommendation);
+    this.cleanupHandlers.push(() =>
+      this.stateManager.off('recommendation', handleRecommendation)
     );
   }
 
@@ -231,6 +244,7 @@ export class WOARUSupervisor extends EventEmitter {
       // Stop components
       this.fileWatcher.stop();
       this.stateManager.stopAutoSave();
+      this.databaseManager.stopBackgroundUpdates();
 
       // Clean up event listeners
       this.cleanupEventListeners();
@@ -336,75 +350,89 @@ export class WOARUSupervisor extends EventEmitter {
   }
 
   private async handleFileChanges(changes: FileChange[]): Promise<void> {
-    // Apply changes to state
-    changes.forEach(change => {
-      this.stateManager.applyFileChange(change);
-    });
+    try {
+      // Apply changes to state and emit events
+      changes.forEach(change => {
+        this.stateManager.applyFileChange(change);
+        this.emit('file-changed', change.path);
+      });
 
-    // Check for package definition changes for security scanning
-    const packageFiles = [
-      'package.json',
-      'package-lock.json',
-      'pyproject.toml',
-      'requirements.txt',
-      'Gemfile',
-      'go.mod',
-    ];
-    const hasPackageChanges = changes.some(change =>
-      packageFiles.some(pkgFile => change.path.endsWith(pkgFile))
-    );
+      // Check for package definition changes for security scanning
+      const packageFiles = [
+        'package.json',
+        'package-lock.json',
+        'pyproject.toml',
+        'requirements.txt',
+        'Gemfile',
+        'go.mod',
+      ];
+      const hasPackageChanges = changes.some(change =>
+        packageFiles.some(pkgFile => change.path.endsWith(pkgFile))
+      );
 
-    // Check for new recommendations based on changes
-    const fileSpecificRecommendations: ToolRecommendation[] = [];
+      // Check for new recommendations based on changes
+      const fileSpecificRecommendations: ToolRecommendation[] = [];
 
-    for (const change of changes) {
-      if (change.type === 'change') {
-        // Run immediate quality checks
-        await this.qualityRunner.runChecksOnFileChange(
-          path.join(this.projectPath, change.path)
-        );
+      for (const change of changes) {
+        if (change.type === 'change') {
+          // Run immediate quality checks
+          await this.qualityRunner.runChecksOnFileChange(
+            path.join(this.projectPath, change.path)
+          );
 
-        // Get recommendations for the file
-        const recommendations = await this.toolEngine.checkSingleFile(
-          path.join(this.projectPath, change.path),
-          this.stateManager.getState()
-        );
-        fileSpecificRecommendations.push(...recommendations);
+          // Run auto-fix if enabled
+          if (this.config.autoFix) {
+            await this.qualityRunner.runChecksOnFileList([
+              path.join(this.projectPath, change.path),
+            ]);
+          }
+
+          // Get recommendations for the file
+          const recommendations = await this.toolEngine.checkSingleFile(
+            path.join(this.projectPath, change.path),
+            this.stateManager.getState()
+          );
+          fileSpecificRecommendations.push(...recommendations);
+        }
       }
-    }
 
-    if (fileSpecificRecommendations.length > 0) {
-      await this.notificationManager.notifyRecommendations(
-        fileSpecificRecommendations
+      if (fileSpecificRecommendations.length > 0) {
+        await this.notificationManager.notifyRecommendations(
+          fileSpecificRecommendations
+        );
+      }
+
+      // Run security check asynchronously if package files changed or critical code files
+      const securityTriggerFiles = [
+        ...packageFiles,
+        '.env',
+        '.env.example',
+        'docker-compose.yml',
+        'Dockerfile',
+      ];
+      const hasSecurityTriggers = changes.some(
+        change =>
+          securityTriggerFiles.some(secFile => change.path.endsWith(secFile)) ||
+          change.path.includes('auth') ||
+          change.path.includes('secret') ||
+          change.path.includes('key') ||
+          change.path.includes('password')
+      );
+
+      if (hasPackageChanges || hasSecurityTriggers) {
+        this.runBackgroundSecurityCheck(
+          changes.map(c => path.join(this.projectPath, c.path))
+        ).catch(error => {
+          console.error('Background security check failed:', error);
+        });
+      }
+
+      // Note: Periodic checks are now handled by dedicated interval
+    } catch (error) {
+      this.notificationManager.showError(
+        `Quality check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-
-    // Run security check asynchronously if package files changed or critical code files
-    const securityTriggerFiles = [
-      ...packageFiles,
-      '.env',
-      '.env.example',
-      'docker-compose.yml',
-      'Dockerfile',
-    ];
-    const hasSecurityTriggers = changes.some(
-      change =>
-        securityTriggerFiles.some(secFile => change.path.endsWith(secFile)) ||
-        change.path.includes('auth') ||
-        change.path.includes('secret') ||
-        change.path.includes('key') ||
-        change.path.includes('password')
-    );
-
-    if (hasPackageChanges || hasSecurityTriggers) {
-      this.runBackgroundSecurityCheck(
-        changes.map(c => path.join(this.projectPath, c.path))
-      ).catch(error => {
-        console.error('Background security check failed:', error);
-      });
-    }
-
-    // Note: Periodic checks are now handled by dedicated interval
   }
 
   private async handleCriticalFileChange(change: FileChange): Promise<void> {

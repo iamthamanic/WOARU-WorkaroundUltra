@@ -2,13 +2,17 @@
  * Base SOLID Checker - Abstrakte Basisklasse für alle SOLID-Prinzipien-Checker
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { safeExecAsync, validateCommand, ALLOWED_COMMANDS } from '../../utils/secureExecution';
+// import { exec } from 'child_process';
+// import { promisify } from 'util';
+import {
+  safeExecAsync,
+  validateCommand,
+  ALLOWED_COMMANDS,
+} from '../../utils/secureExecution';
 import { SOLIDViolation, SOLIDPrinciple } from '../types/solid-types';
 import { APP_CONFIG } from '../../config/constants';
 
-const execAsync = promisify(exec);
+// const execAsync = promisify(exec);
 
 export abstract class BaseSOLIDChecker {
   protected abstract principle: SOLIDPrinciple;
@@ -39,23 +43,23 @@ export abstract class BaseSOLIDChecker {
       if (!validateCommand(command, [...ALLOWED_COMMANDS])) {
         throw new Error(`Command '${command}' is not allowed`);
       }
-      
+
       const result = await safeExecAsync(command, args, {
         cwd: options.cwd || process.cwd(),
         timeout: options.timeout || APP_CONFIG.TIMEOUTS.DEFAULT,
       });
-      
+
       const { stdout, stderr } = result;
-      
+
       if (stderr && !stdout) {
         throw new Error(stderr);
       }
-      
+
       return stdout;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Manche Tools geben Ergebnisse über stderr zurück
-      if (error.stdout) {
-        return error.stdout;
+      if (error && typeof error === 'object' && 'stdout' in error) {
+        return (error as { stdout: string }).stdout;
       }
       throw error;
     }
@@ -65,7 +69,7 @@ export abstract class BaseSOLIDChecker {
    * Berechnet einen Severity-Score basierend auf Metriken
    */
   protected calculateSeverity(
-    value: number, 
+    value: number,
     thresholds: { low: number; medium: number; high: number }
   ): 'low' | 'medium' | 'high' | 'critical' {
     if (value >= thresholds.high) return 'critical';
@@ -94,7 +98,15 @@ export abstract class BaseSOLIDChecker {
     impact: string;
     suggestion: string;
     severity: 'low' | 'medium' | 'high' | 'critical';
-    metrics?: any;
+    metrics?: {
+      complexity?: number;
+      methodCount?: number;
+      dependencies?: number;
+      parameters?: number;
+      linesOfCode?: number;
+      importConcerns?: string[];
+      classCount?: number;
+    };
   }): SOLIDViolation {
     return {
       principle: this.principle,
@@ -108,7 +120,7 @@ export abstract class BaseSOLIDChecker {
       explanation: params.explanation,
       impact: params.impact,
       suggestion: params.suggestion,
-      metrics: params.metrics
+      metrics: params.metrics,
     };
   }
 
@@ -131,51 +143,128 @@ export abstract class BaseSOLIDChecker {
    */
   protected analyzeImportConcerns(imports: string[]): string[] {
     const concerns = new Set<string>();
-    
+
     imports.forEach(imp => {
       const lowerImp = imp.toLowerCase();
-      
+
       // Database concerns
-      if (this.matchesPattern(lowerImp, ['database', 'db', 'sql', 'mongo', 'redis', 'orm', 'prisma', 'sequelize', 'typeorm'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'database',
+          'db',
+          'sql',
+          'mongo',
+          'redis',
+          'orm',
+          'prisma',
+          'sequelize',
+          'typeorm',
+        ])
+      ) {
         concerns.add('database');
       }
-      
-      // HTTP/Network concerns  
-      if (this.matchesPattern(lowerImp, ['http', 'axios', 'fetch', 'request', 'api', 'rest', 'graphql', 'socket'])) {
+
+      // HTTP/Network concerns
+      if (
+        this.matchesPattern(lowerImp, [
+          'http',
+          'axios',
+          'fetch',
+          'request',
+          'api',
+          'rest',
+          'graphql',
+          'socket',
+        ])
+      ) {
         concerns.add('http');
       }
-      
+
       // Filesystem concerns
-      if (this.matchesPattern(lowerImp, ['file', 'fs', 'path', 'upload', 'download', 'stream'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'file',
+          'fs',
+          'path',
+          'upload',
+          'download',
+          'stream',
+        ])
+      ) {
         concerns.add('filesystem');
       }
-      
+
       // Email concerns
-      if (this.matchesPattern(lowerImp, ['email', 'mail', 'smtp', 'sendgrid', 'nodemailer'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'email',
+          'mail',
+          'smtp',
+          'sendgrid',
+          'nodemailer',
+        ])
+      ) {
         concerns.add('email');
       }
-      
+
       // Validation concerns
-      if (this.matchesPattern(lowerImp, ['validation', 'validator', 'joi', 'yup', 'ajv', 'zod'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'validation',
+          'validator',
+          'joi',
+          'yup',
+          'ajv',
+          'zod',
+        ])
+      ) {
         concerns.add('validation');
       }
-      
+
       // UI concerns
-      if (this.matchesPattern(lowerImp, ['react', 'vue', 'angular', 'component', 'ui', 'dom', 'jsx', 'tsx'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'react',
+          'vue',
+          'angular',
+          'component',
+          'ui',
+          'dom',
+          'jsx',
+          'tsx',
+        ])
+      ) {
         concerns.add('ui');
       }
-      
+
       // Authentication concerns
-      if (this.matchesPattern(lowerImp, ['auth', 'jwt', 'passport', 'session', 'oauth', 'bcrypt'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'auth',
+          'jwt',
+          'passport',
+          'session',
+          'oauth',
+          'bcrypt',
+        ])
+      ) {
         concerns.add('authentication');
       }
-      
+
       // Logging concerns
-      if (this.matchesPattern(lowerImp, ['log', 'winston', 'pino', 'console', 'debug'])) {
+      if (
+        this.matchesPattern(lowerImp, [
+          'log',
+          'winston',
+          'pino',
+          'console',
+          'debug',
+        ])
+      ) {
         concerns.add('logging');
       }
     });
-    
+
     return Array.from(concerns);
   }
 

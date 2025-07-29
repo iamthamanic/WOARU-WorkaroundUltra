@@ -3,162 +3,155 @@
   "cli": {
     "main": {
       "description": "Universeller Projekt-Setup-Autopilot - Analysiert und konfiguriert automatisch Entwicklungstools für JEDE Programmiersprache"
-    }
-  },
-  "commands": {
-    "version": {
-      "description": "Versionsinformationen anzeigen",
-      "purpose": "Aktuelle WOARU-Version und Systeminformationen anzeigen",
-      "check": {
-        "description": "Nach Updates suchen",
-        "purpose": "Prüfen, ob neuere Versionen von WOARU verfügbar sind"
-      }
+    },
+    "ai_control_center": {
+      "title": "WOARU AI Control Center",
+      "current_status": "Aktueller Status:",
+      "no_primary_provider": "⚠️ Kein primärer Provider ausgewählt!",
+      "menu_options": {
+        "add_edit_provider": "🔧 Provider hinzufügen/bearbeiten",
+        "disable_multi_ai": "🔕 Multi-AI Review deaktivieren",
+        "enable_multi_ai": "🔊 Multi-AI Review aktivieren",
+        "select_primary": "🎯 Primären Review-Model auswählen",
+        "exit": "🚪 Verlassen"
+      },
+      "multi_ai_enabled": "Alle aktivierten Provider werden nun für Reviews verwendet.",
+      "should_select_primary": "Sie sollten einen primären Provider auswählen.",
+      "continue_prompt": "Drücke Enter um fortzufahren...",
+      "disable_multi_ai_explanation": "Multi-AI Review deaktiviert. Nur der primäre Provider wird für Reviews verwendet.",
+      "menu_prompt": "Was möchtest du tun?"
+    },
+    "provider_management": {
+      "select_provider": "Wähle einen AI-Provider:",
+      "select_primary": "Wähle den primären Provider für Reviews:",
+      "primary_selected": "✅ {{provider}} wurde als primärer Provider ausgewählt!",
+      "provider_actions": "Was möchtest du mit {{provider}} tun?",
+      "change_model": "🔄 Model ändern",
+      "change_api_key": "🔑 API-Schlüssel ändern",
+      "toggle_enabled": "🔛 Aktiviert/Deaktiviert umschalten",
+      "remove_provider": "🗑️ Provider entfernen",
+      "back_to_menu": "← Zurück zum Hauptmenü",
+      "model_changed": "✅ Model geändert zu: {{model}}",
+      "api_key_prompt": "Neuer API-Schlüssel für {{provider}}:",
+      "api_key_validation": "API-Schlüssel validiert und gespeichert.",
+      "confirm_removal": "Bist du sicher, dass du {{provider}} entfernen möchtest?",
+      "provider_removed": "✅ {{provider}} wurde entfernt.",
+      "removal_cancelled": "❌ Entfernung abgebrochen."
+    },
+    "setup": {
+      "loading_models": "🔄 Lade verfügbare Models...",
+      "api_key_prompt": "API-Schlüssel für {{provider}} eingeben:",
+      "api_key_validation": "API-Schlüssel validiert und gespeichert.",
+      "select_model": "Model für {{provider}} auswählen:",
+      "enable_for_analysis": "{{provider}} für Code-Analyse aktivieren?",
+      "provider_setup_complete": "✅ {{provider}} wurde erfolgreich eingerichtet!",
+      "setup_another": "Möchtest du einen weiteren Provider einrichten?",
+      "enable_multi_ai": "Möchtest du die \"Multi-AI Review\" Funktion aktivieren, die alle aktivierten Provider gleichzeitig für umfassendere Analysen nutzt?",
+      "multi_ai_activated": "✅ Multi-AI Review wurde aktiviert! Alle aktivierten Provider werden nun für Reviews verwendet.",
+      "multi_ai_not_activated": "📋 Multi-AI Review bleibt deaktiviert. Du kannst dies später über \"woaru ai\" ändern.",
+      "more_changes": "Möchtest du weitere Änderungen vornehmen?",
+      "no_changes": "Keine weiteren Änderungen gewünscht."
     },
     "commands": {
-      "description": "Detaillierte Befehlsreferenz-Dokumentation anzeigen",
-      "purpose": "Alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen durchsuchen",
-      "title": "📚 WOARU Befehlsreferenz"
+      "quick_analyze": {
+        "description": "Schnellanalyse für Projekt-Setup-Empfehlungen",
+        "purpose": "Erhalten Sie sofortige Empfehlungen zur Verbesserung Ihres Projekt-Setups"
+      },
+      "setup": {
+        "description": "Einrichtung von Tools und AI-Integrationen",
+        "purpose": "Konfiguriert Entwicklungstools und AI-Provider für optimalen Workflow"
+      },
+      "ai": {
+        "description": "Verwaltung von AI-Providern für Code-Analyse",
+        "purpose": "Konfiguriert und verwaltet AI-gestützte Code-Analyse-Funktionen"
+      },
+      "update_db": {
+        "description": "Aktualisierung der Tools-Datenbank von Remote-Quelle",
+        "purpose": "Aktualisiert die Datenbank verfügbarer Entwicklungstools und Konfigurationen"
+      },
+      "watch": {
+        "description": "Startet WOARU Supervisor zur kontinuierlichen Projektüberwachung",
+        "purpose": "Aktiviert Echtzeit-Monitoring und automatische Projektverbesserungen"
+      },
+      "status": {
+        "description": "Zeigt WOARU Supervisor-Status und Projekt-Gesundheit",
+        "purpose": "Zeigt aktuellen Monitoring-Status und Projekt-Gesundheitsmetriken"
+      },
+      "update": {
+        "description": "Aktualisiert WOARU auf die neueste Version von npm",
+        "purpose": "Hält WOARU mit den neuesten Features und Verbesserungen aktuell"
+      },
+      "stop": {
+        "description": "Stoppt den WOARU Supervisor",
+        "purpose": "Deaktiviert Projektüberwachung und Hintergrundprozesse"
+      },
+      "logs": {
+        "description": "Zeigt Supervisor-Logs",
+        "purpose": "Zeigt detaillierte Logs vom WOARU Supervisor"
+      },
+      "recommendations": {
+        "description": "Zeigt aktuelle Tool-Empfehlungen",
+        "purpose": "Zeigt personalisierte Tool-Vorschläge für Ihr Projekt"
+      },
+      "helpers": {
+        "description": "Zeigt alle erkannten/aktivierten Entwicklungstools und Helfer",
+        "purpose": "Zeigt alle aktuell aktiven Entwicklungstools und Konfigurationen"
+      },
+      "docu": {
+        "description": "AI-gestützter Code-Dokumentationsgenerator",
+        "purpose": "Generiert umfassende Dokumentation für Ihre Codebasis"
+      },
+      "docu_nopro": {
+        "description": "Generiert benutzerfreundliche Dokumentation für nicht-technische Zielgruppen",
+        "purpose": "Erstellt zugängliche Dokumentation, die jeder verstehen kann"
+      },
+      "docu_pro": {
+        "description": "Generiert technische TSDoc/JSDoc-Dokumentation für Entwickler",
+        "purpose": "Erstellt umfassende technische Dokumentation mit ordnungsgemäßen Annotationen"
+      },
+      "docu_ai": {
+        "description": "Generiert AI-optimierte YAML-Kontext-Header für maschinelles Verständnis",
+        "purpose": "Erstellt maschinenlesbare Dokumentation für AI-Tools und Automatisierung"
+      },
+      "ignore": {
+        "description": "Fügt ein Tool zur Ignorierliste hinzu",
+        "purpose": "Schließt spezifische Tools von Empfehlungen und Monitoring aus"
+      },
+      "review": {
+        "description": "Code-Review und Analyse-Tools",
+        "purpose": "Umfassende Code-Qualitäts- und Sicherheitsanalyse"
+      },
+      "analyze": {
+        "description": "Umfassende Projektanalyse inklusive Sicherheitsaudit",
+        "purpose": "Führt tiefgreifende Analyse der Projekt-Gesundheit und Sicherheit durch"
+      },
+      "rollback": {
+        "description": "Rollback von Änderungen eines spezifischen Tools",
+        "purpose": "Macht Änderungen von WOARU Tools und Konfigurationen rückgängig"
+      },
+      "commands": {
+        "description": "Zeigt detaillierte Befehls-Referenz-Dokumentation",
+        "purpose": "Durchsucht alle verfügbaren WOARU Befehle mit detaillierten Erklärungen"
+      },
+      "message": {
+        "description": "Sendet Reports aus der Historie zu konfigurierten Nachrichtenkanälen",
+        "purpose": "Teilt Analyse-Reports über konfigurierte Kommunikationskanäle"
+      },
+      "version": {
+        "description": "Zeigt Versionsinformationen",
+        "purpose": "Zeigt aktuelle WOARU Version und Systeminformationen"
+      },
+      "config": {
+        "description": "Konfiguriert WOARU Einstellungen",
+        "purpose": "Verwaltet WOARU Konfiguration und Einstellungen"
+      },
+      "language": {
+        "description": "Interaktive Sprachauswahl",
+        "purpose": "Ändert die von WOARU verwendete Sprache"
+      }
     },
-    "wiki": {
-      "description": "Umfassende WOARU-Dokumentation und Konzeptleitfaden anzeigen",
-      "purpose": "Vollständige Dokumentation einsehen und WOARU-Konzepte erlernen",
-      "title": "📖 WOARU Dokumentation & Wiki",
-      "no_docs_found": "Keine Dokumentation für Sprache gefunden: {{lang}}",
-      "error": "Fehler beim Laden der Dokumentation:"
-    },
-    "purpose_label": "Zweck"
-  },
-  "version": {
-    "display": "WOARU Version: {{version}}",
-    "checking_updates": "🔍 Suche nach Updates...",
-    "up_to_date": "✅ Sie verwenden die neueste Version ({{version}})"
-  },
-  "splash_screen": {
-    "main_title": "🤖 WOARU - HILFT IHNEN, DEN BESTEN CODE ZU SCHREIBEN",
-    "version_display": "Version {{version}}",
-    "usage_hint": "Geben Sie \"woaru --help\" ein, um alle verfügbaren Befehle anzuzeigen",
-    "main_commands": "Hauptbefehle:",
-    "commands_desc": "Alle Befehle anzeigen",
-    "analyze_desc": "Projekt analysieren",
-    "watch_desc": "Überwachung starten",
-    "ai_desc": "AI-Kontrollzentrum",
-    "language_desc": "Sprachauswahl",
-    "setup_desc": "Tools einrichten"
-  },
-  "language_selection": {
-    "prompt": "Bitte wählen Sie Ihre bevorzugte Sprache:",
-    "english": "🇺🇸 English",
-    "german": "🇩🇪 Deutsch"
-  },
-  "language_setup": {
-    "welcome_multilingual": "🌍 Willkommen bei WOARU",
-    "first_time_message": "🚀 WOARU wird zum ersten Mal ausgeführt! Lassen Sie uns Ihre Spracheinstellung konfigurieren.",
-    "language_set_confirmation": "✅ Sprache auf {{language}} gesetzt! WOARU ist jetzt bereit.",
-    "change_language_hint": "💡 Sie können Ihre Sprache jederzeit ändern mit: woaru config set language <en|de>",
-    "current_configuration": "🌍 Sprachkonfiguration:",
-    "current_language_display": "Aktuell: {{name}} ({{code}})",
-    "available_languages_display": "Verfügbar: {{languages}}",
-    "change_command_hint": "Ändern mit: woaru config set language <{{options}}>"
-  },
-  "errors": {
-    "snyk_not_found": "Snyk nicht gefunden. Bitte installieren Sie die Snyk CLI für Sicherheitsanalysen.",
-    "config_load_failed": "Konfiguration konnte nicht geladen werden",
-    "api_key_missing": "API-Schlüssel für Provider {{provider}} nicht gefunden",
-    "file_not_found": "Datei nicht gefunden: {{file}}",
-    "invalid_command": "Ungültiger Befehl: {{command}}",
-    "security": {
-      "directory_traversal": "Ungültiger Dateipfad: Directory Traversal erkannt",
-      "command_timeout": "Befehl-Timeout nach {{timeout}}ms",
-      "command_not_allowed": "Befehl '{{command}}' ist nicht erlaubt"
-    },
-    "json": {
-      "string_too_large": "JSON-String zu groß: {{size}} Bytes > {{maxSize}} Bytes",
-      "validation_failed": "JSON-Validierung fehlgeschlagen",
-      "parsing_failed": "JSON-Parsing fehlgeschlagen:",
-      "unknown_error": "Unbekannter Fehler",
-      "output_too_large": "JSON-Ausgabe zu groß: {{size}} Bytes > {{maxSize}} Bytes",
-      "stringify_failed": "JSON-Stringify fehlgeschlagen: {{error}}"
-    }
-  },
-  "status": {
-    "title": "WOARU Status",
-    "supervisor_running": "Supervisor läuft",
-    "supervisor_stopped": "Supervisor gestoppt",
-    "project_health": "Projekt-Gesundheit: {{score}}/100",
-    "configured_providers": "{{count}} konfiguriert",
-    "enabled_providers": "{{count}} aktiviert",
-    "monitoring_files": "Überwache {{count}} Dateien"
-  },
-  "ai_control_center": {
-    "title": "WOARU AI Control Center",
-    "current_status": "Aktueller Status:",
-    "review_configuration": "Review-Konfiguration:",
-    "multi_ai_enabled": "Multi-AI Review aktiviert",
-    "multi_ai_disabled": "Multi-AI Review deaktiviert",
-    "primary_provider": "Primärer Provider: {{provider}}",
-    "api_key_found": "API-Schlüssel gefunden",
-    "api_key_missing": "API-Schlüssel fehlt",
-    "goodbye": "Bis bald!",
-    "no_providers_enabled": "Keine aktivierten Provider gefunden!",
-    "configure_providers_first": "Bitte erst Provider konfigurieren und aktivieren.",
-    "multi_ai_enabled_message": "Multi-AI Review wurde aktiviert!",
-    "multi_ai_disabled_message": "Multi-AI Review wurde deaktiviert.",
-    "menu": {
-      "add_edit_provider": "Provider hinzufügen/bearbeiten",
-      "disable_multi_ai": "Multi-AI Review deaktivieren",
-      "enable_multi_ai": "Multi-AI Review aktivieren",
-      "exit": "🚪 Beenden",
-      "done_save": "✅ Fertig & Speichern"
-    }
-  },
-  "setup": {
-    "title": "WOARU Setup",
-    "ai_setup_title": "WOARU AI Setup",
-    "provider_selection": "Wählen Sie einen AI-Provider:",
-    "model_selection": "Wählen Sie ein Modell für {{provider}}:",
-    "api_key_prompt": "Bitte geben Sie Ihren {{provider}} API-Schlüssel ein:",
-    "api_key_hint": "(beginnt mit '{{prefix}}')",
-    "success": "Setup erfolgreich abgeschlossen!",
-    "provider_configured": "{{provider}} erfolgreich konfiguriert",
-    "setup_another": "Weiteren Provider einrichten?",
-    "status_active": "AKTIV",
-    "status_disabled": "DEAKTIVIERT",
-    "status_not_configured": "NICHT KONFIGURIERT",
-    "what_to_do_with": "Was möchtest du mit {{provider}} machen?",
-    "loading_models": "Lade verfügbare Modelle...",
-    "no_models_found": "Keine Modelle gefunden. Konfiguration abgebrochen.",
-    "no_api_key_found": "Kein API-Key gefunden. Bitte erst API-Key aktualisieren.",
-    "api_key_updated": "API-Key aktualisiert",
-    "confirm_removal": "Bist du sicher, dass du {{provider}} entfernen möchtest?",
-    "new_api_key_for": "Neuer API-Key für {{provider}}:",
-    "select_new_model": "Wähle ein neues Modell für {{provider}}:"
-  },
-  "analysis": {
-    "starting": "Starte Analyse...",
-    "complete": "Analyse abgeschlossen",
-    "security_scan": "Führe Sicherheitsscan durch...",
-    "quality_check": "Führe Qualitätsprüfung durch...",
-    "recommendations": "Empfehlungen:",
-    "issues_found": "{{count}} Probleme gefunden",
-    "no_issues": "Keine Probleme gefunden"
-  },
-  "config": {
-    "language_set": "Sprache auf {{language}} gesetzt",
-    "language_invalid": "Ungültige Sprache: {{language}}. Unterstützte Sprachen: en, de",
-    "current_language": "Aktuelle Sprache: {{language}}",
-    "available_languages": "Verfügbare Sprachen: {{languages}}"
-  },
-  "language_command": {
-    "title": "Sprachauswahl",
-    "current_language": "Aktuell ausgewählte Sprache: {{language}} ({{code}})",
-    "select_new": "Wählen Sie eine neue Sprache:",
-    "language_changed": "Sprache wurde erfolgreich auf {{language}} geändert",
-    "language_unchanged": "Sprache bleibt auf {{language}} eingestellt",
-    "next_usage_note": "Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv.",
-    "error_changing": "Fehler beim Ändern der Sprache:"
-  },
-  "ai_prompts": {
-    "language_instruction": "Antworte ausschließlich in deutscher Sprache."
+    "additional_recommendations": "... und {{count}} weitere Empfehlungen",
+    "version_check_error": "❌ Fehler beim Prüfen der Version:"
   },
   "commands": {
     "main": {
@@ -344,6 +337,139 @@
     },
     "purpose_label": "Zweck"
   },
+  "version": {
+    "display": "WOARU Version: {{version}}",
+    "checking_updates": "🔍 Suche nach Updates...",
+    "up_to_date": "✅ Sie verwenden die neueste Version ({{version}})"
+  },
+  "splash_screen": {
+    "main_title": "🤖 WOARU - HILFT IHNEN, DEN BESTEN CODE ZU SCHREIBEN",
+    "version_display": "Version {{version}}",
+    "usage_hint": "Geben Sie \"woaru --help\" ein, um alle verfügbaren Befehle anzuzeigen",
+    "main_commands": "Hauptbefehle:",
+    "commands_desc": "Alle Befehle anzeigen",
+    "analyze_desc": "Projekt analysieren",
+    "watch_desc": "Überwachung starten",
+    "ai_desc": "AI-Kontrollzentrum",
+    "language_desc": "Sprachauswahl",
+    "setup_desc": "Tools einrichten"
+  },
+  "language_selection": {
+    "prompt": "Bitte wählen Sie Ihre bevorzugte Sprache:",
+    "english": "🇺🇸 English",
+    "german": "🇩🇪 Deutsch"
+  },
+  "language_setup": {
+    "welcome_multilingual": "🌍 Willkommen bei WOARU",
+    "first_time_message": "🚀 WOARU wird zum ersten Mal ausgeführt! Lassen Sie uns Ihre Spracheinstellung konfigurieren.",
+    "language_set_confirmation": "✅ Sprache auf {{language}} gesetzt! WOARU ist jetzt bereit.",
+    "change_language_hint": "💡 Sie können Ihre Sprache jederzeit ändern mit: woaru config set language <en|de>",
+    "current_configuration": "🌍 Sprachkonfiguration:",
+    "current_language_display": "Aktuell: {{name}} ({{code}})",
+    "available_languages_display": "Verfügbar: {{languages}}",
+    "change_command_hint": "Ändern mit: woaru config set language <{{options}}>"
+  },
+  "errors": {
+    "snyk_not_found": "Snyk nicht gefunden. Bitte installieren Sie die Snyk CLI für Sicherheitsanalysen.",
+    "config_load_failed": "Konfiguration konnte nicht geladen werden",
+    "api_key_missing": "API-Schlüssel für Provider {{provider}} nicht gefunden",
+    "file_not_found": "Datei nicht gefunden: {{file}}",
+    "invalid_command": "Ungültiger Befehl: {{command}}",
+    "security": {
+      "directory_traversal": "Ungültiger Dateipfad: Directory Traversal erkannt",
+      "command_timeout": "Befehl-Timeout nach {{timeout}}ms",
+      "command_not_allowed": "Befehl '{{command}}' ist nicht erlaubt"
+    },
+    "json": {
+      "string_too_large": "JSON-String zu groß: {{size}} Bytes > {{maxSize}} Bytes",
+      "validation_failed": "JSON-Validierung fehlgeschlagen",
+      "parsing_failed": "JSON-Parsing fehlgeschlagen:",
+      "unknown_error": "Unbekannter Fehler",
+      "output_too_large": "JSON-Ausgabe zu groß: {{size}} Bytes > {{maxSize}} Bytes",
+      "stringify_failed": "JSON-Stringify fehlgeschlagen: {{error}}"
+    }
+  },
+  "status": {
+    "title": "WOARU Status",
+    "supervisor_running": "Supervisor läuft",
+    "supervisor_stopped": "Supervisor gestoppt",
+    "project_health": "Projekt-Gesundheit: {{score}}/100",
+    "configured_providers": "{{count}} konfiguriert",
+    "enabled_providers": "{{count}} aktiviert",
+    "monitoring_files": "Überwache {{count}} Dateien"
+  },
+  "ai_control_center": {
+    "title": "WOARU AI Control Center",
+    "current_status": "Aktueller Status:",
+    "review_configuration": "Review-Konfiguration:",
+    "multi_ai_enabled": "Multi-AI Review aktiviert",
+    "multi_ai_disabled": "Multi-AI Review deaktiviert",
+    "primary_provider": "Primärer Provider: {{provider}}",
+    "api_key_found": "API-Schlüssel gefunden",
+    "api_key_missing": "API-Schlüssel fehlt",
+    "goodbye": "Bis bald!",
+    "no_providers_enabled": "Keine aktivierten Provider gefunden!",
+    "configure_providers_first": "Bitte erst Provider konfigurieren und aktivieren.",
+    "multi_ai_enabled_message": "Multi-AI Review wurde aktiviert!",
+    "multi_ai_disabled_message": "Multi-AI Review wurde deaktiviert.",
+    "menu": {
+      "add_edit_provider": "Provider hinzufügen/bearbeiten",
+      "disable_multi_ai": "Multi-AI Review deaktivieren",
+      "enable_multi_ai": "Multi-AI Review aktivieren",
+      "exit": "🚪 Beenden",
+      "done_save": "✅ Fertig & Speichern"
+    }
+  },
+  "setup": {
+    "title": "WOARU Setup",
+    "ai_setup_title": "WOARU AI Setup",
+    "provider_selection": "Wählen Sie einen AI-Provider:",
+    "model_selection": "Wählen Sie ein Modell für {{provider}}:",
+    "api_key_prompt": "Bitte geben Sie Ihren {{provider}} API-Schlüssel ein:",
+    "api_key_hint": "(beginnt mit '{{prefix}}')",
+    "success": "Setup erfolgreich abgeschlossen!",
+    "provider_configured": "{{provider}} erfolgreich konfiguriert",
+    "setup_another": "Weiteren Provider einrichten?",
+    "status_active": "AKTIV",
+    "status_disabled": "DEAKTIVIERT",
+    "status_not_configured": "NICHT KONFIGURIERT",
+    "what_to_do_with": "Was möchtest du mit {{provider}} machen?",
+    "loading_models": "Lade verfügbare Modelle...",
+    "no_models_found": "Keine Modelle gefunden. Konfiguration abgebrochen.",
+    "no_api_key_found": "Kein API-Key gefunden. Bitte erst API-Key aktualisieren.",
+    "api_key_updated": "API-Key aktualisiert",
+    "confirm_removal": "Bist du sicher, dass du {{provider}} entfernen möchtest?",
+    "new_api_key_for": "Neuer API-Key für {{provider}}:",
+    "select_new_model": "Wähle ein neues Modell für {{provider}}:"
+  },
+  "analysis": {
+    "results": "Analyseergebnisse:",
+    "setup_recommendations": "Setup-Empfehlungen:",
+    "framework_tools": "Framework-spezifische Tools:",
+    "refactor_suggestions": "Refactoring-Vorschläge:",
+    "already_installed": "Bereits installiert:",
+    "code_insights": "Code-Analyse-Einsichten:",
+    "claude_automation": "Claude-Automatisierungs-Ideen:",
+    "confirm_setup": "Möchten Sie mit dem automatisierten Setup fortfahren?"
+  },
+  "config": {
+    "language_set": "Sprache auf {{language}} gesetzt",
+    "language_invalid": "Ungültige Sprache: {{language}}. Unterstützte Sprachen: en, de",
+    "current_language": "Aktuelle Sprache: {{language}}",
+    "available_languages": "Verfügbare Sprachen: {{languages}}"
+  },
+  "language_command": {
+    "title": "Sprachauswahl",
+    "current_language": "Aktuell ausgewählte Sprache: {{language}} ({{code}})",
+    "select_new": "Wählen Sie eine neue Sprache:",
+    "language_changed": "Sprache wurde erfolgreich auf {{language}} geändert",
+    "language_unchanged": "Sprache bleibt auf {{language}} eingestellt",
+    "next_usage_note": "Die neue Sprache wird bei der nächsten Verwendung von WOARU aktiv.",
+    "error_changing": "Fehler beim Ändern der Sprache:"
+  },
+  "ai_prompts": {
+    "language_instruction": "Antworte ausschließlich in deutscher Sprache."
+  },
   "command_not_implemented": {
     "quick_analyze": "Schnellanalyse noch nicht implementiert. Verwenden Sie stattdessen \"woaru analyze\".",
     "setup": "Setup-Befehl noch nicht implementiert.",
@@ -357,17 +483,15 @@
     "recommendations": "Empfehlungen-Befehl noch nicht implementiert.",
     "helpers": "Helfer-Befehl noch nicht implementiert.",
     "docu": "Dokumentations-Befehl noch nicht implementiert.",
-    "review": "Review-Befehl noch nicht implementiert.",
+    "review": "KI-gestütztes Code-Review und Analyse-System",
     "analyze": "Analyse-Befehl noch nicht implementiert.",
     "message": "Nachrichten-Befehl noch nicht implementiert.",
     "config": "Konfigurations-Befehl noch nicht implementiert."
   },
   "ui": {
-    "available_commands": "Verfügbare Befehle",
-    "help_tip": "Verwenden Sie \"woaru <command> --help\" für detaillierte Optionen",
-    "documentation_tip": "Für umfassende Dokumentation: woaru wiki",
-    "quick_commands": "Schnellbefehle",
-    "run_commands_help": "Führen Sie \"woaru commands\" für detaillierte Hilfe aus"
+    "command_analyze_desc": "  • woaru analyze    - Projekt analysieren",
+    "command_commands_desc": "  • woaru commands   - Alle Befehle anzeigen",
+    "fallback_title": "🤖 WOARU - Code Quality Tool"
   },
   "ai_helpers": {
     "config_check_error": "Fehler beim Prüfen der AI-Konfiguration:",
@@ -418,62 +542,22 @@
     "extract_nested_logic": "Verschachtelte Logik in separate Funktionen extrahieren"
   },
   "production_auditor": {
-    "error_monitoring_critical": "🚨 KRITISCH: Kein Error-Monitoring für Production-Apps gefunden",
-    "error_monitoring_recommendation": "Error-Monitoring ist essentiell für Production-Apps. Empfohlen: {{tool}}{{alternatives}}. {{installCommand}}",
-    "python_error_monitoring_tip": "💡 PRO-TIPP: Kein Error-Monitoring für Python gefunden",
-    "python_error_monitoring_install": "Installiere sentry-sdk: pip install sentry-sdk",
-    "testing_framework_warning": "⚠️ WARNUNG: Kein Testing-Framework gefunden",
-    "testing_framework_recommendation": "Tests sind essentiell für Code-Qualität. Für React: npm install --save-dev jest @testing-library/react, für allgemein: npm install --save-dev vitest",
+    "invalid_changed_files_config": "Ungültige Konfiguration für geänderte Dateien",
+    "package_json_not_found": "Package.json für Audit nicht gefunden",
+    "error_monitoring_found": "Error-Monitoring-Tool gefunden: {{tool}}",
+    "error_auditing_monitoring": "Fehler beim Überprüfen des Error-Monitorings:",
+    "audit_changed_files_error": "Fehler beim Überprüfen geänderter Dateien:",
+    "file_too_large": "Datei {{file}} ist zu groß für die Verarbeitung",
+    "error_python_monitoring": "Fehler beim Überprüfen des Python Error-Monitorings:",
+    "error_monitoring_critical": "Kein Error-Monitoring-Tool erkannt. Kritische Produktionsfehler können unentdeckt bleiben.",
+    "error_monitoring_recommendation": "Installiere {{tool}} für umfassendes Error-Tracking{{alternatives}}. Installation: {{installCommand}}",
+    "alternatives": "Alternativen",
+    "python_error_monitoring_missing": "Kein Error-Monitoring für Python erkannt. Produktionsfehler können unentdeckt bleiben.",
+    "python_error_monitoring_recommendation": "Installiere sentry-sdk für umfassendes Error-Tracking: pip install sentry-sdk",
+    "testing_framework_missing": "Kein Testing-Framework erkannt. Code-Qualität kann ohne ordentliche Tests leiden.",
+    "testing_framework_recommendation": "Tests sind essentiell für Code-Qualität. Für React: npm install --save-dev jest @testing-library/react, allgemein: npm install --save-dev vitest",
     "test_scripts_missing": "Testing-Framework gefunden, aber keine Test-Scripts in package.json",
-    "test_scripts_recommendation": "Füge Test-Scripts hinzu: \"test\": \"jest\" oder \"test\": \"vitest\"",
-    "python_testing_warning": "⚠️ WARNUNG: Kein Testing-Framework für Python gefunden",
-    "python_testing_install": "Installiere pytest: pip install pytest",
-    "dockerfile_missing": "🐳 Kein Dockerfile gefunden",
-    "dockerfile_recommendation": "Containerisierung vereinfacht Deployment und Skalierung. Erstelle ein Dockerfile für konsistente Deployments.",
-    "dockerignore_missing": "Dockerfile gefunden, aber keine .dockerignore",
-    "dockerignore_recommendation": "Erstelle .dockerignore um Build-Performance zu verbessern und Image-Größe zu reduzieren.",
-    "snyk_not_configured": "🚨 Snyk Security Scanner nicht konfiguriert",
-    "snyk_install_recommendation": "Installiere Snyk global: npm install -g snyk && snyk auth",
-    "snyk_auth_recommendation": "Konfiguriere Snyk: snyk auth",
-    "critical_vulnerabilities_found": "🚨 {{count}} KRITISCHE Sicherheitslücken in Dependencies gefunden",
-    "critical_vulnerabilities_action": "Sofortiges Handeln erforderlich! {{upgradableCount}} können durch Updates behoben werden. Führe \"snyk wizard\" aus für geführte Behebung.",
-    "high_vulnerabilities_found": "⚠️ {{count}} hohe Sicherheitslücken in Dependencies",
-    "high_vulnerabilities_action": "{{upgradableCount}} können durch Updates behoben werden. Führe \"snyk test\" für Details aus.",
-    "medium_vulnerabilities_found": "🔵 {{count}} mittlere Sicherheitslücken gefunden",
-    "medium_vulnerabilities_action": "Plane Updates für betroffene Packages ein. Führe \"snyk test --severity-threshold=medium\" aus.",
-    "code_vulnerabilities_critical": "🚨 {{count}} kritische Sicherheitsprobleme im Code gefunden",
-    "code_vulnerabilities_critical_action": "Behebe diese Sicherheitslücken sofort! Führe \"snyk code test\" für Details aus.",
-    "code_vulnerabilities_high": "⚠️ {{count}} hohe Sicherheitsprobleme im Code",
-    "code_vulnerabilities_high_action": "Review und behebe diese Sicherheitsprobleme vor dem Production-Deploy.",
-    "express_helmet_missing": "🔒 Express ohne Helmet-Schutz",
-    "express_helmet_install": "Installiere Helmet für sichere HTTP-Headers: npm install helmet",
-    "https_enforcement_missing": "🔒 Keine HTTPS-Enforcement gefunden",
-    "https_enforcement_install": "Erzwinge HTTPS in Production: npm install express-enforces-ssl",
-    "security_headers_missing": "🔒 Keine Security Headers Konfiguration für Next.js",
-    "security_headers_install": "Installiere next-secure-headers für besseren Schutz: npm install next-secure-headers",
-    "rate_limiting_missing": "🔒 Kein Rate Limiting zum Schutz vor DDoS/Brute-Force",
-    "rate_limiting_install": "Installiere express-rate-limit: npm install express-rate-limit",
-    "input_validation_missing": "🔒 Keine Input-Validierungs-Bibliothek gefunden",
-    "input_validation_install": "Installiere eine Validierungs-Bibliothek wie Joi oder Zod für sichere Input-Verarbeitung",
-    "python_bandit_missing": "🔒 Kein Python Security Linter (Bandit) gefunden",
-    "python_bandit_install": "Installiere Bandit für Security-Checks: pip install bandit",
-    "env_example_missing": ".env gefunden, aber keine .env.example",
-    "env_example_recommendation": "Erstelle .env.example für Team-Kollaboration und Setup-Dokumentation.",
-    "env_config_partial": "dotenv installiert, aber keine .env-Dateien gefunden",
-    "env_config_recommendation": "Erstelle .env für lokale Konfiguration und .env.example als Template.",
-    "vulnerability_detail": "🔴 {{title}} in {{packageName}}@{{version}}",
-    "vulnerability_fix_available": "Update auf {{version}}: npm update {{packageName}}",
-    "vulnerability_no_fix": "Kein direkter Fix verfügbar. Erwäge Alternative oder warte auf Patch.",
-    "deprecated_tool_warning": "⚠️ WARNUNG: Das von dir genutzte Tool {{toolName}} ist veraltet",
-    "deprecated_tool_successor": "Der empfohlene Nachfolger ist {{successor}}. Migriere zu: npm install {{successor}}",
-    "deprecated_tool_alternative": "Erwäge Migration zu einer modernen Alternative",
-    "fallback_error_monitoring": "💡 PRO-TIPP: Kein Error-Monitoring gefunden (Fallback)",
-    "fallback_sentry_install": "Installiere Sentry für Production-Error-Tracking. Für React: npm install @sentry/react, für Node.js: npm install @sentry/node",
-    "new_components_no_tests": "{{count}} neue Komponenten ohne Tests",
-    "new_components_test_recommendation": "Erstelle Tests für die neuen Komponenten: {{components}}",
-    "api_endpoints_no_monitoring": "Neue API-Endpunkte ohne Error-Monitoring",
-    "api_endpoints_monitoring_recommendation": "Integriere Sentry oder ähnliche Tools für API-Error-Tracking",
-    "snyk_scan_failed": "Snyk security scan failed, falling back to basic checks:"
+    "test_scripts_recommendation": "Füge Test-Scripts hinzu: \"test\": \"jest\" oder \"test\": \"vitest\""
   },
   "provider_actions": {
     "change_model": "🔄 Modell ändern",
@@ -576,244 +660,24 @@
     }
   },
   "report_generator": {
-    "headers": {
-      "changed_files": "📋 Geänderte Dateien",
-      "critical_quality_issues": "🚨 Kritische Qualitäts-Probleme",
-      "solution_suggestions": "🔧 **Lösungsvorschläge:**",
-      "security_analysis": "🔒 Sicherheitsanalyse",
-      "solid_analysis": "🏗️ SOLID-Architektur Analyse",
-      "code_smell_analysis": "👃 Code-Smell Analyse",
-      "ai_review": "🤖 AI-Review Analyse"
-    },
-    "summary": {
-      "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
-      "quality_issues_found": "{{count}} Qualitäts-Probleme",
-      "security_warnings": "⚠️ WARNUNG: {{critical}} kritische und {{high}} hohe Sicherheitslücken gefunden!",
-      "changes_since_branch": "**Änderungen seit Branch: `{{branch}}`**",
-      "changed_files": "- **Geänderte Dateien:** {{count}}",
-      "quality_problems": "- **Qualitäts-Probleme:** {{count}}",
-      "fix_available": "- **✅ Fix verfügbar:** Upgrade auf {{version}}"
-    },
-    "solid": {
-      "score": "📊 **SOLID Score: {{score}}/100** ({{violations}} Verstöße gefunden)",
-      "violations_found": "### 🔴 {{principle}} ({{count}} Verstöße)",
-      "solution": "🔨 **Lösung:** {{suggestion}}",
-      "complexity": "Komplexität: {{complexity}}",
-      "more_violations": "*... und {{count}} weitere {{label}}-Verstöße*",
-      "systematic_refactoring": "🏗️ Führe systematisches Refactoring durch - beginne mit den kritischsten SOLID-Verstößen",
-      "high_complexity_classes": "🔄 {{count}} Klassen mit hoher Komplexität - extrahiere komplexe Logik in separate Utility-Klassen",
-      "files_with_violations": "⚠️ {{count}} Dateien mit vielen SOLID-Verstößen - priorisiere diese für Architektur-Überarbeitung",
-      "check_documentation": "📚 Überprüfe die SOLID-Prinzipien Dokumentation für weitere Verbesserungsideen"
-    },
-    "code_smell": {
-      "reduce_complexity": "🔄 Reduziere zyklomatische Komplexität in {{count}} Funktionen durch Aufteilen",
-      "shorten_functions": "📏 Kürze {{count}} zu lange Funktionen durch Extraktion von Logik"
-    },
-    "ai_review": {
-      "estimated_cost": "💰 **Geschätzte Kosten:** ${{cost}}",
-      "findings_summary": "📊 **{{findings}} Befunde gefunden** | **Analysedauer:** {{duration}}ms | **LLM Übereinstimmung:** {{agreement}}%",
-      "reasoning": "💭 **Begründung:** {{rationale}}",
-      "estimated_fix_time": "⏱️ **Geschätzte Behebungszeit:** {{time}}",
-      "check_security": "🔒 Überprüfe {{count}} potenzielle Sicherheitsprobleme",
-      "low_agreement": "🤔 Niedrige LLM-Übereinstimmung - manuelle Überprüfung empfohlen",
-      "high_costs": "💰 Hohe AI-Kosten - erwäge Batch-Processing für große Codebasen",
-      "meets_standards": "✅ Code erfüllt AI-basierte Qualitätsstandards"
-    }
-  },
-  "cli": {
-    "ai_control_center": {
-      "title": "WOARU AI Control Center",
-      "current_status": "Aktueller Status:",
-      "no_primary_provider": "⚠️ Kein primärer Provider ausgewählt!",
-      "menu_options": {
-        "add_edit_provider": "🔧 Provider hinzufügen/bearbeiten",
-        "disable_multi_ai": "🔕 Multi-AI Review deaktivieren",
-        "enable_multi_ai": "🔊 Multi-AI Review aktivieren",
-        "select_primary": "🎯 Primäres Review-Modell auswählen",
-        "exit": "🚪 Beenden"
-      },
-      "multi_ai_enabled": "Alle aktivierten Provider werden nun für Reviews verwendet.",
-      "should_select_primary": "Du solltest einen primären Provider auswählen.",
-      "continue_prompt": "Drücke Enter um fortzufahren...",
-      "disable_multi_ai_explanation": "Multi-AI Review deaktiviert. Nur der primäre Provider wird für Reviews verwendet.",
-      "menu_prompt": "Was möchtest du tun?"
-    },
-    "provider_management": {
-      "select_provider": "Wähle einen AI-Provider:",
-      "select_primary": "Wähle den primären Provider für Reviews:",
-      "primary_selected": "✅ {{provider}} wurde als primärer Provider ausgewählt!",
-      "provider_actions": "Was möchtest du mit {{provider}} machen?",
-      "change_model": "🔄 Modell ändern",
-      "change_api_key": "🔑 API-Key ändern",
-      "toggle_enabled": "🔛 Aktiviert/Deaktiviert umschalten",
-      "remove_provider": "🗑️ Provider entfernen",
-      "back_to_menu": "← Zurück zum Hauptmenü",
-      "model_changed": "✅ Modell geändert zu: {{model}}",
-      "api_key_prompt": "Neuer API-Key für {{provider}}:",
-      "api_key_validation": "API-Key validiert und gespeichert.",
-      "confirm_removal": "Bist du sicher, dass du {{provider}} entfernen möchtest?",
-      "provider_removed": "✅ {{provider}} wurde entfernt.",
-      "removal_cancelled": "❌ Entfernung abgebrochen."
-    },
-    "setup": {
-      "loading_models": "🔄 Lade verfügbare Modelle...",
-      "api_key_prompt": "API-Key für {{provider}} eingeben:",
-      "api_key_validation": "API-Key validiert und gespeichert.",
-      "select_model": "Wähle ein Modell für {{provider}}:",
-      "enable_for_analysis": "{{provider}} für Code-Analyse aktivieren?",
-      "provider_setup_complete": "✅ {{provider}} wurde erfolgreich eingerichtet!",
-      "setup_another": "Möchtest du einen weiteren Provider einrichten?",
-      "enable_multi_ai": "Möchtest du die \"Multi-AI Review\"-Funktion aktivieren, bei der alle aktivierten Provider gleichzeitig für eine umfassendere Analyse verwendet werden?",
-      "multi_ai_activated": "✅ Multi-AI Review wurde aktiviert! Alle aktivierten Provider werden nun für Reviews verwendet.",
-      "multi_ai_not_activated": "📋 Multi-AI Review bleibt deaktiviert. Du kannst dies später über \"woaru ai\" ändern.",
-      "more_changes": "Möchtest du weitere Änderungen vornehmen?",
-      "no_changes": "Keine weiteren Änderungen gewünscht."
-    },
-    "commands": {
-      "quick_analyze": {
-        "description": "Schnellanalyse für Projekt-Setup-Empfehlungen",
-        "purpose": "Erhalten Sie sofortige Empfehlungen zur Verbesserung Ihres Projekt-Setups"
-      },
-      "setup": {
-        "description": "Einrichtung von Tools und AI-Integrationen",
-        "purpose": "Konfiguriert Entwicklungstools und AI-Provider für optimalen Workflow"
-      },
-      "ai": {
-        "description": "Verwaltung von AI-Providern für Code-Analyse",
-        "purpose": "Konfiguriert und verwaltet AI-gestützte Code-Analyse-Funktionen"
-      },
-      "update_db": {
-        "description": "Aktualisierung der Tools-Datenbank von Remote-Quelle",
-        "purpose": "Aktualisiert die Datenbank verfügbarer Entwicklungstools und Konfigurationen"
-      },
-      "watch": {
-        "description": "Startet WOARU Supervisor zur kontinuierlichen Projektüberwachung",
-        "purpose": "Aktiviert Echtzeit-Monitoring und automatische Projektverbesserungen"
-      },
-      "status": {
-        "description": "Zeigt WOARU Supervisor-Status und Projekt-Gesundheit",
-        "purpose": "Zeigt aktuellen Monitoring-Status und Projekt-Gesundheitsmetriken"
-      },
-      "update": {
-        "description": "Aktualisiert WOARU auf die neueste Version von npm",
-        "purpose": "Hält WOARU mit den neuesten Features und Verbesserungen aktuell"
-      },
-      "stop": {
-        "description": "Stoppt den WOARU Supervisor",
-        "purpose": "Deaktiviert Projektüberwachung und Hintergrundprozesse"
-      },
-      "logs": {
-        "description": "Zeigt Supervisor-Logs",
-        "purpose": "Zeigt detaillierte Logs vom WOARU Supervisor"
-      },
-      "recommendations": {
-        "description": "Zeigt aktuelle Tool-Empfehlungen",
-        "purpose": "Zeigt personalisierte Tool-Vorschläge für Ihr Projekt"
-      },
-      "helpers": {
-        "description": "Zeigt alle erkannten/aktivierten Entwicklungstools und Helfer",
-        "purpose": "Zeigt alle aktuell aktiven Entwicklungstools und Konfigurationen"
-      },
-      "docu": {
-        "description": "AI-gestützter Code-Dokumentationsgenerator",
-        "purpose": "Generiert umfassende Dokumentation für Ihre Codebasis"
-      },
-      "ignore": {
-        "description": "Fügt ein Tool zur Ignorierliste hinzu",
-        "purpose": "Schließt spezifische Tools von Empfehlungen und Monitoring aus"
-      },
-      "review": {
-        "description": "Code-Review und Analyse-Tools",
-        "purpose": "Umfassende Code-Qualitäts- und Sicherheitsanalyse"
-      },
-      "analyze": {
-        "description": "Umfassende Projektanalyse inklusive Sicherheitsaudit",
-        "purpose": "Führt tiefgreifende Analyse der Projekt-Gesundheit und Sicherheit durch"
-      },
-      "rollback": {
-        "description": "Macht Änderungen rückgängig, die von einem spezifischen Tool gemacht wurden",
-        "purpose": "Macht Änderungen von WOARU-Tools und Konfigurationen rückgängig"
-      },
-      "commands": {
-        "description": "Zeigt detaillierte Befehlsreferenz-Dokumentation",
-        "purpose": "Durchsucht alle verfügbaren WOARU-Befehle mit detaillierten Erklärungen"
-      },
-      "message": {
-        "description": "Sendet Berichte aus Historie an konfigurierte Nachrichten-Kanäle",
-        "purpose": "Teilt Analyse-Berichte über konfigurierte Kommunikationskanäle"
-      },
-      "version": {
-        "description": "Zeigt Versionsinformationen",
-        "purpose": "Zeigt aktuelle WOARU-Version und Systeminformationen"
-      },
-      "config": {
-        "description": "Konfiguriert WOARU-Einstellungen",
-        "purpose": "Verwaltet WOARU-Konfiguration und Präferenzen"
-      },
-      "language": {
-        "description": "Interaktive Sprachauswahl",
-        "purpose": "Ändert die von WOARU-Interface verwendete Sprache"
-      }
-    }
-  },
-  "production_auditor": {
-    "invalid_changed_files_config": "Ungültige Konfiguration für geänderte Dateien",
-    "package_json_not_found": "Package.json für Audit nicht gefunden",
-    "error_monitoring_found": "Error-Monitoring-Tool gefunden: {{tool}}",
-    "error_auditing_monitoring": "Fehler beim Überprüfen des Error-Monitorings:",
-    "audit_changed_files_error": "Fehler beim Überprüfen geänderter Dateien:",
-    "file_too_large": "Datei {{file}} ist zu groß für die Verarbeitung",
-    "error_python_monitoring": "Fehler beim Überprüfen des Python Error-Monitorings:",
-    "error_monitoring_critical": "Kein Error-Monitoring-Tool erkannt. Kritische Produktionsfehler können unentdeckt bleiben.",
-    "error_monitoring_recommendation": "Installiere {{tool}} für umfassendes Error-Tracking{{alternatives}}. Installation: {{installCommand}}",
-    "alternatives": "Alternativen",
-    "python_error_monitoring_missing": "Kein Error-Monitoring für Python erkannt. Produktionsfehler können unentdeckt bleiben.",
-    "python_error_monitoring_recommendation": "Installiere sentry-sdk für umfassendes Error-Tracking: pip install sentry-sdk",
-    "testing_framework_missing": "Kein Testing-Framework erkannt. Code-Qualität kann ohne ordentliche Tests leiden.",
-    "testing_framework_recommendation": "Tests sind essentiell für Code-Qualität. Für React: npm install --save-dev jest @testing-library/react, allgemein: npm install --save-dev vitest",
-    "test_scripts_missing": "Testing-Framework gefunden, aber keine Test-Scripts in package.json",
-    "test_scripts_recommendation": "Füge Test-Scripts hinzu: \"test\": \"jest\" oder \"test\": \"vitest\""
-  },
-  "report_generator": {
-    "error_invalid_data": "Ungültige Berichtsdaten bereitgestellt",
-    "error_unsafe_path": "Unsicherer Ausgabepfad erkannt",
-    "error_generating_markdown": "Fehler beim Generieren des Markdown-Berichts:",
-    "headers": {
-      "critical_security_issues": "## 🚨 KRITISCHE SICHERHEITS-PROBLEME (gefunden von Snyk/Gitleaks)",
-      "summary": "## 📊 Zusammenfassung",
-      "changed_files": "📁 Geänderte Dateien",
-      "critical_quality_issues": "⚠️ Kritische Qualitätsprobleme",
-      "all_security_findings": "## 🔒 Alle Sicherheits-Befunde",
-      "production_recommendations": "🚀 Produktions-Empfehlungen",
-      "ai_review_details": "🧠 AI Review Details",
-      "commits": "📝 Commits"
-    },
-    "summary": {
-      "changes_since_branch": "**Änderungen seit Branch: `{{branch}}`**",
-      "current_branch": "**Aktueller Branch: `{{branch}}`**",
-      "generated_at": "**Generiert am: {{date}}**",
-      "security_warnings": "⚠️ **SOFORTIGES HANDELN ERFORDERLICH:** {{critical}} kritische und {{high}} hoch-schwere Sicherheitslücken erkannt!",
-      "changed_files": "- **Geänderte Dateien:** {{count}}",
-      "quality_problems": "- **Qualitätsprobleme:** {{count}}",
-      "security_problems": "- **Sicherheits-Probleme:** {{total}} ({{critical}} kritisch, {{high}} hoch)",
-      "production_recommendations": "- **Produktions-Empfehlungen:** {{count}}",
-      "ai_review": "- **🧠 AI Code Review:** {{filesAnalyzed}} Dateien analysiert, {{totalFindings}} Befunde gefunden",
-      "ai_cost": "- **💰 AI Kosten:** ${{cost}}",
-      "commits": "- **Commits:** {{count}}",
-      "more_files": "... und {{count}} weitere Dateien",
-      "more_commits": "... und {{count}} weitere Commits"
-    },
-    "status": {
-      "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
-      "found_issues": "⚠️ Gefunden:",
-      "code_context": "📄 **Code-Kontext:**"
-    },
-    "priorities": {
-      "critical": "### 🔴 CRITICAL - Muss behoben werden",
-      "high": "### 🟡 HIGH PRIORITY - Sollte behoben werden",
-      "medium": "### 🔵 MEDIUM - Verbesserung empfohlen",
-      "low": "### ⚪ LOW - Optional"
-    }
+    "invalid_commit_message": "Ungültige Commit-Nachricht",
+    "invalid_audit_message": "Ungültige Audit-Nachricht",
+    "invalid_report_data": "Ungültige Berichtsdaten bereitgestellt",
+    "failed_to_generate": "Bericht konnte nicht generiert werden",
+    "found_problems": "📋 **Gefundene Probleme:**",
+    "problem_label": "💡 **Problem:** {{explanation}}",
+    "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
+    "solid_recommendations": "### 💡 SOLID-Empfehlungen",
+    "critical_problems": "#### 🔴 Kritische Probleme:",
+    "warnings": "#### 🟡 Warnungen:",
+    "information": "#### 🔵 Informationen:",
+    "code_smell_recommendations": "### 💡 Code Smell Empfehlungen:",
+    "code_smell_line": "- **Zeile {{line}}:{{column}}** - {{message}}",
+    "ai_review_recommendations": "### 💡 AI Review Empfehlungen:",
+    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Zeile ${lineNumber}` : ''}}",
+    "ai_rationale": "  💭 **Begründung:** {{rationale}}",
+    "ai_suggestion": "  💡 **Empfehlung:** {{suggestion}}",
+    "ai_confidence": "  🎯 **Vertrauen:** {{confidence}}%"
   },
   "code_analyzer": {
     "unsupported_language": "Nicht unterstützte Sprache: {{language}}",
@@ -836,38 +700,6 @@
     "async_issues_found": "Potenzielle async/await Probleme gefunden. SonarAnalyzer kann diese automatisch erkennen.",
     "csharp_analysis_error": "C# Analyse-Fehler:",
     "inconsistent_indentation": "Inkonsistente Einrückung: {{styles}}"
-  },
-  "cli": {
-    "additional_recommendations": "... und {{count}} weitere Empfehlungen",
-    "version_check_error": "❌ Fehler beim Prüfen der Version:"
-  },
-  "actions": {
-    "failed_to_install_packages": "Fehler beim Installieren der Pakete: {{output}}"
-  },
-  "general": {
-    "continue_prompt": "Drücke Enter um fortzufahren...",
-    "select_provider": "Wähle den primären Provider für Reviews:",
-    "select_ai_provider": "Wähle einen AI-Provider:",
-    "failed_to_configure": "Konfiguration fehlgeschlagen",
-    "setup_cancelled": "Setup abgebrochen.",
-    "project_setup_complete": "Projekt-Setup erfolgreich abgeschlossen!",
-    "next_steps": "Nächste Schritte:",
-    "deprecated_warning_path": "Hinweis: Projektpfad-Option ist veraltet. AI-Konfiguration ist jetzt global.",
-    "deprecated_warning_llm": "Hinweis: \"woaru setup llm\" ist veraltet. Verwende \"woaru ai setup\" stattdessen."
-  },
-  "startup": {
-    "startup_notes": "Startup-Hinweise:",
-    "startup_problems": "Startup-Probleme:"
-  },
-  "analysis": {
-    "results": "Analyseergebnisse:",
-    "setup_recommendations": "Setup-Empfehlungen:",
-    "framework_tools": "Framework-spezifische Tools:",
-    "refactor_suggestions": "Refactoring-Vorschläge:",
-    "already_installed": "Bereits installiert:",
-    "code_insights": "Code-Analyse-Einsichten:",
-    "claude_automation": "Claude-Automatisierungs-Ideen:",
-    "confirm_setup": "Möchten Sie mit dem automatisierten Setup fortfahren?"
   },
   "actions": {
     "eslint": {
@@ -902,6 +734,21 @@
       "rollback_success": "✅ Prettier-Setup erfolgreich zurückgesetzt",
       "rollback_failed": "❌ Prettier-Setup-Rücksetzung fehlgeschlagen:"
     }
+  },
+  "general": {
+    "continue_prompt": "Drücke Enter um fortzufahren...",
+    "select_provider": "Wähle den primären Provider für Reviews:",
+    "select_ai_provider": "Wähle einen AI-Provider:",
+    "failed_to_configure": "Konfiguration fehlgeschlagen",
+    "setup_cancelled": "Setup abgebrochen.",
+    "project_setup_complete": "Projekt-Setup erfolgreich abgeschlossen!",
+    "next_steps": "Nächste Schritte:",
+    "deprecated_warning_path": "Hinweis: Projektpfad-Option ist veraltet. AI-Konfiguration ist jetzt global.",
+    "deprecated_warning_llm": "Hinweis: \"woaru setup llm\" ist veraltet. Verwende \"woaru ai setup\" stattdessen."
+  },
+  "startup": {
+    "startup_notes": "Startup-Hinweise:",
+    "startup_problems": "Startup-Probleme:"
   },
   "notifications": {
     "critical_issues": "Kritische Probleme erkannt:",
@@ -1066,26 +913,6 @@
     "failed_to_save": "⚠️ Nutzungsstatistiken konnten nicht gespeichert werden:",
     "failed_ensure_load": "⚠️ Statistiken konnten nicht geladen werden, verwende leere Statistiken"
   },
-  "report_generator": {
-    "invalid_commit_message": "Ungültige Commit-Nachricht",
-    "invalid_audit_message": "Ungültige Audit-Nachricht",
-    "invalid_report_data": "Ungültige Berichtsdaten bereitgestellt",
-    "failed_to_generate": "Bericht konnte nicht generiert werden",
-    "found_problems": "📋 **Gefundene Probleme:**", 
-    "problem_label": "💡 **Problem:** {{explanation}}",
-    "no_critical_issues": "✅ Keine kritischen Probleme gefunden - bereit für Review!",
-    "solid_recommendations": "### 💡 SOLID-Empfehlungen",
-    "critical_problems": "#### 🔴 Kritische Probleme:",
-    "warnings": "#### 🟡 Warnungen:",
-    "information": "#### 🔵 Informationen:",
-    "code_smell_recommendations": "### 💡 Code Smell Empfehlungen:",
-    "code_smell_line": "- **Zeile {{line}}:{{column}}** - {{message}}",
-    "ai_review_recommendations": "### 💡 AI Review Empfehlungen:",
-    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Zeile ${lineNumber}` : ''}}",
-    "ai_rationale": "  💭 **Begründung:** {{rationale}}",
-    "ai_suggestion": "  💡 **Empfehlung:** {{suggestion}}",
-    "ai_confidence": "  🎯 **Vertrauen:** {{confidence}}%"
-  },
   "supervisor": {
     "tool_detected": "Tool erkannt: {{tool}}",
     "stopped": "WOARU Supervisor gestoppt",
@@ -1093,10 +920,5 @@
     "setup_completed": "{{tool}} Setup abgeschlossen",
     "tool_ignored": "Tool {{tool}} zur Ignorierliste hinzugefügt",
     "audit_failed": "Produktions-Audit fehlgeschlagen: {{error}}"
-  },
-  "ui": {
-    "command_analyze_desc": "  • woaru analyze    - Projekt analysieren",
-    "command_commands_desc": "  • woaru commands   - Alle Befehle anzeigen",
-    "fallback_title": "🤖 WOARU - Code Quality Tool"
   }
 }

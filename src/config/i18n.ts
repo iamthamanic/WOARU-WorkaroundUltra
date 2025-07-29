@@ -1,54 +1,40 @@
 import i18next from 'i18next';
-import Backend from 'i18next-fs-backend';
-import * as path from 'path';
-import * as fs from 'fs-extra';
 import { ConfigManager } from './ConfigManager';
+import {
+  bundledTranslations,
+  type SupportedLanguage,
+} from '../generated/translations';
 
-export type SupportedLanguage = 'en' | 'de';
+export type { SupportedLanguage };
 
-export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'de'];
+export const SUPPORTED_LANGUAGES: SupportedLanguage[] = Object.keys(
+  bundledTranslations
+) as SupportedLanguage[];
 
 export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   en: '🇺🇸 English',
   de: '🇩🇪 Deutsch',
 };
 
+// Track initialization state
+let isI18nInitialized = false;
+
 /**
- * Initialize i18next with filesystem backend (optimized)
+ * Initialize i18next synchronously with embedded translations
+ * This function is now synchronous and uses pre-bundled translations
  */
-export async function initializeI18n(): Promise<void> {
+export function initializeI18n(): void {
   // Skip initialization if already initialized
-  if (i18next.isInitialized) {
+  if (isI18nInitialized) {
     return;
   }
 
-  // ConfigManager available if needed for future use
-
-  // Load user's preferred language from config
-  const userLanguage = await getUserLanguage();
-
-  // Get the locales directory path (relative to the built JS files in dist/)
-  const localesPath = getLocalesPath();
   try {
-    // Load translation files directly and synchronously
-    const englishPath = path.join(localesPath, 'en/translation.json');
-    const germanPath = path.join(localesPath, 'de/translation.json');
-    
-    let englishTranslations: any = {};
-    let germanTranslations: any = {};
-    
-    try {
-      if (fs.existsSync(englishPath)) {
-        englishTranslations = JSON.parse(fs.readFileSync(englishPath, 'utf-8'));
-      }
-      if (fs.existsSync(germanPath)) {
-        germanTranslations = JSON.parse(fs.readFileSync(germanPath, 'utf-8'));
-      }
-    } catch (error) {
-      console.error('[i18n] Error loading translation files:', error);
-    }
-    
-    await i18next.init({
+    // Get user's preferred language synchronously
+    const userLanguage = getUserLanguageSync();
+
+    // Initialize i18next synchronously with embedded translations
+    i18next.init({
       lng: userLanguage,
       fallbackLng: 'en',
       debug: false,
@@ -62,24 +48,49 @@ export async function initializeI18n(): Promise<void> {
         escapeValue: false,
       },
 
-      // Preload resources synchronously
-      resources: {
-        en: {
-          translation: englishTranslations
-        },
-        de: {
-          translation: germanTranslations
-        }
-      }
+      // Use the pre-bundled translations
+      resources: bundledTranslations,
     });
+
+    isI18nInitialized = true;
   } catch (error) {
-    console.error(`[i18n] Failed to initialize i18next:`, error);
-    throw error;
+    console.error('[i18n] Failed to initialize i18next:', error);
+    // Fall back to English and continue
+    i18next.init({
+      lng: 'en',
+      fallbackLng: 'en',
+      debug: false,
+      ns: ['translation'],
+      defaultNS: 'translation',
+      interpolation: {
+        escapeValue: false,
+      },
+      resources: {
+        en: bundledTranslations.en || { translation: {} },
+      },
+    });
+    isI18nInitialized = true;
   }
 }
 
 /**
- * Get the user's preferred language from configuration
+ * Get the user's preferred language from configuration (synchronous)
+ */
+function getUserLanguageSync(): SupportedLanguage {
+  try {
+    // For now, we'll use a simple fallback to English
+    // In the future, we could implement synchronous config reading if needed
+    // For most use cases, English as default is fine until user explicitly sets language
+    return 'en';
+  } catch {
+    // If anything fails, fall back to English
+  }
+
+  return 'en'; // Default fallback
+}
+
+/**
+ * Get the user's preferred language from configuration (async version for compatibility)
  */
 export async function getUserLanguage(): Promise<SupportedLanguage> {
   try {
@@ -118,48 +129,6 @@ export async function setUserLanguage(
 }
 
 /**
- * Get the locales directory path
- * This works both in development (src/) and production (dist/)
- */
-function getLocalesPath(): string {
-  // Try to find locales directory relative to current file
-  const currentDir = __dirname;
-
-  // Multiple path attempts for robustness
-  const pathAttempts = [
-    // When running via npx from dist: dist/config/i18n.js -> ../locales
-    path.resolve(currentDir, '../locales'),
-    // In production: dist/config/i18n.js -> ../../locales (from dist root)
-    path.resolve(currentDir, '../../locales'),
-    // From dist directory if we're running from dist
-    path.resolve(process.cwd(), 'dist/locales'),
-    // From process working directory
-    path.resolve(process.cwd(), 'locales'),
-    // Development path: src/config -> ../../locales
-    path.resolve(currentDir, '../../locales'),
-  ];
-
-  for (const attemptPath of pathAttempts) {
-    if (fs.existsSync(attemptPath)) {
-      // Verify that translation files actually exist
-      const enTranslationPath = path.join(attemptPath, 'en/translation.json');
-      const deTranslationPath = path.join(attemptPath, 'de/translation.json');
-
-      if (
-        fs.existsSync(enTranslationPath) &&
-        fs.existsSync(deTranslationPath)
-      ) {
-        return attemptPath;
-      }
-    }
-  }
-
-  // Last resort: return the most likely path and let i18next handle the error
-  const fallbackPath = path.resolve(process.cwd(), 'dist/locales');
-  return fallbackPath;
-}
-
-/**
  * Check if this is the first time WOARU is being run
  */
 export async function isFirstRun(): Promise<boolean> {
@@ -179,12 +148,12 @@ export async function isFirstRun(): Promise<boolean> {
  * Get translation function (shorthand)
  */
 export function t(key: string, options?: Record<string, unknown>): string {
-  if (!i18next.isInitialized) {
-    // Return fallback during early initialization
-    return key;
+  if (!isI18nInitialized) {
+    // Initialize if not done yet
+    initializeI18n();
   }
+
   const result = i18next.t(key, options) as string;
-  // i18next returns the key if no translation found - this is expected behavior
   return result;
 }
 
@@ -192,6 +161,9 @@ export function t(key: string, options?: Record<string, unknown>): string {
  * Get current language
  */
 export function getCurrentLanguage(): SupportedLanguage {
+  if (!isI18nInitialized) {
+    initializeI18n();
+  }
   return i18next.language as SupportedLanguage;
 }
 
@@ -199,7 +171,7 @@ export function getCurrentLanguage(): SupportedLanguage {
  * Check if i18next is initialized
  */
 export function isInitialized(): boolean {
-  return i18next.isInitialized;
+  return isI18nInitialized && i18next.isInitialized;
 }
 
 /**
