@@ -122,13 +122,13 @@ export async function displaySplashScreen(
     // Load version safely
     const version = finalConfig.showVersion ? await loadVersionSafely() : null;
 
-    // Display splash screen content with security-safe output
+    // Display properly framed ASCII art splash screen
     console.log();
-    console.log(chalk.cyan.bold(t('splash_screen.main_title')));
+    console.log(WOARU_FRAMED_SPLASH);
 
     if (version && finalConfig.showVersion) {
       console.log(
-        chalk.gray(`   ${t('splash_screen.version_display', { version })}`)
+        chalk.gray(`   Version ${version}`)
       );
     }
 
@@ -190,9 +190,7 @@ async function displayCommandsSection(): Promise<void> {
 async function displayFallbackSplash(config: SplashConfig): Promise<void> {
   try {
     console.log();
-    console.log(
-      chalk.cyan.bold('🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE')
-    );
+    console.log(WOARU_FRAMED_SPLASH);
 
     if (config.showVersion) {
       const version = await loadVersionSafely();
@@ -202,17 +200,19 @@ async function displayFallbackSplash(config: SplashConfig): Promise<void> {
     console.log();
 
     if (config.showCommands) {
-      console.log(chalk.white(t('ui.quick_commands')));
-      console.log(chalk.gray(t('ui.command_analyze_desc')));
-      console.log(chalk.gray(t('ui.command_commands_desc')));
+      console.log(chalk.white('Quick Commands:'));
+      console.log(chalk.gray('  • woaru analyze    - Analyze project'));
+      console.log(chalk.gray('  • woaru commands   - Show all commands'));
       console.log();
-      console.log(chalk.yellow(t('ui.run_commands_help')));
+      console.log(chalk.yellow('💡 Type "woaru --help" to see all available commands'));
     }
 
     console.log();
   } catch {
-    // Final fallback - minimal safe output
-    console.log(t('ui.fallback_title'));
+    // Final fallback - minimal safe output with framed display
+    console.log();
+    console.log(WOARU_FRAMED_SPLASH);
+    console.log();
   }
 }
 
@@ -227,6 +227,16 @@ export const WOARU_COMPACT_LOGO = `
 \x1b[0m`;
 
 export const WOARU_MINI_LOGO = `\x1b[33m📢\x1b[36m \x1b[37m●●●\x1b[36m \x1b[32m✓✓✓\x1b[36m \x1b[1m\x1b[33mWOARU\x1b[0m\x1b[36m \x1b[33m📦\x1b[0m`;
+
+/**
+ * Properly framed splash screen with exact character width control
+ * Language-independent hardcoded content ensures consistent frame rendering
+ * Frame width: 66 characters total (64 + 2 borders)
+ * Content area: 62 characters (including padding)
+ */
+export const WOARU_FRAMED_SPLASH = `\x1b[36m╔══════════════════════════════════════════════════════════════╗
+\x1b[36m║ \x1b[33m🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE        \x1b[36m║
+\x1b[36m╚══════════════════════════════════════════════════════════════╝\x1b[0m`;
 
 /**
  * Legacy export for backward compatibility

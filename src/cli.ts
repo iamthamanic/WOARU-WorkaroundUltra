@@ -837,37 +837,21 @@ async function main() {
   }
 }
 
-// Helper function to calculate visual width accounting for emojis
-function getVisualWidth(text: string): number {
-  return Array.from(text).reduce((width, char) => {
-    // Simple emoji detection - Unicode ranges for most emojis
-    const codePoint = char.codePointAt(0);
-    if (codePoint && (
-      (codePoint >= 0x1F600 && codePoint <= 0x1F64F) || // Emoticons
-      (codePoint >= 0x1F300 && codePoint <= 0x1F5FF) || // Misc Symbols
-      (codePoint >= 0x1F680 && codePoint <= 0x1F6FF) || // Transport
-      (codePoint >= 0x2600 && codePoint <= 0x26FF) ||   // Misc symbols
-      (codePoint >= 0x2700 && codePoint <= 0x27BF)      // Dingbats
-    )) {
-      return width + 2; // Emojis are roughly 2 characters wide
-    }
-    return width + 1;
-  }, 0);
-}
-
 // Helper function to center text in the ASCII box and ensure exact length
 function centerText(text: string, availableWidth: number): string {
-  const visualWidth = getVisualWidth(text);
-  const padding = Math.max(0, Math.floor((availableWidth - visualWidth) / 2));
-  const rightPadding = availableWidth - visualWidth - padding;
+  // Use simple string length instead of visual width to avoid emoji issues
+  const textLength = text.length;
+  const padding = Math.max(0, Math.floor((availableWidth - textLength) / 2));
+  const rightPadding = availableWidth - textLength - padding;
   
-  const result = ' '.repeat(padding) + text + ' '.repeat(Math.max(0, rightPadding));
+  let result = ' '.repeat(padding) + text + ' '.repeat(Math.max(0, rightPadding));
   
-  // Ensure exact length by trimming or padding as needed
-  if (result.length > availableWidth) {
-    return result.substring(0, availableWidth);
-  } else if (result.length < availableWidth) {
-    return result + ' '.repeat(availableWidth - result.length);
+  // Ensure exact length by force-adjusting the result
+  while (result.length < availableWidth) {
+    result += ' ';
+  }
+  while (result.length > availableWidth) {
+    result = result.substring(0, result.length - 1);
   }
   
   return result;
@@ -884,6 +868,7 @@ function displaySplashScreen() {
   const commandsDesc = t('splash_screen.commands_desc');
   const analyzeDesc = t('splash_screen.analyze_desc');
   const watchDesc = t('splash_screen.watch_desc');
+  const reviewDesc = 'Code review and analysis';
   const aiDesc = t('splash_screen.ai_desc');
   const languageDesc = t('splash_screen.language_desc');
   const setupDesc = t('splash_screen.setup_desc');
@@ -898,12 +883,12 @@ function displaySplashScreen() {
   
   console.log(chalk.cyan('╔══════════════════════════════════════════════════════════════════╗'));
   console.log(chalk.cyan('║                                                                  ║'));
-  console.log(chalk.cyan('║     ██╗    ██╗ ██████╗  █████╗ ██████╗ ██╗   ██╗               ║'));
-  console.log(chalk.cyan('║     ██║    ██║██╔═══██╗██╔══██╗██╔══██╗██║   ██║               ║'));
-  console.log(chalk.cyan('║     ██║ █╗ ██║██║   ██║███████║██████╔╝██║   ██║               ║'));
-  console.log(chalk.cyan('║     ██║███╗██║██║   ██║██╔══██║██╔══██╗██║   ██║               ║'));
-  console.log(chalk.cyan('║     ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██║╚██████╔╝               ║'));
-  console.log(chalk.cyan('║      ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝                ║'));
+  console.log(chalk.cyan('║           ██╗    ██╗ ██████╗  █████╗ ██████╗ ██╗   ██╗           ║'));
+  console.log(chalk.cyan('║           ██║    ██║██╔═══██╗██╔══██╗██╔══██╗██║   ██║           ║'));
+  console.log(chalk.cyan('║           ██║ █╗ ██║██║   ██║███████║██████╔╝██║   ██║           ║'));
+  console.log(chalk.cyan('║           ██║███╗██║██║   ██║██╔══██║██╔══██╗██║   ██║           ║'));
+  console.log(chalk.cyan('║           ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██║╚██████╔╝           ║'));
+  console.log(chalk.cyan('║            ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝            ║'));
   console.log(chalk.cyan('║                                                                  ║'));
   console.log(chalk.cyan('║') + chalk.yellow(centeredTitle) + chalk.cyan('║'));
   console.log(chalk.cyan('║                                                                  ║'));
@@ -922,6 +907,9 @@ function displaySplashScreen() {
   );
   console.log(
     chalk.blue('  • woaru watch') + chalk.gray('      - ' + watchDesc)
+  );
+  console.log(
+    chalk.blue('  • woaru review') + chalk.gray('     - ' + reviewDesc)
   );
   console.log(chalk.blue('  • woaru ai') + chalk.gray('         - ' + aiDesc));
   console.log(
