@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.2] - 2025-07-29
+
+### Fixed
+- **Splash Screen Frame Rendering**: Fixed visual display issues in the ASCII splash screen
+  - Fixed right border interruption in splash screen frame - borders now fully closed
+  - Improved text centering logic to avoid emoji width calculation issues that caused misalignment
+  - Added proper `WOARU_FRAMED_SPLASH` constant for consistent frame rendering across all platforms
+  - Centered ASCII art logo properly within frame boundaries for perfect visual alignment
+  - Enhanced fallback splash screen with proper framing for better user experience
+
+### Enhanced
+- **User Interface Improvements**: Better visual consistency and professional appearance
+  - ASCII art splash screen now renders consistently across different terminal environments
+  - Improved text alignment algorithms for better cross-platform compatibility
+  - Added missing 'review' command description in splash screen quick commands section
+  - Enhanced visual padding and spacing for optimal readability
+
+### Technical Improvements
+- **Code Quality**: Improved maintainability and consistency
+  - Simplified text width calculation logic to prevent emoji-related rendering issues
+  - Updated translations timestamp for build consistency and cache invalidation
+  - Better error handling in splash screen fallback mechanisms
+  - Improved code documentation for splash screen rendering functions
+
 ## [5.2.1] - 2025-07-28
 
 ### Fixed
