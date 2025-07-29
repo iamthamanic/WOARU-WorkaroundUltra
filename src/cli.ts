@@ -855,13 +855,22 @@ function getVisualWidth(text: string): number {
   }, 0);
 }
 
-// Helper function to center text in the ASCII box
+// Helper function to center text in the ASCII box and ensure exact length
 function centerText(text: string, availableWidth: number): string {
   const visualWidth = getVisualWidth(text);
   const padding = Math.max(0, Math.floor((availableWidth - visualWidth) / 2));
   const rightPadding = availableWidth - visualWidth - padding;
   
-  return ' '.repeat(padding) + text + ' '.repeat(Math.max(0, rightPadding));
+  const result = ' '.repeat(padding) + text + ' '.repeat(Math.max(0, rightPadding));
+  
+  // Ensure exact length by trimming or padding as needed
+  if (result.length > availableWidth) {
+    return result.substring(0, availableWidth);
+  } else if (result.length < availableWidth) {
+    return result + ' '.repeat(availableWidth - result.length);
+  }
+  
+  return result;
 }
 
 // Splash Screen Funktion
