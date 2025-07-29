@@ -156,34 +156,29 @@ function defineCommands(program: Command) {
       }
     });
 
-  // AI Command
-  program
+  // AI Command - Interactive Control Center
+  const aiCommand = program
     .command('ai')
     .description(t('commands.ai.description'))
     .action(async () => {
       try {
-        // const { default: inquirer } = await import('inquirer'); // Unused
-        const { ensureAiIsConfigured } = await import('./utils/ai-helpers');
-
-        console.log(chalk.cyan.bold(t('ai_control_center.title')));
-        console.log();
-
-        // Check current AI configuration
-        const isConfigured = ensureAiIsConfigured();
-        if (!isConfigured) {
-          console.log(
-            chalk.yellow(
-              'No AI providers configured. Please set up an AI provider first.'
-            )
-          );
-          console.log(chalk.blue('Run: woaru ai setup'));
-          return;
-        }
-
-        console.log(chalk.green('AI providers are configured and ready!'));
-        console.log(chalk.gray('Use commands like: woaru review ai <path>'));
+        const { showAiControlCenter } = await import('./utils/ai-control-center');
+        await showAiControlCenter();
       } catch (error) {
         console.error(chalk.red('AI command failed:'), error);
+      }
+    });
+
+  // AI Setup Sub-command
+  aiCommand
+    .command('setup')
+    .description(t('commands.ai_setup.description'))
+    .action(async () => {
+      try {
+        const { showAiSetup } = await import('./utils/ai-control-center');
+        await showAiSetup();
+      } catch (error) {
+        console.error(chalk.red('AI setup failed:'), error);
       }
     });
 

@@ -3,440 +3,7 @@
   "cli": {
     "main": {
       "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language"
-    }
-  },
-  "commands": {
-    "version": {
-      "description": "Show version information",
-      "purpose": "Display current WOARU version and system information",
-      "check": {
-        "description": "Check for updates",
-        "purpose": "Check if newer versions of WOARU are available"
-      }
     },
-    "commands": {
-      "description": "Show detailed command reference documentation",
-      "purpose": "Browse all available WOARU commands with detailed explanations",
-      "title": "📚 WOARU Command Reference"
-    },
-    "wiki": {
-      "description": "Show comprehensive WOARU documentation and concept guide",
-      "purpose": "Access complete documentation and learn WOARU concepts",
-      "title": "📖 WOARU Documentation & Wiki",
-      "no_docs_found": "No documentation found for language: {{lang}}",
-      "error": "Error loading documentation:"
-    },
-    "purpose_label": "Purpose"
-  },
-  "version": {
-    "display": "WOARU Version: {{version}}",
-    "checking_updates": "🔍 Checking for updates...",
-    "up_to_date": "✅ You are using the latest version ({{version}})"
-  },
-  "splash_screen": {
-    "main_title": "🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE",
-    "version_display": "Version {{version}}",
-    "usage_hint": "Type \"woaru --help\" to see all available commands",
-    "main_commands": "Main Commands:",
-    "commands_desc": "Show all commands",
-    "analyze_desc": "Analyze project",
-    "watch_desc": "Start monitoring",
-    "ai_desc": "AI control center",
-    "language_desc": "Language selection",
-    "setup_desc": "Setup tools"
-  },
-  "language_selection": {
-    "prompt": "Please select your preferred language:",
-    "english": "🇺🇸 English",
-    "german": "🇩🇪 Deutsch"
-  },
-  "language_setup": {
-    "welcome_multilingual": "🌍 Welcome to WOARU",
-    "first_time_message": "🚀 First time running WOARU! Let's set up your language preference.",
-    "language_set_confirmation": "✅ Language set to {{language}}! WOARU is now ready.",
-    "change_language_hint": "💡 You can change your language anytime with: woaru config set language <en|de>",
-    "current_configuration": "🌍 Language Configuration:",
-    "current_language_display": "Current: {{name}} ({{code}})",
-    "available_languages_display": "Available: {{languages}}",
-    "change_command_hint": "Change with: woaru config set language <{{options}}>"
-  },
-  "errors": {
-    "snyk_not_found": "Snyk not found. Please install Snyk CLI for security analysis.",
-    "config_load_failed": "Failed to load configuration",
-    "api_key_missing": "API key not found for provider {{provider}}",
-    "file_not_found": "File not found: {{file}}",
-    "invalid_command": "Invalid command: {{command}}",
-    "security": {
-      "directory_traversal": "Invalid file path: Directory traversal detected",
-      "command_timeout": "Command timeout after {{timeout}}ms",
-      "command_not_allowed": "Command '{{command}}' is not allowed"
-    },
-    "json": {
-      "string_too_large": "JSON string too large: {{size}} bytes > {{maxSize}} bytes",
-      "validation_failed": "JSON validation failed",
-      "parsing_failed": "JSON parsing failed:",
-      "unknown_error": "Unknown error",
-      "output_too_large": "JSON output too large: {{size}} bytes > {{maxSize}} bytes",
-      "stringify_failed": "JSON stringify failed: {{error}}"
-    }
-  },
-  "status": {
-    "title": "WOARU Status",
-    "supervisor_running": "Supervisor is running",
-    "supervisor_stopped": "Supervisor is stopped",
-    "project_health": "Project Health: {{score}}/100",
-    "configured_providers": "{{count}} configured",
-    "enabled_providers": "{{count}} enabled",
-    "monitoring_files": "Monitoring {{count}} files"
-  },
-  "ai_control_center": {
-    "title": "WOARU AI Control Center",
-    "current_status": "Current Status:",
-    "review_configuration": "Review Configuration:",
-    "multi_ai_enabled": "Multi-AI Review activated",
-    "multi_ai_disabled": "Multi-AI Review deactivated",
-    "primary_provider": "Primary Provider: {{provider}}",
-    "api_key_found": "API-Key found",
-    "api_key_missing": "API-Key missing",
-    "goodbye": "See you soon!",
-    "no_providers_enabled": "No enabled providers found!",
-    "configure_providers_first": "Please configure and enable providers first.",
-    "multi_ai_enabled_message": "Multi-AI Review has been activated!",
-    "multi_ai_disabled_message": "Multi-AI Review has been deactivated.",
-    "menu": {
-      "add_edit_provider": "Add/Edit Provider",
-      "disable_multi_ai": "Disable Multi-AI Review",
-      "enable_multi_ai": "Enable Multi-AI Review",
-      "exit": "🚪 Exit",
-      "done_save": "✅ Done & Save"
-    }
-  },
-  "setup": {
-    "title": "WOARU Setup",
-    "ai_setup_title": "WOARU AI Setup",
-    "provider_selection": "Select an AI provider:",
-    "model_selection": "Select a model for {{provider}}:",
-    "api_key_prompt": "Please enter your {{provider}} API key:",
-    "api_key_hint": "(starts with '{{prefix}}')",
-    "success": "Setup completed successfully!",
-    "provider_configured": "{{provider}} configured successfully",
-    "setup_another": "Setup another provider?",
-    "status_active": "ACTIVE",
-    "status_disabled": "DISABLED",
-    "status_not_configured": "NOT CONFIGURED",
-    "what_to_do_with": "What would you like to do with {{provider}}?",
-    "loading_models": "Loading available models...",
-    "no_models_found": "No models found. Configuration aborted.",
-    "no_api_key_found": "No API key found. Please update API key first.",
-    "api_key_updated": "API key updated",
-    "confirm_removal": "Are you sure you want to remove {{provider}}?",
-    "new_api_key_for": "New API key for {{provider}}:",
-    "select_new_model": "Select a new model for {{provider}}:"
-  },
-  "analysis": {
-    "starting": "Starting analysis...",
-    "complete": "Analysis complete",
-    "security_scan": "Running security scan...",
-    "quality_check": "Running quality check...",
-    "recommendations": "Recommendations:",
-    "issues_found": "{{count}} issues found",
-    "no_issues": "No issues found"
-  },
-  "config": {
-    "language_set": "Language set to {{language}}",
-    "language_invalid": "Invalid language: {{language}}. Supported languages: en, de",
-    "current_language": "Current language: {{language}}",
-    "available_languages": "Available languages: {{languages}}"
-  },
-  "language_command": {
-    "title": "Language Selection",
-    "current_language": "Currently selected language: {{language}} ({{code}})",
-    "select_new": "Choose a new language:",
-    "language_changed": "Language successfully changed to {{language}}",
-    "language_unchanged": "Language remains set to {{language}}",
-    "next_usage_note": "The new language will be active in the next WOARU usage.",
-    "error_changing": "Error changing language:"
-  },
-  "ai_prompts": {
-    "language_instruction": "Respond exclusively in English."
-  },
-  "command_not_implemented": {
-    "quick_analyze": "Quick analyze not implemented yet. Use \"woaru analyze\" instead.",
-    "setup": "Setup command not implemented yet.",
-    "ai": "AI-powered code analysis and review system",
-    "update_db": "Update database command not implemented yet.",
-    "watch": "Watch command not implemented yet.",
-    "status": "Status command not implemented yet.",
-    "update": "Update command not implemented yet.",
-    "stop": "Stop command not implemented yet.",
-    "logs": "Logs command not implemented yet.",
-    "recommendations": "Recommendations command not implemented yet.",
-    "helpers": "Helpers command not implemented yet.",
-    "docu": "Documentation command not implemented yet.",
-    "review": "AI-powered code review and analysis system",
-    "analyze": "Analyze command not implemented yet.",
-    "message": "Message command not implemented yet.",
-    "config": "Config command not implemented yet."
-  },
-  "ui": {
-    "available_commands": "Available Commands",
-    "help_tip": "Use \"woaru <command> --help\" for detailed options",
-    "documentation_tip": "For comprehensive documentation: woaru wiki",
-    "quick_commands": "Quick Commands",
-    "run_commands_help": "Run \"woaru commands\" for detailed help"
-  },
-  "ai_helpers": {
-    "config_check_error": "Error checking AI configuration:",
-    "config_missing_error": "Error: This feature requires an active and correctly configured AI.",
-    "config_setup_hint": "Please first set up an AI provider with the command: woaru ai setup",
-    "config_loading_error": "Warning: Error loading AI providers:",
-    "validation_failed": "AI provider validation failed for: {{provider}}",
-    "no_active_providers": "No active AI providers found",
-    "provider_disabled": "AI provider {{provider}} is disabled",
-    "invalid_provider_id": "Invalid provider ID: {{provider}}",
-    "api_key_missing_for_provider": "API key missing for provider: {{provider}}",
-    "configuration_validation_passed": "AI configuration validation passed",
-    "graceful_shutdown": "Shutting down gracefully due to AI configuration error"
-  },
-  "startup_check": {
-    "git_not_available": "Git is not available in your system PATH",
-    "docker_not_available": "Docker is not available (optional)",
-    "snyk_not_available": "Snyk is not available (optional for security checks)",
-    "warning_prefix": "⚠️ WARNING:",
-    "git_commands_warning": "Commands like 'woaru review git' will not work.",
-    "docker_tip": "💡 TIP: Docker is not available. Containerization checks will be skipped.",
-    "snyk_tip": "💡 TIP: Snyk is not available. Extended security checks will be skipped.",
-    "new_version_available": "💡 A new version of WOARU (v{{version}}) is available!",
-    "released_on": "Released on: {{date}}",
-    "update_prompt": "Would you like to update now?",
-    "update_failed": "Update failed: {{error}}",
-    "version_check_failed": "Version check failed: {{error}}",
-    "startup_notes": "📋 Startup Notes:",
-    "startup_problems": "❌ Startup Problems:",
-    "new_version_silent": "💡 A new version of WOARU (v{{version}}) is available. Run 'woaru update'."
-  },
-  "code_smell_analyzer": {
-    "error_analyzing_file": "Error analyzing file {{filePath}}:",
-    "var_keyword_message": "Use \"let\" or \"const\" instead of \"var\" for better scoping",
-    "var_keyword_suggestion": "Replace \"var\" with \"let\" or \"const\"",
-    "weak_equality_message": "Use strict equality \"{{strictOperator}}\" instead of \"{{operator}}\"",
-    "weak_equality_suggestion": "Replace \"{{operator}}\" with \"{{strictOperator}}\"",
-    "console_log_message": "Remove console statements before production",
-    "console_log_suggestion": "Remove or replace with proper logging",
-    "magic_number_message": "Magic number \"{{number}}\" should be extracted to a named constant",
-    "magic_number_suggestion": "Extract to a named constant",
-    "high_complexity_message": "Function \"{{functionName}}\" has high cyclomatic complexity ({{complexity}}). Consider breaking it down.",
-    "break_down_functions": "Break down into smaller functions",
-    "long_function_message": "Function \"{{functionName}}\" is too long ({{length}} lines). Consider breaking it down.",
-    "too_many_parameters_message": "Function \"{{functionName}}\" has too many parameters ({{paramCount}}). Consider using an options object.",
-    "use_options_object": "Use an options object or break down the function",
-    "excessive_nesting_message": "Excessive nesting depth ({{maxDepth}} levels). Consider refactoring.",
-    "extract_nested_logic": "Extract nested logic into separate functions"
-  },
-  "production_auditor": {
-    "error_monitoring_critical": "🚨 CRITICAL: No error monitoring found for production apps",
-    "error_monitoring_recommendation": "Error monitoring is essential for production apps. Recommended: {{tool}}{{alternatives}}. {{installCommand}}",
-    "python_error_monitoring_tip": "💡 PRO-TIP: No error monitoring found for Python",
-    "python_error_monitoring_install": "Install sentry-sdk: pip install sentry-sdk",
-    "testing_framework_warning": "⚠️ WARNING: No testing framework found",
-    "testing_framework_recommendation": "Tests are essential for code quality. For React: npm install --save-dev jest @testing-library/react, for general: npm install --save-dev vitest",
-    "test_scripts_missing": "Testing framework found, but no test scripts in package.json",
-    "test_scripts_recommendation": "Add test scripts: \"test\": \"jest\" or \"test\": \"vitest\"",
-    "python_testing_warning": "⚠️ WARNING: No testing framework found for Python",
-    "python_testing_install": "Install pytest: pip install pytest",
-    "dockerfile_missing": "🐳 No Dockerfile found",
-    "dockerfile_recommendation": "Containerization simplifies deployment and scaling. Create a Dockerfile for consistent deployments.",
-    "dockerignore_missing": "Dockerfile found, but no .dockerignore",
-    "dockerignore_recommendation": "Create .dockerignore to improve build performance and reduce image size.",
-    "snyk_not_configured": "🚨 Snyk security scanner not configured",
-    "snyk_install_recommendation": "Install Snyk globally: npm install -g snyk && snyk auth",
-    "snyk_auth_recommendation": "Configure Snyk: snyk auth",
-    "critical_vulnerabilities_found": "🚨 {{count}} CRITICAL security vulnerabilities found in dependencies",
-    "critical_vulnerabilities_action": "Immediate action required! {{upgradableCount}} can be fixed through updates. Run \"snyk wizard\" for guided remediation.",
-    "high_vulnerabilities_found": "⚠️ {{count}} high security vulnerabilities in dependencies",
-    "high_vulnerabilities_action": "{{upgradableCount}} can be fixed through updates. Run \"snyk test\" for details.",
-    "medium_vulnerabilities_found": "🔵 {{count}} medium security vulnerabilities found",
-    "medium_vulnerabilities_action": "Plan updates for affected packages. Run \"snyk test --severity-threshold=medium\".",
-    "code_vulnerabilities_critical": "🚨 {{count}} critical security issues found in code",
-    "code_vulnerabilities_critical_action": "Fix these security vulnerabilities immediately! Run \"snyk code test\" for details.",
-    "code_vulnerabilities_high": "⚠️ {{count}} high security issues in code",
-    "code_vulnerabilities_high_action": "Review and fix these security issues before production deploy.",
-    "express_helmet_missing": "🔒 Express without Helmet protection",
-    "express_helmet_install": "Install Helmet for secure HTTP headers: npm install helmet",
-    "https_enforcement_missing": "🔒 No HTTPS enforcement found",
-    "https_enforcement_install": "Enforce HTTPS in production: npm install express-enforces-ssl",
-    "security_headers_missing": "🔒 No security headers configuration for Next.js",
-    "security_headers_install": "Install next-secure-headers for better protection: npm install next-secure-headers",
-    "rate_limiting_missing": "🔒 No rate limiting to protect against DDoS/Brute-Force",
-    "rate_limiting_install": "Install express-rate-limit: npm install express-rate-limit",
-    "input_validation_missing": "🔒 No input validation library found",
-    "input_validation_install": "Install a validation library like Joi or Zod for secure input processing",
-    "python_bandit_missing": "🔒 No Python security linter (Bandit) found",
-    "python_bandit_install": "Install Bandit for security checks: pip install bandit",
-    "env_example_missing": ".env found, but no .env.example",
-    "env_example_recommendation": "Create .env.example for team collaboration and setup documentation.",
-    "env_config_partial": "dotenv installed, but no .env files found",
-    "env_config_recommendation": "Create .env for local configuration and .env.example as template.",
-    "vulnerability_detail": "🔴 {{title}} in {{packageName}}@{{version}}",
-    "vulnerability_fix_available": "Update to {{version}}: npm update {{packageName}}",
-    "vulnerability_no_fix": "No direct fix available. Consider alternative or wait for patch.",
-    "deprecated_tool_warning": "⚠️ WARNING: The tool you are using {{toolName}} is deprecated",
-    "deprecated_tool_successor": "The recommended successor is {{successor}}. Migrate to: npm install {{successor}}",
-    "deprecated_tool_alternative": "Consider migration to a modern alternative",
-    "fallback_error_monitoring": "💡 PRO-TIP: No error monitoring found (Fallback)",
-    "fallback_sentry_install": "Install Sentry for production error tracking. For React: npm install @sentry/react, for Node.js: npm install @sentry/node",
-    "new_components_no_tests": "{{count}} new components without tests",
-    "new_components_test_recommendation": "Create tests for the new components: {{components}}",
-    "api_endpoints_no_monitoring": "New API endpoints without error monitoring",
-    "api_endpoints_monitoring_recommendation": "Integrate Sentry or similar tools for API error tracking",
-    "snyk_scan_failed": "Snyk security scan failed, falling back to basic checks:"
-  },
-  "provider_actions": {
-    "change_model": "🔄 Change Model",
-    "update_api_key": "🔑 Update API Key",
-    "toggle_enabled": "🔛 Toggle Enabled/Disabled",
-    "remove_provider": "🗑️ Remove Provider",
-    "back_to_menu": "← Back to Main Menu"
-  },
-  "messages": {
-    "success": "✅ {{message}}",
-    "error": "❌ {{message}}",
-    "warning": "⚠️ {{message}}",
-    "info": "📝 {{message}}",
-    "loading": "🔄 {{message}}",
-    "analyzing_project": "Analyzing project...",
-    "analyzing_codebase": "Analyzing codebase for insights...",
-    "running_security_analysis": "Running comprehensive security analysis...",
-    "running_infrastructure_audit": "Running infrastructure security audit...",
-    "running_production_audit": "Running production readiness audit...",
-    "project_well_configured": "Project is already well configured!",
-    "updating_database": "Updating tools database...",
-    "database_updated": "Database updated successfully",
-    "database_update_failed": "Failed to update database",
-    "fetching_openai_models": "Fetching available models from OpenAI...",
-    "fetching_google_models": "Fetching available models from Google...",
-    "invalid_api_key": "Invalid API key"
-  },
-  "security_analysis": {
-    "gitleaks_not_installed": "Gitleaks not installed. Skipping secret detection.",
-    "semgrep_not_available": "Semgrep not available, using pattern-based analysis.",
-    "analysis_failed": "Security analysis failed:",
-    "xss_vulnerability": "Potential XSS vulnerability detected",
-    "sql_injection": "Potential SQL injection vulnerability detected",
-    "path_traversal": "Potential path traversal vulnerability detected",
-    "code_injection": "Potential code injection vulnerability detected"
-  },
-  "quality_runner": {
-    "core_plugin_running": "Running core plugin: {{tool}} on {{file}}",
-    "experimental_tool_running": "Running experimental tool: {{tool}} on {{file}}",
-    "legacy_check_running": "Running legacy check for {{file}}",
-    "tool_warnings": "{{tool}} warnings in {{file}}",
-    "check_failed": "Quality check failed for {{file}}:",
-    "core_plugin_failed": "Core plugin check failed:",
-    "experimental_tool_failed": "Experimental tool check failed:"
-  },
-  "version_manager": {
-    "checking_updates": "🔍 Checking for updates...",
-    "up_to_date": "✅ You are using the latest version (v{{version}})",
-    "new_version_available": "📦 A new version (v{{version}}) is available!",
-    "released_on": "   Released on: {{date}}",
-    "update_instruction": "   Run `woaru update` to update.",
-    "updating": "🚀 Updating WOARU to latest version...",
-    "update_success": "✅ Update completed successfully!",
-    "update_failed": "❌ Update failed (Exit Code: {{code}})",
-    "update_error": "❌ Update failed:",
-    "version_display": "WOARU Version: {{version}}",
-    "error_reading_package": "Error reading package.json:",
-    "error_fetching_latest": "Error fetching latest version:",
-    "error_fetching_release_date": "Error fetching release date:"
-  },
-  "solid": {
-    "srp": {
-      "method_count": {
-        "description": "Class {{className}} has {{count}} methods",
-        "explanation": "Classes with many methods often have multiple responsibilities. The Single Responsibility Principle states that a class should have only one reason to change.",
-        "impact": "Hard to test, understand and maintain. High probability of bugs when making changes.",
-        "suggestion": "Split class {{className}} into smaller, focused classes. Group related methods into separate services or utility classes."
-      },
-      "complexity": {
-        "description": "Class {{className}} has complexity of {{complexity}}",
-        "explanation": "High cyclomatic complexity indicates too many different logic paths in a class, violating the SRP.",
-        "impact": "Hard to test (many test cases needed), error-prone, hard to understand.",
-        "suggestion": "Extract complex logic into separate methods or classes. Use design patterns like Strategy or Command to reduce complexity."
-      },
-      "concern_diversity": {
-        "description": "Class {{className}} imports from {{concernCount}} different areas: {{concerns}}",
-        "explanation": "Imports from different areas (Database, HTTP, Filesystem, Email, etc.) indicate that the class has multiple responsibilities.",
-        "impact": "High coupling, hard to test (many mocks needed), changes in one area can affect others.",
-        "suggestion": "Separate the different concerns into their own services: {{concernServices}}. Use dependency injection to coordinate these services."
-      },
-      "class_size": {
-        "description": "Class {{className}} has {{linesOfCode}} lines of code",
-        "explanation": "Very large classes are often an indicator of multiple responsibilities and violate the Single Responsibility Principle.",
-        "impact": "Hard to navigate, understand and maintain. High probability of merge conflicts.",
-        "suggestion": "Refactor class {{className}} into smaller, cohesive units. Identify logical groups of methods and extract them into separate classes."
-      },
-      "method_parameters": {
-        "description": "Method {{methodName}} has {{parameterCount}} parameters",
-        "explanation": "Methods with many parameters often indicate that they do too many different things and violate the SRP.",
-        "impact": "Hard to use, error-prone (parameter order), hard to test.",
-        "suggestion": "Group related parameters into an object or split method {{methodName}} into smaller, more specific methods."
-      },
-      "file_class_count": {
-        "description": "File contains {{classCount}} classes: {{classList}}",
-        "explanation": "Files with many classes often indicate that related but different responsibilities are mixed in one file.",
-        "impact": "Hard to navigate, unclear structure, merge conflicts more likely.",
-        "suggestion": "Split file {{fileName}}: one file per class or group only truly closely related classes together."
-      },
-      "analysis_error": "SRP-Checker: Error analyzing {{filePath}}"
-    }
-  },
-  "report_generator": {
-    "headers": {
-      "changed_files": "📋 Changed Files",
-      "critical_quality_issues": "🚨 Critical Quality Issues",
-      "solution_suggestions": "🔧 **Solution Suggestions:**",
-      "security_analysis": "🔒 Security Analysis",
-      "solid_analysis": "🏗️ SOLID Architecture Analysis",
-      "code_smell_analysis": "👃 Code Smell Analysis",
-      "ai_review": "🤖 AI Review Analysis"
-    },
-    "summary": {
-      "no_critical_issues": "✅ No critical issues found - ready for review!",
-      "quality_issues_found": "{{count}} quality issues",
-      "security_warnings": "⚠️ WARNING: {{critical}} critical and {{high}} high security vulnerabilities found!",
-      "changes_since_branch": "**Changes since branch: `{{branch}}`**",
-      "changed_files": "- **Changed files:** {{count}}",
-      "quality_problems": "- **Quality issues:** {{count}}",
-      "fix_available": "- **✅ Fix available:** Upgrade to {{version}}"
-    },
-    "solid": {
-      "score": "📊 **SOLID Score: {{score}}/100** ({{violations}} violations found)",
-      "violations_found": "### 🔴 {{principle}} ({{count}} violations)",
-      "solution": "🔨 **Solution:** {{suggestion}}",
-      "complexity": "Complexity: {{complexity}}",
-      "more_violations": "*... and {{count}} more {{label}} violations*",
-      "systematic_refactoring": "🏗️ Perform systematic refactoring - start with the most critical SOLID violations",
-      "high_complexity_classes": "🔄 {{count}} classes with high complexity - extract complex logic into separate utility classes",
-      "files_with_violations": "⚠️ {{count}} files with many SOLID violations - prioritize these for architectural overhaul",
-      "check_documentation": "📚 Check the SOLID principles documentation for additional improvement ideas"
-    },
-    "code_smell": {
-      "reduce_complexity": "🔄 Reduce cyclomatic complexity in {{count}} functions by splitting",
-      "shorten_functions": "📏 Shorten {{count}} overly long functions by extracting logic"
-    },
-    "ai_review": {
-      "estimated_cost": "💰 **Estimated cost:** ${{cost}}",
-      "findings_summary": "📊 **{{findings}} findings found** | **Analysis duration:** {{duration}}ms | **LLM agreement:** {{agreement}}%",
-      "reasoning": "💭 **Reasoning:** {{rationale}}",
-      "estimated_fix_time": "⏱️ **Estimated fix time:** {{time}}",
-      "check_security": "🔒 Check {{count}} potential security issues",
-      "low_agreement": "🤔 Low LLM agreement - manual review recommended",
-      "high_costs": "💰 High AI costs - consider batch processing for large codebases",
-      "meets_standards": "✅ Code meets AI-based quality standards"
-    }
-  },
-  "cli": {
     "ai_control_center": {
       "title": "WOARU AI Control Center",
       "current_status": "Current Status:",
@@ -570,7 +137,236 @@
         "description": "Interactive language selection",
         "purpose": "Change the language used by WOARU interface"
       }
+    },
+    "additional_recommendations": "... and {{count}} more recommendations",
+    "version_check_error": "❌ Error checking version:"
+  },
+  "commands": {
+    "version": {
+      "description": "Show version information",
+      "purpose": "Display current WOARU version and system information",
+      "check": {
+        "description": "Check for updates",
+        "purpose": "Check if newer versions of WOARU are available"
+      }
+    },
+    "commands": {
+      "description": "Show detailed command reference documentation",
+      "purpose": "Browse all available WOARU commands with detailed explanations",
+      "title": "📚 WOARU Command Reference"
+    },
+    "wiki": {
+      "description": "Show comprehensive WOARU documentation and concept guide",
+      "purpose": "Access complete documentation and learn WOARU concepts",
+      "title": "📖 WOARU Documentation & Wiki",
+      "no_docs_found": "No documentation found for language: {{lang}}",
+      "error": "Error loading documentation:"
+    },
+    "purpose_label": "Purpose"
+  },
+  "version": {
+    "display": "WOARU Version: {{version}}",
+    "checking_updates": "🔍 Checking for updates...",
+    "up_to_date": "✅ You are using the latest version ({{version}})"
+  },
+  "splash_screen": {
+    "main_title": "🤖 WOARU - HELPS YOU TO WRITE YOUR BEST CODE POSSIBLE",
+    "version_display": "Version {{version}}",
+    "usage_hint": "Type \"woaru --help\" to see all available commands",
+    "main_commands": "Main Commands:",
+    "commands_desc": "Show all commands",
+    "analyze_desc": "Analyze project",
+    "watch_desc": "Start monitoring",
+    "ai_desc": "AI control center",
+    "language_desc": "Language selection",
+    "setup_desc": "Setup tools"
+  },
+  "language_selection": {
+    "prompt": "Please select your preferred language:",
+    "english": "🇺🇸 English",
+    "german": "🇩🇪 Deutsch"
+  },
+  "language_setup": {
+    "welcome_multilingual": "🌍 Welcome to WOARU",
+    "first_time_message": "🚀 First time running WOARU! Let's set up your language preference.",
+    "language_set_confirmation": "✅ Language set to {{language}}! WOARU is now ready.",
+    "change_language_hint": "💡 You can change your language anytime with: woaru config set language <en|de>",
+    "current_configuration": "🌍 Language Configuration:",
+    "current_language_display": "Current: {{name}} ({{code}})",
+    "available_languages_display": "Available: {{languages}}",
+    "change_command_hint": "Change with: woaru config set language <{{options}}>"
+  },
+  "errors": {
+    "snyk_not_found": "Snyk not found. Please install Snyk CLI for security analysis.",
+    "config_load_failed": "Failed to load configuration",
+    "api_key_missing": "API key not found for provider {{provider}}",
+    "file_not_found": "File not found: {{file}}",
+    "invalid_command": "Invalid command: {{command}}",
+    "security": {
+      "directory_traversal": "Invalid file path: Directory traversal detected",
+      "command_timeout": "Command timeout after {{timeout}}ms",
+      "command_not_allowed": "Command '{{command}}' is not allowed"
+    },
+    "json": {
+      "string_too_large": "JSON string too large: {{size}} bytes > {{maxSize}} bytes",
+      "validation_failed": "JSON validation failed",
+      "parsing_failed": "JSON parsing failed:",
+      "unknown_error": "Unknown error",
+      "output_too_large": "JSON output too large: {{size}} bytes > {{maxSize}} bytes",
+      "stringify_failed": "JSON stringify failed: {{error}}"
     }
+  },
+  "status": {
+    "title": "WOARU Status",
+    "supervisor_running": "Supervisor is running",
+    "supervisor_stopped": "Supervisor is stopped",
+    "project_health": "Project Health: {{score}}/100",
+    "configured_providers": "{{count}} configured",
+    "enabled_providers": "{{count}} enabled",
+    "monitoring_files": "Monitoring {{count}} files"
+  },
+  "ai_control_center": {
+    "title": "WOARU AI Control Center",
+    "current_status": "Current Status:",
+    "review_configuration": "Review Configuration:",
+    "multi_ai_enabled": "Multi-AI Review activated",
+    "multi_ai_disabled": "Multi-AI Review deactivated",
+    "primary_provider": "Primary Provider: {{provider}}",
+    "api_key_found": "API-Key found",
+    "api_key_missing": "API-Key missing",
+    "goodbye": "See you soon!",
+    "no_providers_enabled": "No enabled providers found!",
+    "configure_providers_first": "Please configure and enable providers first.",
+    "multi_ai_enabled_message": "Multi-AI Review has been activated!",
+    "multi_ai_disabled_message": "Multi-AI Review has been deactivated.",
+    "menu": {
+      "add_edit_provider": "Add/Edit Provider",
+      "disable_multi_ai": "Disable Multi-AI Review",
+      "enable_multi_ai": "Enable Multi-AI Review",
+      "exit": "🚪 Exit",
+      "done_save": "✅ Done & Save"
+    }
+  },
+  "setup": {
+    "title": "WOARU Setup",
+    "ai_setup_title": "WOARU AI Setup",
+    "provider_selection": "Select an AI provider:",
+    "model_selection": "Select a model for {{provider}}:",
+    "api_key_prompt": "Please enter your {{provider}} API key:",
+    "api_key_hint": "(starts with '{{prefix}}')",
+    "success": "Setup completed successfully!",
+    "provider_configured": "{{provider}} configured successfully",
+    "setup_another": "Setup another provider?",
+    "status_active": "ACTIVE",
+    "status_disabled": "DISABLED",
+    "status_not_configured": "NOT CONFIGURED",
+    "what_to_do_with": "What would you like to do with {{provider}}?",
+    "loading_models": "Loading available models...",
+    "no_models_found": "No models found. Configuration aborted.",
+    "no_api_key_found": "No API key found. Please update API key first.",
+    "api_key_updated": "API key updated",
+    "confirm_removal": "Are you sure you want to remove {{provider}}?",
+    "new_api_key_for": "New API key for {{provider}}:",
+    "select_new_model": "Select a new model for {{provider}}:"
+  },
+  "analysis": {
+    "results": "Analysis Results:",
+    "setup_recommendations": "Setup Recommendations:",
+    "framework_tools": "Framework-Specific Tools:",
+    "refactor_suggestions": "Refactor Suggestions:",
+    "already_installed": "Already Installed:",
+    "code_insights": "Code Analysis Insights:",
+    "claude_automation": "Claude Automation Ideas:",
+    "confirm_setup": "Do you want to proceed with automated setup?"
+  },
+  "config": {
+    "language_set": "Language set to {{language}}",
+    "language_invalid": "Invalid language: {{language}}. Supported languages: en, de",
+    "current_language": "Current language: {{language}}",
+    "available_languages": "Available languages: {{languages}}"
+  },
+  "language_command": {
+    "title": "Language Selection",
+    "current_language": "Currently selected language: {{language}} ({{code}})",
+    "select_new": "Choose a new language:",
+    "language_changed": "Language successfully changed to {{language}}",
+    "language_unchanged": "Language remains set to {{language}}",
+    "next_usage_note": "The new language will be active in the next WOARU usage.",
+    "error_changing": "Error changing language:"
+  },
+  "ai_prompts": {
+    "language_instruction": "Respond exclusively in English."
+  },
+  "command_not_implemented": {
+    "quick_analyze": "Quick analyze not implemented yet. Use \"woaru analyze\" instead.",
+    "setup": "Setup command not implemented yet.",
+    "ai": "AI-powered code analysis and review system",
+    "update_db": "Update database command not implemented yet.",
+    "watch": "Watch command not implemented yet.",
+    "status": "Status command not implemented yet.",
+    "update": "Update command not implemented yet.",
+    "stop": "Stop command not implemented yet.",
+    "logs": "Logs command not implemented yet.",
+    "recommendations": "Recommendations command not implemented yet.",
+    "helpers": "Helpers command not implemented yet.",
+    "docu": "Documentation command not implemented yet.",
+    "review": "AI-powered code review and analysis system",
+    "analyze": "Analyze command not implemented yet.",
+    "message": "Message command not implemented yet.",
+    "config": "Config command not implemented yet."
+  },
+  "ui": {
+    "command_analyze_desc": "  • woaru analyze    - Analyze project",
+    "command_commands_desc": "  • woaru commands   - Show all commands",
+    "fallback_title": "🤖 WOARU - Code Quality Tool"
+  },
+  "ai_helpers": {
+    "config_check_error": "Error checking AI configuration:",
+    "config_missing_error": "Error: This feature requires an active and correctly configured AI.",
+    "config_setup_hint": "Please first set up an AI provider with the command: woaru ai setup",
+    "config_loading_error": "Warning: Error loading AI providers:",
+    "validation_failed": "AI provider validation failed for: {{provider}}",
+    "no_active_providers": "No active AI providers found",
+    "provider_disabled": "AI provider {{provider}} is disabled",
+    "invalid_provider_id": "Invalid provider ID: {{provider}}",
+    "api_key_missing_for_provider": "API key missing for provider: {{provider}}",
+    "configuration_validation_passed": "AI configuration validation passed",
+    "graceful_shutdown": "Shutting down gracefully due to AI configuration error"
+  },
+  "startup_check": {
+    "git_not_available": "Git is not available in your system PATH",
+    "docker_not_available": "Docker is not available (optional)",
+    "snyk_not_available": "Snyk is not available (optional for security checks)",
+    "warning_prefix": "⚠️ WARNING:",
+    "git_commands_warning": "Commands like 'woaru review git' will not work.",
+    "docker_tip": "💡 TIP: Docker is not available. Containerization checks will be skipped.",
+    "snyk_tip": "💡 TIP: Snyk is not available. Extended security checks will be skipped.",
+    "new_version_available": "💡 A new version of WOARU (v{{version}}) is available!",
+    "released_on": "Released on: {{date}}",
+    "update_prompt": "Would you like to update now?",
+    "update_failed": "Update failed: {{error}}",
+    "version_check_failed": "Version check failed: {{error}}",
+    "startup_notes": "📋 Startup Notes:",
+    "startup_problems": "❌ Startup Problems:",
+    "new_version_silent": "💡 A new version of WOARU (v{{version}}) is available. Run 'woaru update'."
+  },
+  "code_smell_analyzer": {
+    "error_analyzing_file": "Error analyzing file {{filePath}}:",
+    "var_keyword_message": "Use \"let\" or \"const\" instead of \"var\" for better scoping",
+    "var_keyword_suggestion": "Replace \"var\" with \"let\" or \"const\"",
+    "weak_equality_message": "Use strict equality \"{{strictOperator}}\" instead of \"{{operator}}\"",
+    "weak_equality_suggestion": "Replace \"{{operator}}\" with \"{{strictOperator}}\"",
+    "console_log_message": "Remove console statements before production",
+    "console_log_suggestion": "Remove or replace with proper logging",
+    "magic_number_message": "Magic number \"{{number}}\" should be extracted to a named constant",
+    "magic_number_suggestion": "Extract to a named constant",
+    "high_complexity_message": "Function \"{{functionName}}\" has high cyclomatic complexity ({{complexity}}). Consider breaking it down.",
+    "break_down_functions": "Break down into smaller functions",
+    "long_function_message": "Function \"{{functionName}}\" is too long ({{length}} lines). Consider breaking it down.",
+    "too_many_parameters_message": "Function \"{{functionName}}\" has too many parameters ({{paramCount}}). Consider using an options object.",
+    "use_options_object": "Use an options object or break down the function",
+    "excessive_nesting_message": "Excessive nesting depth ({{maxDepth}} levels). Consider refactoring.",
+    "extract_nested_logic": "Extract nested logic into separate functions"
   },
   "production_auditor": {
     "invalid_changed_files_config": "Invalid changed files configuration provided",
@@ -590,46 +386,125 @@
     "test_scripts_missing": "Testing framework found, but no test scripts in package.json",
     "test_scripts_recommendation": "Add test scripts: \"test\": \"jest\" or \"test\": \"vitest\""
   },
-  "report_generator": {
-    "error_invalid_data": "Invalid report data provided",
-    "error_unsafe_path": "Unsafe output path detected",
-    "error_generating_markdown": "Error generating markdown report:",
-    "headers": {
-      "critical_security_issues": "## 🚨 CRITICAL SECURITY ISSUES (found by Snyk/Gitleaks)",
-      "summary": "## 📊 Summary",
-      "changed_files": "📁 Changed Files",
-      "critical_quality_issues": "⚠️ Critical Quality Issues",
-      "all_security_findings": "## 🔒 All Security Findings",
-      "production_recommendations": "🚀 Production Recommendations",
-      "ai_review_details": "🧠 AI Review Details",
-      "commits": "📝 Commits"
-    },
-    "summary": {
-      "changes_since_branch": "**Changes since branch: `{{branch}}`**",
-      "current_branch": "**Current Branch: `{{branch}}`**",
-      "generated_at": "**Generated on: {{date}}**",
-      "security_warnings": "⚠️ **IMMEDIATE ACTION REQUIRED:** {{critical}} critical and {{high}} high-severity security vulnerabilities detected!",
-      "changed_files": "- **Changed Files:** {{count}}",
-      "quality_problems": "- **Quality Issues:** {{count}}",
-      "security_problems": "- **Security Issues:** {{total}} ({{critical}} critical, {{high}} high)",
-      "production_recommendations": "- **Production Recommendations:** {{count}}",
-      "ai_review": "- **🧠 AI Code Review:** {{filesAnalyzed}} files analyzed, {{totalFindings}} findings found",
-      "ai_cost": "- **💰 AI Cost:** ${{cost}}",
-      "commits": "- **Commits:** {{count}}",
-      "more_files": "... and {{count}} more files",
-      "more_commits": "... and {{count}} more commits"
-    },
-    "status": {
-      "no_critical_issues": "✅ No critical issues found - ready for review!",
-      "found_issues": "⚠️ Found:",
-      "code_context": "📄 **Code Context:**"
-    },
-    "priorities": {
-      "critical": "### 🔴 CRITICAL - Must be fixed",
-      "high": "### 🟡 HIGH PRIORITY - Should be fixed",
-      "medium": "### 🔵 MEDIUM - Improvement recommended",
-      "low": "### ⚪ LOW - Optional"
+  "provider_actions": {
+    "change_model": "🔄 Change Model",
+    "update_api_key": "🔑 Update API Key",
+    "toggle_enabled": "🔛 Toggle Enabled/Disabled",
+    "remove_provider": "🗑️ Remove Provider",
+    "back_to_menu": "← Back to Main Menu"
+  },
+  "messages": {
+    "success": "✅ {{message}}",
+    "error": "❌ {{message}}",
+    "warning": "⚠️ {{message}}",
+    "info": "📝 {{message}}",
+    "loading": "🔄 {{message}}",
+    "analyzing_project": "Analyzing project...",
+    "analyzing_codebase": "Analyzing codebase for insights...",
+    "running_security_analysis": "Running comprehensive security analysis...",
+    "running_infrastructure_audit": "Running infrastructure security audit...",
+    "running_production_audit": "Running production readiness audit...",
+    "project_well_configured": "Project is already well configured!",
+    "updating_database": "Updating tools database...",
+    "database_updated": "Database updated successfully",
+    "database_update_failed": "Failed to update database",
+    "fetching_openai_models": "Fetching available models from OpenAI...",
+    "fetching_google_models": "Fetching available models from Google...",
+    "invalid_api_key": "Invalid API key"
+  },
+  "security_analysis": {
+    "gitleaks_not_installed": "Gitleaks not installed. Skipping secret detection.",
+    "semgrep_not_available": "Semgrep not available, using pattern-based analysis.",
+    "analysis_failed": "Security analysis failed:",
+    "xss_vulnerability": "Potential XSS vulnerability detected",
+    "sql_injection": "Potential SQL injection vulnerability detected",
+    "path_traversal": "Potential path traversal vulnerability detected",
+    "code_injection": "Potential code injection vulnerability detected"
+  },
+  "quality_runner": {
+    "core_plugin_running": "Running core plugin: {{tool}} on {{file}}",
+    "experimental_tool_running": "Running experimental tool: {{tool}} on {{file}}",
+    "legacy_check_running": "Running legacy check for {{file}}",
+    "tool_warnings": "{{tool}} warnings in {{file}}",
+    "check_failed": "Quality check failed for {{file}}:",
+    "core_plugin_failed": "Core plugin check failed:",
+    "experimental_tool_failed": "Experimental tool check failed:"
+  },
+  "version_manager": {
+    "checking_updates": "🔍 Checking for updates...",
+    "up_to_date": "✅ You are using the latest version (v{{version}})",
+    "new_version_available": "📦 A new version (v{{version}}) is available!",
+    "released_on": "   Released on: {{date}}",
+    "update_instruction": "   Run `woaru update` to update.",
+    "updating": "🚀 Updating WOARU to latest version...",
+    "update_success": "✅ Update completed successfully!",
+    "update_failed": "❌ Update failed (Exit Code: {{code}})",
+    "update_error": "❌ Update failed:",
+    "version_display": "WOARU Version: {{version}}",
+    "error_reading_package": "Error reading package.json:",
+    "error_fetching_latest": "Error fetching latest version:",
+    "error_fetching_release_date": "Error fetching release date:"
+  },
+  "solid": {
+    "srp": {
+      "method_count": {
+        "description": "Class {{className}} has {{count}} methods",
+        "explanation": "Classes with many methods often have multiple responsibilities. The Single Responsibility Principle states that a class should have only one reason to change.",
+        "impact": "Hard to test, understand and maintain. High probability of bugs when making changes.",
+        "suggestion": "Split class {{className}} into smaller, focused classes. Group related methods into separate services or utility classes."
+      },
+      "complexity": {
+        "description": "Class {{className}} has complexity of {{complexity}}",
+        "explanation": "High cyclomatic complexity indicates too many different logic paths in a class, violating the SRP.",
+        "impact": "Hard to test (many test cases needed), error-prone, hard to understand.",
+        "suggestion": "Extract complex logic into separate methods or classes. Use design patterns like Strategy or Command to reduce complexity."
+      },
+      "concern_diversity": {
+        "description": "Class {{className}} imports from {{concernCount}} different areas: {{concerns}}",
+        "explanation": "Imports from different areas (Database, HTTP, Filesystem, Email, etc.) indicate that the class has multiple responsibilities.",
+        "impact": "High coupling, hard to test (many mocks needed), changes in one area can affect others.",
+        "suggestion": "Separate the different concerns into their own services: {{concernServices}}. Use dependency injection to coordinate these services."
+      },
+      "class_size": {
+        "description": "Class {{className}} has {{linesOfCode}} lines of code",
+        "explanation": "Very large classes are often an indicator of multiple responsibilities and violate the Single Responsibility Principle.",
+        "impact": "Hard to navigate, understand and maintain. High probability of merge conflicts.",
+        "suggestion": "Refactor class {{className}} into smaller, cohesive units. Identify logical groups of methods and extract them into separate classes."
+      },
+      "method_parameters": {
+        "description": "Method {{methodName}} has {{parameterCount}} parameters",
+        "explanation": "Methods with many parameters often indicate that they do too many different things and violate the SRP.",
+        "impact": "Hard to use, error-prone (parameter order), hard to test.",
+        "suggestion": "Group related parameters into an object or split method {{methodName}} into smaller, more specific methods."
+      },
+      "file_class_count": {
+        "description": "File contains {{classCount}} classes: {{classList}}",
+        "explanation": "Files with many classes often indicate that related but different responsibilities are mixed in one file.",
+        "impact": "Hard to navigate, unclear structure, merge conflicts more likely.",
+        "suggestion": "Split file {{fileName}}: one file per class or group only truly closely related classes together."
+      },
+      "analysis_error": "SRP-Checker: Error analyzing {{filePath}}"
     }
+  },
+  "report_generator": {
+    "invalid_commit_message": "Invalid commit message",
+    "invalid_audit_message": "Invalid audit message",
+    "invalid_report_data": "Invalid report data provided",
+    "failed_to_generate": "Failed to generate report",
+    "found_problems": "📋 **Found Problems:**",
+    "problem_label": "💡 **Problem:** {{explanation}}",
+    "no_critical_issues": "✅ No critical issues found - ready for review!",
+    "solid_recommendations": "### 💡 SOLID Recommendations",
+    "critical_problems": "#### 🔴 Critical Problems:",
+    "warnings": "#### 🟡 Warnings:",
+    "information": "#### 🔵 Information:",
+    "code_smell_recommendations": "### 💡 Code Smell Recommendations:",
+    "code_smell_line": "- **Line {{line}}:{{column}}** - {{message}}",
+    "ai_review_recommendations": "### 💡 AI Review Recommendations:",
+    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Line ${lineNumber}` : ''}}",
+    "ai_rationale": "  💭 **Rationale:** {{rationale}}",
+    "ai_suggestion": "  💡 **Recommendation:** {{suggestion}}",
+    "ai_confidence": "  🎯 **Confidence:** {{confidence}}%"
   },
   "code_analyzer": {
     "unsupported_language": "Unsupported language: {{language}}",
@@ -652,61 +527,6 @@
     "async_issues_found": "Potential async/await issues found. SonarAnalyzer can automatically detect these.",
     "csharp_analysis_error": "C# analysis error:",
     "inconsistent_indentation": "Inconsistent indentation: {{styles}}"
-  },
-  "cli": {
-    "additional_recommendations": "... and {{count}} more recommendations",
-    "version_check_error": "❌ Error checking version:"
-  },
-  "actions": {
-    "failed_to_install_packages": "Failed to install packages: {{output}}"
-  },
-  "general": {
-    "continue_prompt": "Press Enter to continue...",
-    "select_provider": "Choose the primary provider for reviews:",
-    "select_ai_provider": "Choose an AI provider:",
-    "failed_to_configure": "Failed to configure",
-    "setup_cancelled": "Setup cancelled.",
-    "project_setup_complete": "Project setup completed successfully!",
-    "next_steps": "Next steps:",
-    "deprecated_warning_path": "Note: Project path option is deprecated. AI configuration is now global.",
-    "deprecated_warning_llm": "Note: \"woaru setup llm\" is deprecated. Use \"woaru ai setup\" instead."
-  },
-  "startup": {
-    "startup_notes": "Startup Notes:",
-    "startup_problems": "Startup Problems:"
-  },
-  "analysis": {
-    "results": "Analysis Results:",
-    "setup_recommendations": "Setup Recommendations:",
-    "framework_tools": "Framework-Specific Tools:",
-    "refactor_suggestions": "Refactor Suggestions:",
-    "already_installed": "Already Installed:",
-    "code_insights": "Code Analysis Insights:",
-    "claude_automation": "Claude Automation Ideas:",
-    "confirm_setup": "Do you want to proceed with automated setup?"
-  },
-  "notifications": {
-    "critical_issues": "Critical Issues Detected:",
-    "woaru_update": "WOARU Recommendations Update:",
-    "critical_priority": "Critical:",
-    "high_priority": "High Priority:",
-    "suggestions": "Suggestions:",
-    "run_recommendations": "Run \"woaru recommendations\" for details",
-    "quality_check_failed": "CRITICAL QUALITY CHECK FAILED",
-    "file": "File:",
-    "tool": "Tool:",
-    "fix_before_continuing": "Fix these issues before continuing development",
-    "run_manually": "Run the tool manually to see detailed output",
-    "production_audit": "Production-Readiness-Audit:",
-    "critical_must_fix": "CRITICAL - Must be fixed:",
-    "high_should_fix": "HIGH - Should be fixed before production:",
-    "medium_improvement": "MEDIUM - Improvement recommended:",
-    "low_optional": "LOW - Optional:",
-    "run_analyze_details": "Run \"woaru analyze\" for detailed analysis",
-    "security_alert": "SECURITY ALERT",
-    "security_warning": "SECURITY WARNING",
-    "action_required": "Action Required:",
-    "recommended": "Recommended:"
   },
   "actions": {
     "eslint": {
@@ -741,6 +561,44 @@
       "rollback_success": "✅ Prettier setup rolled back successfully",
       "rollback_failed": "❌ Failed to rollback Prettier setup:"
     }
+  },
+  "general": {
+    "continue_prompt": "Press Enter to continue...",
+    "select_provider": "Choose the primary provider for reviews:",
+    "select_ai_provider": "Choose an AI provider:",
+    "failed_to_configure": "Failed to configure",
+    "setup_cancelled": "Setup cancelled.",
+    "project_setup_complete": "Project setup completed successfully!",
+    "next_steps": "Next steps:",
+    "deprecated_warning_path": "Note: Project path option is deprecated. AI configuration is now global.",
+    "deprecated_warning_llm": "Note: \"woaru setup llm\" is deprecated. Use \"woaru ai setup\" instead."
+  },
+  "startup": {
+    "startup_notes": "Startup Notes:",
+    "startup_problems": "Startup Problems:"
+  },
+  "notifications": {
+    "critical_issues": "Critical Issues Detected:",
+    "woaru_update": "WOARU Recommendations Update:",
+    "critical_priority": "Critical:",
+    "high_priority": "High Priority:",
+    "suggestions": "Suggestions:",
+    "run_recommendations": "Run \"woaru recommendations\" for details",
+    "quality_check_failed": "CRITICAL QUALITY CHECK FAILED",
+    "file": "File:",
+    "tool": "Tool:",
+    "fix_before_continuing": "Fix these issues before continuing development",
+    "run_manually": "Run the tool manually to see detailed output",
+    "production_audit": "Production-Readiness-Audit:",
+    "critical_must_fix": "CRITICAL - Must be fixed:",
+    "high_should_fix": "HIGH - Should be fixed before production:",
+    "medium_improvement": "MEDIUM - Improvement recommended:",
+    "low_optional": "LOW - Optional:",
+    "run_analyze_details": "Run \"woaru analyze\" for detailed analysis",
+    "security_alert": "SECURITY ALERT",
+    "security_warning": "SECURITY WARNING",
+    "action_required": "Action Required:",
+    "recommended": "Recommended:"
   },
   "api_prompts": {
     "anthropic": "Please paste your Anthropic API key (starts with 'sk-'):",
@@ -882,26 +740,6 @@
     "failed_to_save": "⚠️ Failed to save usage statistics:",
     "failed_ensure_load": "⚠️ Failed to ensure stats are loaded, using empty stats"
   },
-  "report_generator": {
-    "invalid_commit_message": "Invalid commit message",
-    "invalid_audit_message": "Invalid audit message",
-    "invalid_report_data": "Invalid report data provided",
-    "failed_to_generate": "Failed to generate report",
-    "found_problems": "📋 **Found Problems:**",
-    "problem_label": "💡 **Problem:** {{explanation}}",
-    "no_critical_issues": "✅ No critical issues found - ready for review!",
-    "solid_recommendations": "### 💡 SOLID Recommendations",
-    "critical_problems": "#### 🔴 Critical Problems:",
-    "warnings": "#### 🟡 Warnings:",
-    "information": "#### 🔵 Information:",
-    "code_smell_recommendations": "### 💡 Code Smell Recommendations:",
-    "code_smell_line": "- **Line {{line}}:{{column}}** - {{message}}",
-    "ai_review_recommendations": "### 💡 AI Review Recommendations:",
-    "ai_finding_category": "  {{categoryIcon}} *{{category}}*{{lineNumber ? ` | Line ${lineNumber}` : ''}}",
-    "ai_rationale": "  💭 **Rationale:** {{rationale}}",
-    "ai_suggestion": "  💡 **Recommendation:** {{suggestion}}",
-    "ai_confidence": "  🎯 **Confidence:** {{confidence}}%"
-  },
   "supervisor": {
     "tool_detected": "Tool detected: {{tool}}",
     "stopped": "WOARU Supervisor stopped",
@@ -909,10 +747,5 @@
     "setup_completed": "{{tool}} setup completed",
     "tool_ignored": "Tool {{tool}} added to ignore list",
     "audit_failed": "Production audit failed: {{error}}"
-  },
-  "ui": {
-    "command_analyze_desc": "  • woaru analyze    - Analyze project",
-    "command_commands_desc": "  • woaru commands   - Show all commands",
-    "fallback_title": "🤖 WOARU - Code Quality Tool"
   }
 }

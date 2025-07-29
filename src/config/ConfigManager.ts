@@ -149,6 +149,13 @@ export class ConfigManager {
   }
 
   /**
+   * Alias for storeApiKey to maintain API compatibility
+   */
+  async saveApiKey(provider: string, apiKey: string): Promise<void> {
+    return this.storeApiKey(provider, apiKey);
+  }
+
+  /**
    * Get an API key for a provider
    */
   async getApiKey(provider: string): Promise<string | undefined> {
@@ -249,6 +256,23 @@ export class ConfigManager {
         )
       );
       return {};
+    }
+  }
+
+  /**
+   * Save AI configuration to global config file
+   */
+  async saveAiConfig(config: Record<string, unknown>): Promise<void> {
+    try {
+      await this.initialize();
+      await fs.writeFile(this.aiConfigFile, JSON.stringify(config, null, 2));
+      await this.setSecurePermissions();
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️ Warning: Could not save AI config: ${error instanceof Error ? error.message : error}`
+        )
+      );
     }
   }
 
