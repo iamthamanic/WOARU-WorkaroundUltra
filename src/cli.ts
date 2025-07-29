@@ -327,11 +327,109 @@ function defineCommands(program: Command) {
     });
 
   // Docu Command
-  program
-    .command('docu')
-    .description(t('commands.docu.description'))
+  const docuCommand = program
+    .command('docu')  
+    .description(t('cli.commands.docu.description'))
     .action(() => {
-      console.log(chalk.yellow(t('command_not_implemented.docu')));
+      // Show main documentation help when no subcommand is provided
+      console.log(chalk.cyan.bold(t('cli.commands.docu.description')));
+      console.log();
+      console.log(chalk.blue('📚 Available Documentation Commands:'));
+      console.log();
+      console.log(chalk.green('  • woaru docu nopro') + chalk.gray('   - ' + t('cli.commands.docu_nopro.description')));
+      console.log(chalk.green('  • woaru docu pro') + chalk.gray('    - ' + t('cli.commands.docu_pro.description')));
+      console.log(chalk.green('  • woaru docu ai') + chalk.gray('     - ' + t('cli.commands.docu_ai.description')));
+      console.log();
+      console.log(chalk.yellow('💡 Example usage:'));
+      console.log(chalk.gray('  woaru docu nopro src/utils/helpers.js'));
+      console.log(chalk.gray('  woaru docu pro --local'));
+      console.log(chalk.gray('  woaru docu ai --path-only src/services/'));
+      console.log();
+      console.log(chalk.gray('Use "woaru docu <command> --help" for detailed options'));
+    });
+
+  // Docu NoPro Subcommand - Human-friendly documentation
+  docuCommand
+    .command('nopro')
+    .description(t('cli.commands.docu_nopro.description'))
+    .option('--local', 'Document uncommitted changes only')
+    .option('--git <branch>', 'Document changes since specified branch')
+    .option('--path-only <path>', 'Document specific files or directories')
+    .option('--preview', 'Preview changes without applying them')
+    .option('--force', 'Apply documentation without confirmation')
+    .action(async (options) => {
+      try {
+        console.log(chalk.cyan('🔍 Generating human-friendly documentation...'));
+        
+        // Check if AI is configured
+        const { ensureAiIsConfigured } = await import('./utils/ai-helpers');
+        const isConfigured = ensureAiIsConfigured();
+        if (!isConfigured) {
+          console.log(chalk.yellow('⚠️ AI provider required for documentation generation.'));
+          console.log(chalk.gray('Run: woaru ai setup'));
+          return;
+        }
+
+        await runDocumentationCommand('nopro', options);
+      } catch (error) {
+        console.error(chalk.red('Documentation generation failed:'), error);
+      }
+    });
+
+  // Docu Pro Subcommand - Technical documentation  
+  docuCommand
+    .command('pro')
+    .description(t('cli.commands.docu_pro.description'))
+    .option('--local', 'Document uncommitted changes only')
+    .option('--git <branch>', 'Document changes since specified branch')
+    .option('--path-only <path>', 'Document specific files or directories')
+    .option('--preview', 'Preview changes without applying them')
+    .option('--force', 'Apply documentation without confirmation')
+    .action(async (options) => {
+      try {
+        console.log(chalk.cyan('🔍 Generating technical documentation...'));
+        
+        // Check if AI is configured
+        const { ensureAiIsConfigured } = await import('./utils/ai-helpers');
+        const isConfigured = ensureAiIsConfigured();
+        if (!isConfigured) {
+          console.log(chalk.yellow('⚠️ AI provider required for documentation generation.'));
+          console.log(chalk.gray('Run: woaru ai setup'));
+          return;
+        }
+
+        await runDocumentationCommand('pro', options);
+      } catch (error) {
+        console.error(chalk.red('Documentation generation failed:'), error);
+      }
+    });
+
+  // Docu AI Subcommand - Machine-readable documentation
+  docuCommand
+    .command('ai')
+    .description(t('cli.commands.docu_ai.description'))
+    .option('--local', 'Document uncommitted changes only')
+    .option('--git <branch>', 'Document changes since specified branch')
+    .option('--path-only <path>', 'Document specific files or directories')
+    .option('--preview', 'Preview changes without applying them')
+    .option('--force', 'Apply documentation without confirmation')
+    .action(async (options) => {
+      try {
+        console.log(chalk.cyan('🔍 Generating AI-optimized documentation...'));
+        
+        // Check if AI is configured
+        const { ensureAiIsConfigured } = await import('./utils/ai-helpers');
+        const isConfigured = ensureAiIsConfigured();
+        if (!isConfigured) {
+          console.log(chalk.yellow('⚠️ AI provider required for documentation generation.'));
+          console.log(chalk.gray('Run: woaru ai setup'));
+          return;
+        }
+
+        await runDocumentationCommand('ai', options);
+      } catch (error) {
+        console.error(chalk.red('Documentation generation failed:'), error);
+      }
     });
 
   // Ignore Command
@@ -558,6 +656,160 @@ function defineCommands(program: Command) {
 async function getCurrentLanguage(): Promise<string> {
   const { getCurrentLanguage: getI18nLanguage } = await import('./config/i18n');
   return getI18nLanguage();
+}
+
+// Documentation command handler
+async function runDocumentationCommand(
+  documentationType: 'nopro' | 'pro' | 'ai',
+  options: any
+): Promise<void> {
+  const projectPath = process.cwd();
+  
+  try {
+    // Import required modules
+    const { ConfigLoader } = await import('./ai/ConfigLoader');
+    const { DocumentationAgent } = await import('./ai/DocumentationAgent');
+    const { PromptManager } = await import('./ai/PromptManager');
+    
+    // Get AI configuration
+    const configLoader = ConfigLoader.getInstance();
+    const aiConfig = await configLoader.loadConfig();
+    
+    if (!aiConfig || aiConfig.providers.length === 0) {
+      console.log(chalk.yellow('⚠️ No AI providers configured.'));
+      console.log(chalk.gray('Run: woaru ai setup'));
+      return;
+    }
+
+    // Load prompt templates using PromptManager
+    const promptManager = PromptManager.getInstance();
+    await promptManager.initialize();
+    
+    // Load documentation-specific prompts
+    const promptTemplates: Record<string, any> = {};
+    try {
+      promptTemplates[`docu_${documentationType}`] = await promptManager.loadPrompt(
+        'global', 
+        `docu_${documentationType}`
+      );
+    } catch (error) {
+      console.log(chalk.yellow(`⚠️ Could not load documentation prompt template for ${documentationType}`));
+      console.log(chalk.gray('Using default AI review prompts'));
+    }
+    
+    // Create documentation agent
+    const docAgent = new DocumentationAgent(aiConfig, promptTemplates);
+    
+    // Determine which files to document
+    let filesToDocument: string[] = [];
+    
+    if (options.pathOnly) {
+      // Document specific files or directories
+      const { glob } = await import('glob');
+      const pattern = options.pathOnly.endsWith('/') 
+        ? `${options.pathOnly}**/*.{js,ts,jsx,tsx,py,java,go,rs,php,rb}`
+        : options.pathOnly;
+      filesToDocument = await glob(pattern, { cwd: projectPath });
+    } else if (options.local) {
+      // Document uncommitted changes
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+      
+      try {
+        const { stdout } = await execAsync('git diff --name-only', { cwd: projectPath });
+        filesToDocument = stdout.trim().split('\n').filter(f => f.length > 0);
+      } catch (error) {
+        console.log(chalk.yellow('⚠️ Git not available or not in a git repository'));
+        console.log(chalk.gray('Using all supported files in current directory'));
+        const { glob } = await import('glob');
+        filesToDocument = await glob('**/*.{js,ts,jsx,tsx,py,java,go,rs,php,rb}', { cwd: projectPath });
+      }
+    } else if (options.git) {
+      // Document changes since specified branch
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+      
+      try {
+        const { stdout } = await execAsync(`git diff --name-only ${options.git}`, { cwd: projectPath });
+        filesToDocument = stdout.trim().split('\n').filter(f => f.length > 0);
+      } catch (error) {
+        console.error(chalk.red(`Failed to get changes since branch ${options.git}:`), error);
+        return;
+      }
+    } else {
+      // Document all supported files
+      const { glob } = await import('glob');
+      filesToDocument = await glob('**/*.{js,ts,jsx,tsx,py,java,go,rs,php,rb}', {
+        cwd: projectPath,
+        ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**', 'coverage/**']
+      });
+    }
+
+    if (filesToDocument.length === 0) {
+      console.log(chalk.yellow('📂 No files found to document.'));
+      return;
+    }
+
+    console.log(chalk.blue(`📝 Found ${filesToDocument.length} files to document`));
+    
+    // Generate documentation
+    const results = await docAgent.generateDocumentation(
+      filesToDocument.map(f => path.resolve(projectPath, f)),
+      projectPath,
+      documentationType
+    );
+
+    if (results.length === 0) {
+      console.log(chalk.yellow('📝 No documentation generated. Files may already be documented.'));
+      return;
+    }
+
+    console.log(chalk.green(`✅ Generated documentation for ${results.length} items`));
+
+    // Preview mode - show what would be changed
+    if (options.preview) {
+      console.log(chalk.cyan('\n📋 Preview of documentation changes:'));
+      for (const result of results.slice(0, 3)) { // Show first 3 as examples
+        console.log(chalk.blue(`\n📄 ${path.relative(projectPath, result.filePath)}:`));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(result.generatedDoc);
+        if (results.length > 3 && result === results[2]) {
+          console.log(chalk.gray(`... and ${results.length - 3} more files`));
+        }
+      }
+      console.log(chalk.yellow('\n💡 Run without --preview to apply changes'));
+      return;
+    }
+
+    // Apply documentation if not in preview mode
+    if (!options.force) {
+      const { default: inquirer } = await import('inquirer');
+      const { confirm } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirm',
+          message: `Apply documentation to ${results.length} items?`,
+          default: true,
+        },
+      ]);
+
+      if (!confirm) {
+        console.log(chalk.gray('Documentation cancelled.'));
+        return;
+      }
+    }
+
+    // Apply the documentation
+    await docAgent.applyDocumentation(results);
+    console.log(chalk.green(`\n🎉 Documentation applied successfully!`));
+    console.log(chalk.gray(`Generated ${documentationType} documentation for ${results.length} items`));
+
+  } catch (error) {
+    console.error(chalk.red('❌ Documentation generation failed:'), error);
+    throw error;
+  }
 }
 
 // Dies ist der EINZIGE Startpunkt der Anwendung.

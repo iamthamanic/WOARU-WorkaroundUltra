@@ -101,6 +101,18 @@
         "description": "AI-powered code documentation generator",
         "purpose": "Generate comprehensive documentation for your codebase"
       },
+      "docu_nopro": {
+        "description": "Generate human-friendly documentation for non-technical audiences",
+        "purpose": "Create accessible documentation that anyone can understand"
+      },
+      "docu_pro": {
+        "description": "Generate technical TSDoc/JSDoc documentation for developers",
+        "purpose": "Create comprehensive technical documentation with proper annotations"
+      },
+      "docu_ai": {
+        "description": "Generate AI-optimized YAML context headers for machine understanding",
+        "purpose": "Create machine-readable documentation for AI tools and automation"
+      },
       "ignore": {
         "description": "Add a tool to the ignore list",
         "purpose": "Exclude specific tools from recommendations and monitoring"
