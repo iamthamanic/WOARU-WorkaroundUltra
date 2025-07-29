@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.1] - 2025-07-28
+
+### Fixed
+- **Translation System Issues**: Fixed critical translation key display problems
+  - Fixed duplicate top-level 'commands' objects in translation files that were overwriting wiki title translations
+  - Removed duplicate 'wiki' definitions from both English and German translation files
+  - Wiki command now correctly displays "📖 WOARU Documentation & Wiki" instead of "commands.wiki.title"
+  - Fixed issue where JSON parsing was causing later command objects to override earlier ones containing wiki.title
+  - Improved translation file structure to prevent key conflicts and ensure proper key resolution
+
+### Enhanced
+- **Translation Architecture**: Improved internationalization stability
+  - Better handling of nested translation objects to prevent key overwrites
+  - Enhanced error resilience in translation bundling system
+  - Improved structure validation for translation files
+- **Code Quality**: Fixed integration test expectations for test data consistency
+- **Developer Experience**: Enhanced debugging capabilities for translation key resolution
+
+### Technical Improvements
+- **Translation File Structure**: Reorganized translation files to prevent JSON object overwrites
+  - Eliminated duplicate command sections that were causing key conflicts
+  - Improved nested object handling in translation bundling
+  - Better error reporting for missing or conflicting translation keys
+- **Build System**: Enhanced translation bundling stability with conflict detection
+- **Testing**: Updated integration test expectations for better reliability
+
 ## [5.2.0] - 2025-07-28
 
 ### Fixed

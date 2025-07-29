@@ -453,7 +453,7 @@ export class ToolsDatabaseManager {
    */
   private getMinimalDatabase(): ToolsDatabase {
     return {
-      version: '1.0.0-minimal',
+      version: '1.0.0',
       lastUpdated: new Date().toISOString(),
       categories: {
         linting: {
@@ -682,6 +682,8 @@ export class ToolsDatabaseManager {
     });
   }
 
+  private backgroundInterval?: NodeJS.Timeout;
+
   /**
    * Starts background update checking (call this when WOARU starts)
    */
@@ -692,7 +694,7 @@ export class ToolsDatabaseManager {
     });
 
     // Set up periodic checking every 24 hours
-    setInterval(
+    this.backgroundInterval = setInterval(
       async () => {
         this.checkForUpdates().catch(() => {
           // Silently ignore errors in background
@@ -700,6 +702,16 @@ export class ToolsDatabaseManager {
       },
       24 * 60 * 60 * 1000
     ); // 24 hours
+  }
+
+  /**
+   * Stops background update checking
+   */
+  stopBackgroundUpdates(): void {
+    if (this.backgroundInterval) {
+      clearInterval(this.backgroundInterval);
+      this.backgroundInterval = undefined;
+    }
   }
 
   /**
@@ -1047,7 +1059,7 @@ export class ToolsDatabaseManager {
    */
   private getMinimalHybridDatabase(): HybridToolsDatabase {
     return {
-      version: '3.2.0-minimal',
+      version: '3.2.0',
       lastUpdated: new Date().toISOString(),
       schema_version: '2.0',
       core_tools: {
@@ -1215,7 +1227,7 @@ export class ToolsDatabaseManager {
    */
   private getMinimalAIModelsDatabase(): AIModelsDatabase {
     return {
-      version: '1.0.0-minimal',
+      version: '1.0.0',
       lastUpdated: new Date().toISOString(),
       llm_providers: {
         anthropic: {

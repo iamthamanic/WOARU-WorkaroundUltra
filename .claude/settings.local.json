@@ -1,18 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node:*)",
-      "Bash(ls:*)",
-      "Bash(npm run build:*)",
-      "Bash(cd:*)",
-      "Bash(npm install:*)",
-      "Bash(npx:*)",
-      "Bash(npm test:*)",
-      "Bash(grep:*)",
-      "Bash(npm run lint)",
-      "Bash(npm run lint:*)",
-      "Bash(npm audit fix:*)",
-      "Bash(tail:*)"
+      "mcp__ruv-swarm",
+      "mcp__claude-flow"
     ],
     "deny": []
   }

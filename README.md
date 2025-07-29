@@ -1,9 +1,30 @@
-# WOARU 🚀 v5.1.4
+# WOARU 🚀 v5.2.1
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v5.1.4 - Major Technical Hardening & Modernization**
+## 🆕 **Latest Release: v5.2.1 - Translation System Stability Enhancement**
+**Release Date:** July 28, 2025
+
+### 🔧 **PATCH: Critical Translation Key Display Fixes**
+This release resolves critical translation display issues that were causing command descriptions to show as placeholder keys instead of proper translated text.
+
+**Key Improvements:**
+- **Fixed Wiki Command Display**: Wiki command now shows "📖 WOARU Documentation & Wiki" instead of "commands.wiki.title"
+- **Translation Structure Optimization**: Eliminated duplicate translation objects that were causing key overwrites
+- **Enhanced Error Resilience**: Improved translation bundling system with better conflict detection
+- **Stable Internationalization**: Better handling of nested translation objects prevents future key conflicts
+
+**Technical Details:**
+- Fixed duplicate top-level 'commands' objects in translation files
+- Removed conflicting 'wiki' definitions from English and German translations
+- Enhanced translation bundling process for better stability
+- Improved JSON object handling to prevent key overwrites
+
+## 🔄 **Previous Release: v5.2.0 - Enhanced i18n System & Build Optimization**
+**Release Date:** July 28, 2025
+
+## 📚 **Previous Release: v5.1.4 - Major Technical Hardening & Modernization**
 **Release Date:** July 26, 2025
 
 ### 🚀 **MAJOR: Complete ES Modules Migration & Code Quality Overhaul**

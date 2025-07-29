@@ -85,13 +85,17 @@ describe('WOARUSupervisor Integration Tests', () => {
     // Setup mocked classes with EventEmitter functionality
     mockStateManager = Object.assign(new EventEmitter(), {
       load: jest.fn().mockResolvedValue(undefined),
+      save: jest.fn().mockResolvedValue(undefined),
+      destroy: jest.fn().mockResolvedValue(undefined),
       getState: jest.fn().mockReturnValue(mockProjectState),
       startAutoSave: jest.fn(),
       stopAutoSave: jest.fn(),
       updateLanguage: jest.fn(),
+      updateFrameworks: jest.fn(),
       addDetectedTool: jest.fn(),
       addCodeIssue: jest.fn(),
-      updateHealthScore: jest.fn()
+      updateHealthScore: jest.fn(),
+      applyFileChange: jest.fn()
     }) as jest.Mocked<StateManager>;
 
     mockFileWatcher = Object.assign(new EventEmitter(), {
@@ -107,17 +111,22 @@ describe('WOARUSupervisor Integration Tests', () => {
       showProgress: jest.fn(),
       showSuccess: jest.fn(),
       showError: jest.fn(),
+      showWarning: jest.fn(),
       showHealthScore: jest.fn(),
       notifyIssues: jest.fn(),
       notifyRecommendation: jest.fn(),
+      notifyRecommendations: jest.fn().mockResolvedValue(undefined),
+      notifyProductionAudits: jest.fn().mockResolvedValue(undefined),
+      showSecurityAlert: jest.fn(),
       sendWebhook: jest.fn().mockResolvedValue(undefined)
     } as jest.Mocked<NotificationManager>;
 
     mockToolEngine = {
       initialize: jest.fn().mockResolvedValue(undefined),
       analyzeProject: jest.fn().mockResolvedValue([]),
-      getRecommendations: jest.fn().mockReturnValue([]),
-      shouldRecommend: jest.fn().mockReturnValue(true)
+      getRecommendations: jest.fn().mockResolvedValue([]),
+      shouldRecommend: jest.fn().mockReturnValue(true),
+      checkSingleFile: jest.fn().mockResolvedValue([])
     } as jest.Mocked<ToolRecommendationEngine>;
 
     mockProjectAnalyzer = {
@@ -131,13 +140,17 @@ describe('WOARUSupervisor Integration Tests', () => {
 
     mockLanguageDetector = {
       detectLanguage: jest.fn().mockReturnValue('typescript'),
-      detectFrameworks: jest.fn().mockReturnValue(['react', 'nextjs'])
+      detectPrimaryLanguage: jest.fn().mockResolvedValue('typescript'),
+      detectFrameworks: jest.fn().mockResolvedValue(['react', 'nextjs'])
     } as jest.Mocked<LanguageDetector>;
 
     mockQualityRunner = {
       runAllQualityChecks: jest.fn().mockResolvedValue([]),
+      runChecksOnFileList: jest.fn().mockResolvedValue([]),
       runSecurityScan: jest.fn().mockResolvedValue([]),
-      runProductionReadinessCheck: jest.fn().mockResolvedValue([])
+      runProductionReadinessCheck: jest.fn().mockResolvedValue([]),
+      runChecksOnFileChange: jest.fn().mockResolvedValue([]),
+      runSecurityChecksForReview: jest.fn().mockResolvedValue([])
     } as jest.Mocked<QualityRunner>;
 
     mockProductionAuditor = {
@@ -240,7 +253,7 @@ describe('WOARUSupervisor Integration Tests', () => {
         await supervisor.start();
         
         expect(mockProjectAnalyzer.analyzeProject).toHaveBeenCalledWith(path.resolve(mockProjectPath));
-        expect(mockLanguageDetector.detectLanguage).toHaveBeenCalled();
+        expect(mockLanguageDetector.detectPrimaryLanguage).toHaveBeenCalledWith(path.resolve(mockProjectPath));
       });
 
       it('should handle database update errors during start', async () => {
@@ -383,14 +396,14 @@ describe('WOARUSupervisor Integration Tests', () => {
         supervisor.on('file-changed', eventSpy);
 
         const mockChanges: FileChange[] = [
-          { type: 'change', path: '/test/project/src/index.ts', timestamp: new Date() }
+          { type: 'change', path: 'src/index.ts', timestamp: new Date() }
         ];
 
         mockFileWatcher.emit('batch_changes', mockChanges);
 
         await new Promise(resolve => setTimeout(resolve, 10));
         
-        expect(eventSpy).toHaveBeenCalledWith('/test/project/src/index.ts');
+        expect(eventSpy).toHaveBeenCalledWith('src/index.ts');
       });
     });
 
@@ -484,6 +497,12 @@ describe('WOARUSupervisor Integration Tests', () => {
       });
 
       it('should not show health score when dashboard is disabled', async () => {
+        // Stop the main supervisor to avoid interference
+        await supervisor.stop();
+        
+        // Clear previous calls to ensure clean test
+        mockNotificationManager.showHealthScore.mockClear();
+
         const noDashboardConfig = { ...mockConfig, dashboard: false };
         const noDashboardSupervisor = new WOARUSupervisor(mockProjectPath, noDashboardConfig);
         
@@ -497,6 +516,9 @@ describe('WOARUSupervisor Integration Tests', () => {
         expect(mockNotificationManager.showHealthScore).not.toHaveBeenCalled();
         
         await noDashboardSupervisor.stop();
+        
+        // Restart the main supervisor for subsequent tests
+        await supervisor.start();
       });
     });
 
@@ -548,28 +570,34 @@ describe('WOARUSupervisor Integration Tests', () => {
       ];
 
       // Mock quality runner to return fixable issues
-      mockQualityRunner.runAllQualityChecks.mockResolvedValue(mockIssues);
+      mockQualityRunner.runChecksOnFileList.mockResolvedValue(mockIssues);
 
       // Emit file change to trigger auto-fix
       const mockChanges: FileChange[] = [
-        { type: 'change', path: '/test/project/src/index.ts', timestamp: new Date() }
+        { type: 'change', path: 'src/index.ts', timestamp: new Date() }
       ];
 
       mockFileWatcher.emit('batch_changes', mockChanges);
 
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      expect(mockQualityRunner.runAllQualityChecks).toHaveBeenCalled();
+      expect(mockQualityRunner.runChecksOnFileList).toHaveBeenCalled();
     });
 
     it('should not auto-fix when disabled', async () => {
+      // Stop the main supervisor to avoid interference
+      await supervisor.stop();
+      
+      // Clear previous calls to ensure clean test
+      mockQualityRunner.runChecksOnFileList.mockClear();
+
       const noAutoFixConfig = { ...mockConfig, autoFix: false };
       const noAutoFixSupervisor = new WOARUSupervisor(mockProjectPath, noAutoFixConfig);
       
       await noAutoFixSupervisor.start();
 
       const mockChanges: FileChange[] = [
-        { type: 'change', path: '/test/project/src/index.ts', timestamp: new Date() }
+        { type: 'change', path: 'src/index.ts', timestamp: new Date() }
       ];
 
       mockFileWatcher.emit('batch_changes', mockChanges);
@@ -577,16 +605,19 @@ describe('WOARUSupervisor Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       // Should not attempt auto-fix
-      expect(mockQualityRunner.runAllQualityChecks).not.toHaveBeenCalled();
+      expect(mockQualityRunner.runChecksOnFileList).not.toHaveBeenCalled();
       
       await noAutoFixSupervisor.stop();
+      
+      // Restart the main supervisor for subsequent tests
+      await supervisor.start();
     });
 
     it('should handle auto-fix errors gracefully', async () => {
-      mockQualityRunner.runAllQualityChecks.mockRejectedValue(new Error('Quality check failed'));
+      mockQualityRunner.runChecksOnFileList.mockRejectedValue(new Error('Quality check failed'));
 
       const mockChanges: FileChange[] = [
-        { type: 'change', path: '/test/project/src/index.ts', timestamp: new Date() }
+        { type: 'change', path: 'src/index.ts', timestamp: new Date() }
       ];
 
       mockFileWatcher.emit('batch_changes', mockChanges);
@@ -844,7 +875,7 @@ describe('WOARUSupervisor Integration Tests', () => {
       await supervisor.start();
 
       const mockChanges: FileChange[] = [
-        { type: 'change', path: '/test/project/src/index.ts', timestamp: new Date() }
+        { type: 'change', path: 'src/index.ts', timestamp: new Date() }
       ];
 
       mockFileWatcher.emit('batch_changes', mockChanges);
@@ -852,7 +883,7 @@ describe('WOARUSupervisor Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       if (mockConfig.autoFix) {
-        expect(mockQualityRunner.runAllQualityChecks).toHaveBeenCalled();
+        expect(mockQualityRunner.runChecksOnFileList).toHaveBeenCalled();
       }
     });
   });
