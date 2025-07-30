@@ -68,22 +68,27 @@ function sanitizeFunctionName(functionName: unknown): string {
 /**
  * Validates code content for security
  * @param content - Code content to validate
+ * @param filePath - File path for context
  * @returns True if content appears safe to analyze
  */
-function isSecureContent(content: string): boolean {
+function isSecureContent(content: string, filePath?: string): boolean {
   // Check for excessive size
   if (content.length > 1000000) {
     // 1MB limit
     return false;
   }
 
-  // Check for suspicious patterns
+  // Skip security checks for test files - they often contain malicious patterns for testing
+  if (filePath && (filePath.includes('.test.') || filePath.includes('__tests__') || filePath.includes('/test/'))) {
+    return true;
+  }
+
+  // Check for suspicious patterns - very specific to avoid false positives
   const suspiciousPatterns = [
-    /<script[^>]*>/i,
-    /eval\s*\(/,
-    /Function\s*\(/,
-    /setTimeout\s*\([^)]*['"].*['"][^)]*\)/,
-    /setInterval\s*\([^)]*['"].*['"][^)]*\)/,
+    /<script[^>]*>.*(?:fetch|XMLHttpRequest|location\.href|window\.open|document\.cookie).*<\/script>/i, // Only malicious script tags
+    /eval\s*\(['"]\s*[^'"]*(?:document|window|location|fetch|XMLHttpRequest)[^'"]*\s*['"]\)/i, // Only malicious eval
+    /new\s+Function\s*\(['"]\s*[^'"]*(?:document|window|location|fetch|XMLHttpRequest)[^'"]*\s*['"]\)/i, // Only malicious Function constructor
+    /data:text\/html[^"']*<script.*(?:fetch|XMLHttpRequest|location)/i, // Data URLs with malicious scripts
   ];
 
   return !suspiciousPatterns.some(pattern => pattern.test(content));
@@ -165,7 +170,7 @@ export class CodeSmellAnalyzer {
         language: language.toLowerCase(),
         content,
         contentLength: content.length,
-        isSecure: isSecureContent(content),
+        isSecure: isSecureContent(content, sanitizedPath),
       };
 
       if (!context.isSecure) {

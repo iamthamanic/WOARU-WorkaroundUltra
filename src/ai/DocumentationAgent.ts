@@ -16,7 +16,7 @@ export interface DocumentationResult {
   generatedDoc: string;
   insertionPoint: number;
   functionName: string;
-  documentationType: 'nopro' | 'pro' | 'ai';
+  documentationType: 'nopro' | 'pro' | 'forai';
 }
 
 export interface CodeFunction {
@@ -25,7 +25,7 @@ export interface CodeFunction {
   endLine: number;
   content: string;
   hasExistingDoc: boolean;
-  existingDocType?: 'nopro' | 'pro' | 'ai';
+  existingDocType?: 'nopro' | 'pro' | 'forai';
 }
 
 /**
@@ -65,13 +65,13 @@ export class DocumentationAgent {
    *
    * @param fileList - Array of file paths to process for documentation
    * @param projectPath - Root path of the project for context
-   * @param documentationType - Type of documentation to generate ('nopro' for human-friendly, 'pro' for technical, 'ai' for machine-readable)
+   * @param documentationType - Type of documentation to generate ('nopro' for human-friendly, 'pro' for technical, 'forai' for machine-readable)
    * @returns Promise resolving to array of documentation results with file modifications
    */
   async generateDocumentation(
     fileList: string[],
     projectPath: string,
-    documentationType: 'nopro' | 'pro' | 'ai'
+    documentationType: 'nopro' | 'pro' | 'forai'
   ): Promise<DocumentationResult[]> {
     const results: DocumentationResult[] = [];
 
@@ -111,7 +111,7 @@ export class DocumentationAgent {
   private async processFile(
     filePath: string,
     projectPath: string,
-    documentationType: 'nopro' | 'pro' | 'ai'
+    documentationType: 'nopro' | 'pro' | 'forai'
   ): Promise<DocumentationResult[]> {
     const content = await fs.readFile(filePath, 'utf-8');
     const language = this.detectLanguage(filePath);
@@ -121,8 +121,8 @@ export class DocumentationAgent {
       return [];
     }
 
-    // For AI documentation, we generate file-level context headers
-    if (documentationType === 'ai') {
+    // For ForAI documentation, we generate file-level context headers
+    if (documentationType === 'forai') {
       return await this.processFileForAIContext(
         filePath,
         projectPath,
@@ -235,7 +235,7 @@ export class DocumentationAgent {
       );
 
       // Extract the best documentation from results
-      const aiContextHeader = this.extractBestDocumentation(result, 'ai');
+      const aiContextHeader = this.extractBestDocumentation(result, 'forai');
 
       if (aiContextHeader) {
         console.log(
@@ -257,7 +257,7 @@ export class DocumentationAgent {
             generatedDoc: formattedHeader,
             insertionPoint: 1, // Insert at beginning of file
             functionName: 'FILE_HEADER',
-            documentationType: 'ai',
+            documentationType: 'forai',
           },
         ];
       } else {
@@ -376,7 +376,7 @@ export class DocumentationAgent {
     filePath: string,
     projectPath: string,
     language: string,
-    documentationType: 'nopro' | 'pro' | 'ai'
+    documentationType: 'nopro' | 'pro' | 'forai'
   ): Promise<string | null> {
     try {
       // Prepare context for AI analysis
@@ -434,7 +434,7 @@ export class DocumentationAgent {
    */
   private extractBestDocumentation(
     aiResult: MultiLLMReviewResult,
-    _documentationType: 'nopro' | 'pro' | 'ai'
+_documentationType: 'nopro' | 'pro' | 'forai'
   ): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);
@@ -633,7 +633,7 @@ export class DocumentationAgent {
   private checkExistingDocumentation(
     lines: string[],
     functionLineIndex: number
-  ): { hasDoc: boolean; type?: 'nopro' | 'pro' | 'ai' } {
+  ): { hasDoc: boolean; type?: 'nopro' | 'pro' | 'forai' } {
     // Look backwards from the function line to find documentation
     for (let i = functionLineIndex - 1; i >= 0; i--) {
       const line = lines[i].trim();
@@ -662,9 +662,9 @@ export class DocumentationAgent {
         return { hasDoc: true, type: 'pro' };
       }
 
-      // Check for AI-optimized documentation (woaru_context header)
+      // Check for ForAI-optimized documentation (woaru_context header)
       if (line.includes(`${APP_CONFIG.DOCUMENTATION.CONTEXT_HEADER_KEY}:`)) {
-        return { hasDoc: true, type: 'ai' };
+        return { hasDoc: true, type: 'forai' };
       }
     }
 

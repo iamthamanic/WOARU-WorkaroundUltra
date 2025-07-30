@@ -224,12 +224,12 @@ describe('CLI Integration Tests', () => {
         expect(result.stdout).toContain('setup');
       });
 
-      it('should recognize "docu ai" sub-command', async () => {
-        const result = await runCLICommand(['docu', 'ai', '--help']);
+      it('should recognize "docu forai" sub-command', async () => {
+        const result = await runCLICommand(['docu', 'forai', '--help']);
         
         expect(result.code).toBe(0);
         expect(result.stdout).toContain('Usage:');
-        expect(result.stdout).toContain('ai');
+        expect(result.stdout).toContain('forai');
       });
 
       it('should recognize "logs clear" sub-command', async () => {

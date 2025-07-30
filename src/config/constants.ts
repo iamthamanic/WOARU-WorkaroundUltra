@@ -199,7 +199,7 @@ export const APP_CONFIG = {
     SCHEMA_VERSION: '1.0',
     CONTEXT_HEADER_KEY: 'woaru_context',
     CONTEXT_HEADER_CHECK_LINES: 20,
-    GENERATED_BY: 'woaru docu ai',
+    GENERATED_BY: 'woaru docu forai',
     TYPES: {
       NOPRO: 'nopro',
       PRO: 'pro',
