@@ -262,7 +262,7 @@ export class ProductionReadinessAuditor {
 
     return (
       typeof config.language === 'string' &&
-      validLanguages.includes(config.language) &&
+      validLanguages.includes(config.language.toLowerCase()) &&
       typeof config.projectType === 'string' &&
       validProjectTypes.includes(config.projectType) &&
       Array.isArray(config.frameworks)

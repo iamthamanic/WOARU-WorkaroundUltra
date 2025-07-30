@@ -65,6 +65,14 @@
         "description": "Manage AI providers for code analysis",
         "purpose": "Configure and manage AI-powered code analysis capabilities"
       },
+      "ai_setup": {
+        "description": "Setup and configuration of AI providers for code analysis",
+        "purpose": "Add new AI providers and configure their settings"
+      },
+      "ai_status": {
+        "description": "Show visual AI model status and configuration",
+        "purpose": "Display comprehensive AI provider status with visual indicators"
+      },
       "update_db": {
         "description": "Update the tools database from remote source",
         "purpose": "Refresh the database of available development tools and configurations"
@@ -109,8 +117,8 @@
         "description": "Generate technical TSDoc/JSDoc documentation for developers",
         "purpose": "Create comprehensive technical documentation with proper annotations"
       },
-      "docu_ai": {
-        "description": "Generate AI-optimized YAML context headers for machine understanding",
+      "docu_forai": {
+        "description": "Generate ForAI-optimized YAML context headers for machine understanding",
         "purpose": "Create machine-readable documentation for AI tools and automation"
       },
       "ignore": {
@@ -124,6 +132,10 @@
       "analyze": {
         "description": "Comprehensive project analysis including security audit",
         "purpose": "Perform deep analysis of your project's health and security"
+      },
+      "analyze_ai": {
+        "description": "AI-powered comprehensive code analysis with multiple AI providers",
+        "purpose": "Get intelligent comprehensive analysis of your entire project (Requires a configured AI provider. Set one up with 'woaru ai setup'.)"
       },
       "rollback": {
         "description": "Rollback changes made by a specific tool",
@@ -343,7 +355,18 @@
     "invalid_provider_id": "Invalid provider ID: {{provider}}",
     "api_key_missing_for_provider": "API key missing for provider: {{provider}}",
     "configuration_validation_passed": "AI configuration validation passed",
-    "graceful_shutdown": "Shutting down gracefully due to AI configuration error"
+    "graceful_shutdown": "Shutting down gracefully due to AI configuration error",
+    "ai_not_configured": "AI is not configured",
+    "no_ai_configured": "No AI providers configured",
+    "ai_fully_configured": "AI fully configured and ready",
+    "ai_partially_configured": "AI partially configured (some issues found)",
+    "ai_needs_setup": "AI providers configured but need activation",
+    "ai_check_failed": "AI configuration check failed",
+    "no_providers_configured": "No AI providers configured",
+    "providers_configured_but_none_active": "AI providers configured but none are active",
+    "some_providers_missing_api_keys": "Some AI providers are missing API keys",
+    "ai_fully_configured": "AI is fully configured and ready",
+    "status_check_failed": "AI status check failed"
   },
   "startup_check": {
     "git_not_available": "Git is not available in your system PATH",

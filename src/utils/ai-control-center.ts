@@ -54,6 +54,10 @@ export async function showAiControlCenter(): Promise<void> {
 async function displayCurrentStatus(): Promise<void> {
   console.log(chalk.blue(t('cli.ai_control_center.current_status')));
 
+  // Use the new visual status system
+  const { displayAiStatus } = await import('./ai-helpers');
+  await displayAiStatus(false); // Show detailed status
+
   const configManager = ConfigManager.getInstance();
   const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
   const activeProviders = await getActiveProviders();
