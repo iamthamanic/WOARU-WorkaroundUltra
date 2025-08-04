@@ -4,6 +4,12 @@ import * as path from 'path';
 import * as yaml from 'js-yaml';
 import { ProjectState, ToolRecommendation, CodeEvidence } from './types';
 import { CodeAnalyzer } from '../analyzer/CodeAnalyzer';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface ToolDefinition {
   name: string;

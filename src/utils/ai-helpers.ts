@@ -440,17 +440,17 @@ export interface AiStatusInfo {
 export async function checkAiModelStatus(): Promise<AiStatusInfo> {
   try {
     await initializeI18n();
-    
+
     const configManager = ConfigManager.getInstance();
     const aiConfig = await configManager.loadAiConfig();
-    
+
     if (!aiConfig || typeof aiConfig !== 'object') {
       return {
         status: 'not_configured',
         icon: '❌',
         message: t('ai_helpers.no_ai_configured'),
         providers: [],
-        setupRequired: true
+        setupRequired: true,
       };
     }
 
@@ -461,16 +461,16 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
     // Check all configured providers
     for (const [id, config] of Object.entries(aiConfig)) {
       if (id === 'lastDataUpdate') continue;
-      
+
       if (config && typeof config === 'object' && 'enabled' in config) {
         const hasApiKey = await configManager.hasApiKey(id);
-        
+
         if (config.enabled && hasApiKey) {
           providers.push({
             id,
             status: 'active' as const,
             icon: '✅',
-            model: (config as any).model || 'default'
+            model: (config as { model?: string }).model || 'default',
           });
           hasActiveProvider = true;
         } else if (config.enabled && !hasApiKey) {
@@ -478,7 +478,7 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
             id,
             status: 'missing_key' as const,
             icon: '🔑',
-            model: (config as any).model || 'default'
+            model: (config as { model?: string }).model || 'default',
           });
           hasWarnings = true;
         } else {
@@ -486,7 +486,7 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
             id,
             status: 'disabled' as const,
             icon: '⚪',
-            model: (config as any).model || 'default'
+            model: (config as { model?: string }).model || 'default',
           });
         }
       }
@@ -496,11 +496,11 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
       return {
         status: hasWarnings ? 'warning' : 'active',
         icon: hasWarnings ? '⚠️' : '✅',
-        message: hasWarnings 
-          ? t('ai_helpers.ai_partially_configured') 
+        message: hasWarnings
+          ? t('ai_helpers.ai_partially_configured')
           : t('ai_helpers.ai_fully_configured'),
         providers,
-        setupRequired: false
+        setupRequired: false,
       };
     } else {
       return {
@@ -508,7 +508,7 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
         icon: '⚠️',
         message: t('ai_helpers.ai_needs_setup'),
         providers,
-        setupRequired: true
+        setupRequired: true,
       };
     }
   } catch {
@@ -517,7 +517,7 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
       icon: '❌',
       message: t('ai_helpers.ai_check_failed'),
       providers: [],
-      setupRequired: true
+      setupRequired: true,
     };
   }
 }
@@ -527,29 +527,34 @@ export async function checkAiModelStatus(): Promise<AiStatusInfo> {
  */
 export async function displayAiStatus(compact = false): Promise<void> {
   const status = await checkAiModelStatus();
-  
+
   console.log();
   console.log(chalk.bold(`${status.icon} AI Status: ${status.message}`));
-  
+
   if (!compact && status.providers.length > 0) {
     console.log();
     console.log(chalk.blue('📋 Configured Providers:'));
     for (const provider of status.providers) {
-      const statusText = provider.status === 'active' ? chalk.green('Ready') :
-                        provider.status === 'missing_key' ? chalk.red('Missing API Key') :
-                        chalk.gray('Disabled');
-      console.log(`  ${provider.icon} ${chalk.cyan(provider.id)}: ${statusText}`);
+      const statusText =
+        provider.status === 'active'
+          ? chalk.green('Ready')
+          : provider.status === 'missing_key'
+            ? chalk.red('Missing API Key')
+            : chalk.gray('Disabled');
+      console.log(
+        `  ${provider.icon} ${chalk.cyan(provider.id)}: ${statusText}`
+      );
       if (provider.model && provider.status === 'active') {
         console.log(`    ${chalk.gray('Model:')} ${provider.model}`);
       }
     }
   }
-  
+
   if (status.setupRequired) {
     console.log();
     console.log(chalk.yellow('💡 Setup required:'));
     console.log(chalk.gray('   Run: woaru ai setup'));
   }
-  
+
   console.log();
 }

@@ -8,10 +8,21 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface TranslationIssue {
   key: string;
-  issue: 'missing' | 'extra' | 'type_mismatch' | 'empty_value' | 'placeholder_mismatch';
+  issue:
+    | 'missing'
+    | 'extra'
+    | 'type_mismatch'
+    | 'empty_value'
+    | 'placeholder_mismatch';
   language: string;
   details?: string;
   severity: 'error' | 'warning' | 'info';
@@ -93,7 +104,7 @@ export class TranslationValidator {
         // Check for missing keys
         for (const key of allKeys) {
           if (this.shouldIgnoreKey(key)) continue;
-          
+
           if (!langKeys.has(key)) {
             issues.push({
               key,
@@ -108,7 +119,7 @@ export class TranslationValidator {
         // Check for extra keys
         for (const key of langKeys) {
           if (this.shouldIgnoreKey(key)) continue;
-          
+
           if (!allKeys.has(key)) {
             issues.push({
               key,
@@ -272,7 +283,13 @@ export class TranslationValidator {
     translations: Record<string, Record<string, unknown>>,
     issues: TranslationIssue[]
   ): void {
-    const baseTranslation = translations[this.options.baseLanguage!];
+    const baseLanguage = this.options.baseLanguage;
+    if (!baseLanguage) {
+      throw new Error(
+        'Base language is required for placeholder consistency check'
+      );
+    }
+    const baseTranslation = translations[baseLanguage];
     const basePlaceholders = this.extractPlaceholders(baseTranslation);
 
     for (const [lang, translation] of Object.entries(translations)) {
@@ -282,7 +299,7 @@ export class TranslationValidator {
 
       for (const [key, basePlaceholder] of basePlaceholders) {
         const langPlaceholder = langPlaceholders.get(key);
-        
+
         if (!langPlaceholder) {
           if (basePlaceholder.length > 0) {
             issues.push({
@@ -296,8 +313,12 @@ export class TranslationValidator {
           continue;
         }
 
-        const missingPlaceholders = basePlaceholder.filter(p => !langPlaceholder.includes(p));
-        const extraPlaceholders = langPlaceholder.filter(p => !basePlaceholder.includes(p));
+        const missingPlaceholders = basePlaceholder.filter(
+          p => !langPlaceholder.includes(p)
+        );
+        const extraPlaceholders = langPlaceholder.filter(
+          p => !basePlaceholder.includes(p)
+        );
 
         if (missingPlaceholders.length > 0) {
           issues.push({
@@ -362,7 +383,7 @@ export class TranslationValidator {
    */
   private shouldIgnoreKey(key: string): boolean {
     if (!this.options.ignorePaths) return false;
-    
+
     return this.options.ignorePaths.some(pattern => {
       if (pattern.includes('*')) {
         const regex = new RegExp(pattern.replace(/\*/g, '.*'));
@@ -388,25 +409,35 @@ export class TranslationValidator {
 
     // Calculate completeness for each language
     const langStats = new Map<string, { total: number; missing: number }>();
-    
+
     issues.forEach(issue => {
       if (issue.language !== 'multiple') {
         if (!langStats.has(issue.language)) {
           langStats.set(issue.language, { total: 0, missing: 0 });
         }
-        
-        const stats = langStats.get(issue.language)!;
-        if (issue.issue === 'missing') {
-          stats.missing++;
+
+        const stats = langStats.get(issue.language);
+        if (!stats) {
+          langStats.set(issue.language, {
+            total: 1,
+            missing: issue.issue === 'missing' ? 1 : 0,
+          });
+        } else {
+          if (issue.issue === 'missing') {
+            stats.missing++;
+          }
+          stats.total++;
         }
-        stats.total++;
       }
     });
 
     summary.languages = Array.from(langStats.keys());
-    
+
     langStats.forEach((stats, lang) => {
-      const completeness = Math.max(0, 100 - (stats.missing / Math.max(stats.total, 1)) * 100);
+      const completeness = Math.max(
+        0,
+        100 - (stats.missing / Math.max(stats.total, 1)) * 100
+      );
       summary.completeness[lang] = Math.round(completeness * 100) / 100;
     });
 
@@ -416,14 +447,29 @@ export class TranslationValidator {
   /**
    * Compare specific languages and return detailed comparison
    */
-  async compareLanguages(lang1: string, lang2: string): Promise<{
+  async compareLanguages(
+    lang1: string,
+    lang2: string
+  ): Promise<{
     onlyInLang1: string[];
     onlyInLang2: string[];
     common: string[];
-    differences: Array<{ key: string; lang1Value: unknown; lang2Value: unknown }>;
+    differences: Array<{
+      key: string;
+      lang1Value: unknown;
+      lang2Value: unknown;
+    }>;
   }> {
-    const translation1Path = path.join(this.localesPath, lang1, 'translation.json');
-    const translation2Path = path.join(this.localesPath, lang2, 'translation.json');
+    const translation1Path = path.join(
+      this.localesPath,
+      lang1,
+      'translation.json'
+    );
+    const translation2Path = path.join(
+      this.localesPath,
+      lang2,
+      'translation.json'
+    );
 
     const [trans1, trans2] = await Promise.all([
       fs.readJson(translation1Path),
@@ -432,7 +478,7 @@ export class TranslationValidator {
 
     const keys1 = new Set<string>();
     const keys2 = new Set<string>();
-    
+
     this.extractKeys(trans1, '', keys1);
     this.extractKeys(trans2, '', keys2);
 
@@ -440,12 +486,16 @@ export class TranslationValidator {
     const onlyInLang2 = Array.from(keys2).filter(k => !keys1.has(k));
     const common = Array.from(keys1).filter(k => keys2.has(k));
 
-    const differences: Array<{ key: string; lang1Value: unknown; lang2Value: unknown }> = [];
-    
+    const differences: Array<{
+      key: string;
+      lang1Value: unknown;
+      lang2Value: unknown;
+    }> = [];
+
     for (const key of common) {
       const val1 = this.getValueByKey(trans1, key);
       const val2 = this.getValueByKey(trans2, key);
-      
+
       if (JSON.stringify(val1) !== JSON.stringify(val2)) {
         differences.push({ key, lang1Value: val1, lang2Value: val2 });
       }
@@ -464,7 +514,7 @@ export class TranslationValidator {
 
     const summary = this.generateSummary(issues);
     const report = ['# Translation Validation Report', ''];
-    
+
     // Add summary section
     report.push('## Summary');
     report.push('');
@@ -473,7 +523,7 @@ export class TranslationValidator {
     report.push(`- **Warnings**: ${summary.warningCount}`);
     report.push(`- **Languages**: ${summary.languages.join(', ')}`);
     report.push('');
-    
+
     // Add completeness section
     if (Object.keys(summary.completeness).length > 0) {
       report.push('## Translation Completeness');
@@ -494,16 +544,19 @@ export class TranslationValidator {
       },
       {} as Record<string, TranslationIssue[]>
     );
-    
+
     // Process each severity level
     (['error', 'warning', 'info'] as const).forEach(severity => {
       const severityIssues = bySeverity[severity];
       if (!severityIssues || severityIssues.length === 0) return;
-      
-      const severityIcon = severity === 'error' ? '🔴' : severity === 'warning' ? '🟡' : '🔵';
-      report.push(`## ${severityIcon} ${severity.toUpperCase()} (${severityIssues.length})`);
+
+      const severityIcon =
+        severity === 'error' ? '🔴' : severity === 'warning' ? '🟡' : '🔵';
+      report.push(
+        `## ${severityIcon} ${severity.toUpperCase()} (${severityIssues.length})`
+      );
       report.push('');
-      
+
       // Group by issue type within severity
       const byType = severityIssues.reduce(
         (acc, issue) => {
@@ -513,17 +566,27 @@ export class TranslationValidator {
         },
         {} as Record<string, TranslationIssue[]>
       );
-      
+
       this.addIssueTypeSection(report, byType, 'missing', 'Missing Keys');
       this.addIssueTypeSection(report, byType, 'extra', 'Extra Keys');
-      this.addIssueTypeSection(report, byType, 'type_mismatch', 'Type Mismatches');
+      this.addIssueTypeSection(
+        report,
+        byType,
+        'type_mismatch',
+        'Type Mismatches'
+      );
       this.addIssueTypeSection(report, byType, 'empty_value', 'Empty Values');
-      this.addIssueTypeSection(report, byType, 'placeholder_mismatch', 'Placeholder Mismatches');
+      this.addIssueTypeSection(
+        report,
+        byType,
+        'placeholder_mismatch',
+        'Placeholder Mismatches'
+      );
     });
 
     return report.join('\n');
   }
-  
+
   /**
    * Helper method to add issue type sections to report
    */
@@ -540,7 +603,9 @@ export class TranslationValidator {
         if (issue.language === 'multiple') {
           report.push(`- \`${issue.key}\`: ${issue.details}`);
         } else {
-          report.push(`- **${issue.language}**: \`${issue.key}\`${issue.details ? ` - ${issue.details}` : ''}`);
+          report.push(
+            `- **${issue.language}**: \`${issue.key}\`${issue.details ? ` - ${issue.details}` : ''}`
+          );
         }
       });
       report.push('');

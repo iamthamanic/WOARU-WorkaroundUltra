@@ -2,6 +2,12 @@ import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ToolsDatabase, ToolConfig } from '../types';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export class DatabaseManager {
   private readonly localDbPath: string;

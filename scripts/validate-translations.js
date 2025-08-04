@@ -5,10 +5,14 @@
  * Used during build process to ensure translation quality
  */
 
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
-const config = require('./translation-config');
+import fs from 'fs-extra';
+import path from 'path';
+import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+import config from './translation-config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const LOCALES_DIR = path.join(__dirname, '../locales');
 
@@ -367,10 +371,10 @@ async function main() {
 }
 
 // Export for programmatic use
-module.exports = { TranslationValidator };
+export { TranslationValidator };
 
 // Run if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
     console.error(chalk.red('❌ Validation script failed:'), error.message);
     process.exit(1);

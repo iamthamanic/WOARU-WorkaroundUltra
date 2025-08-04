@@ -5,10 +5,14 @@
  * Includes validation to ensure translation completeness before bundling
  */
 
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
-const { TranslationValidator } = require('./validate-translations');
+import fs from 'fs-extra';
+import path from 'path';
+import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+import { TranslationValidator } from './validate-translations.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const LOCALES_DIR = path.join(__dirname, '../locales');
 const OUTPUT_DIR = path.join(__dirname, '../src/generated');

@@ -72,7 +72,7 @@ export class MessageHandler {
   static async send(options: MessageHandlerOptions): Promise<void> {
     try {
       await initializeI18n();
-      
+
       const handler = new MessageHandler();
 
       console.log(chalk.blue('📤 WOARU Message Handler'));
@@ -81,7 +81,9 @@ export class MessageHandler {
       // Read and filter reports
       const reports = await handler.readReports();
       if (reports.length === 0) {
-        console.log(chalk.yellow('📭 No reports found in sent-reports directory'));
+        console.log(
+          chalk.yellow('📭 No reports found in sent-reports directory')
+        );
         console.log(chalk.gray(`   Location: ${handler.sentReportsDir}`));
         return;
       }
@@ -92,7 +94,9 @@ export class MessageHandler {
         return;
       }
 
-      console.log(chalk.green(`📋 Found ${filteredReports.length} matching reports`));
+      console.log(
+        chalk.green(`📋 Found ${filteredReports.length} matching reports`)
+      );
 
       // Display reports in terminal
       await handler.formatForTerminal(filteredReports, options);
@@ -101,15 +105,15 @@ export class MessageHandler {
       if (options.url) {
         await handler.sendWebhook(options.url, filteredReports, options);
       }
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error(chalk.red(`❌ Error: ${errorMessage}`));
-      
+
       if (options?.verbose) {
         console.error(chalk.gray('Stack trace:'), error);
       }
-      
+
       throw error;
     }
   }
@@ -134,13 +138,17 @@ export class MessageHandler {
         }
 
         const filepath = path.join(this.sentReportsDir, filename);
-        
+
         try {
           const stats = await fs.stat(filepath);
-          
+
           // Security check: skip files that are too large
           if (stats.size > SECURITY_LIMITS.MAX_FILE_SIZE) {
-            console.warn(chalk.yellow(`⚠️ Skipping large file: ${filename} (${stats.size} bytes)`));
+            console.warn(
+              chalk.yellow(
+                `⚠️ Skipping large file: ${filename} (${stats.size} bytes)`
+              )
+            );
             continue;
           }
 
@@ -154,7 +162,7 @@ export class MessageHandler {
             type: type || 'unknown',
             size: stats.size,
           });
-        } catch (fileError) {
+        } catch {
           console.warn(chalk.yellow(`⚠️ Could not process file: ${filename}`));
           continue;
         }
@@ -164,12 +172,14 @@ export class MessageHandler {
       reports.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
       return reports.slice(0, SECURITY_LIMITS.MAX_REPORTS_TO_PROCESS);
-    } catch (error: any) {
-      if (error?.code === 'ENOENT') {
+    } catch (error: unknown) {
+      if ((error as { code?: string })?.code === 'ENOENT') {
         console.warn(chalk.yellow('📁 sent-reports directory does not exist'));
         return [];
       }
-      throw new Error(`Failed to read reports: ${error?.message || String(error)}`);
+      throw new Error(
+        `Failed to read reports: ${(error as Error)?.message || String(error)}`
+      );
     }
   }
 
@@ -179,14 +189,18 @@ export class MessageHandler {
    * @param criteria - Filter criteria from CLI options
    * @returns ReportMetadata[] Filtered reports
    */
-  filterReports(reports: ReportMetadata[], criteria: MessageHandlerOptions): ReportMetadata[] {
+  filterReports(
+    reports: ReportMetadata[],
+    criteria: MessageHandlerOptions
+  ): ReportMetadata[] {
     let filtered = [...reports];
 
     // Filter by type
     if (criteria.type && criteria.type !== 'all') {
-      filtered = filtered.filter(report => 
-        report.type === criteria.type || 
-        report.filename.includes(criteria.type!)
+      filtered = filtered.filter(
+        report =>
+          report.type === criteria.type ||
+          (criteria.type && report.filename.includes(criteria.type))
       );
     }
 
@@ -203,7 +217,10 @@ export class MessageHandler {
    * @param reports - Array of report metadata
    * @param options - Display options
    */
-  async formatForTerminal(reports: ReportMetadata[], options: MessageHandlerOptions): Promise<void> {
+  async formatForTerminal(
+    reports: ReportMetadata[],
+    options: MessageHandlerOptions
+  ): Promise<void> {
     console.log();
     console.log(chalk.cyan('📊 Report Summary:'));
     console.log(chalk.gray('-'.repeat(50)));
@@ -213,7 +230,9 @@ export class MessageHandler {
       const sizeFormatted = this.formatFileSize(report.size);
       const timeFormatted = report.timestamp.toLocaleString();
 
-      console.log(`${index + 1}. ${typeIcon} ${chalk.bold(report.type.toUpperCase())}`);
+      console.log(
+        `${index + 1}. ${typeIcon} ${chalk.bold(report.type.toUpperCase())}`
+      );
       console.log(`   ${chalk.gray('File:')} ${report.filename}`);
       console.log(`   ${chalk.gray('Size:')} ${sizeFormatted}`);
       console.log(`   ${chalk.gray('Date:')} ${timeFormatted}`);
@@ -224,7 +243,7 @@ export class MessageHandler {
           const content = await fs.readFile(report.filepath, 'utf8');
           const preview = this.extractContentPreview(content);
           console.log(`   ${chalk.gray('Preview:')} ${preview}`);
-        } catch (error) {
+        } catch {
           console.log(`   ${chalk.red('Preview: Error reading file')}`);
         }
       }
@@ -236,10 +255,14 @@ export class MessageHandler {
   /**
    * Send reports to webhook URL
    * @param url - Webhook URL
-   * @param reports - Array of report metadata  
+   * @param reports - Array of report metadata
    * @param options - Send options
    */
-  async sendWebhook(url: string, reports: ReportMetadata[], options: MessageHandlerOptions): Promise<void> {
+  async sendWebhook(
+    url: string,
+    reports: ReportMetadata[],
+    options: MessageHandlerOptions
+  ): Promise<void> {
     // Validate URL
     if (!this.isValidWebhookUrl(url)) {
       throw new Error('Invalid webhook URL provided');
@@ -257,7 +280,8 @@ export class MessageHandler {
           reportType: report.type,
           timestamp: report.timestamp.toISOString(),
           filename: report.filename,
-          content: options.format === 'json' ? this.convertToJson(content) : content,
+          content:
+            options.format === 'json' ? this.convertToJson(content) : content,
           metadata: {
             size: report.size,
             originalPath: report.filepath,
@@ -269,9 +293,12 @@ export class MessageHandler {
 
         console.log(chalk.green(`✅ Sent: ${report.filename}`));
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`❌ Failed to send ${report.filename}: ${errorMessage}`));
-        
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error(
+          chalk.red(`❌ Failed to send ${report.filename}: ${errorMessage}`)
+        );
+
         if (options.verbose) {
           console.error(chalk.gray('Error details:'), error);
         }
@@ -287,9 +314,11 @@ export class MessageHandler {
   private isWOARUReportFile(filename: string): boolean {
     // Check for WOARU report pattern: YYYY-MM-DDTHH-mm-ss-fffZ-woaru-[command]-YYYYMMDD-HHMMSS.md
     // Or the standard FilenameHelper pattern
-    return FilenameHelper.isValidReportFilename(filename) || 
-           filename.includes('woaru') || 
-           /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-woaru-/.test(filename);
+    return (
+      FilenameHelper.isValidReportFilename(filename) ||
+      filename.includes('woaru') ||
+      /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-woaru-/.test(filename)
+    );
   }
 
   /**
@@ -309,13 +338,19 @@ export class MessageHandler {
       }
 
       // Try legacy format: YYYY-MM-DDTHH-mm-ss-fffZ
-      const isoMatch = filename.match(/^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)/);
+      const isoMatch = filename.match(
+        /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)/
+      );
       if (isoMatch) {
-        return new Date(isoMatch[1].replace(/-/g, ':').replace(/T(\d{2}):(\d{2}):(\d{2}):(\d{3})Z/, 'T$1:$2:$3.$4Z'));
+        return new Date(
+          isoMatch[1]
+            .replace(/-/g, ':')
+            .replace(/T(\d{2}):(\d{2}):(\d{2}):(\d{3})Z/, 'T$1:$2:$3.$4Z')
+        );
       }
 
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -382,7 +417,7 @@ export class MessageHandler {
     const meaningfulLines = lines
       .filter(line => line.trim() && !line.startsWith('#'))
       .slice(0, 2);
-    
+
     const preview = meaningfulLines.join(' ').substring(0, 100);
     return preview + (preview.length === 100 ? '...' : '');
   }
@@ -426,15 +461,22 @@ export class MessageHandler {
    */
   private convertToJson(content: string): string {
     try {
-      return JSON.stringify({
-        format: 'markdown',
-        content: content,
-        lines: content.split('\n').length,
-        size: content.length,
-        timestamp: new Date().toISOString(),
-      }, null, 2);
+      return JSON.stringify(
+        {
+          format: 'markdown',
+          content: content,
+          lines: content.split('\n').length,
+          size: content.length,
+          timestamp: new Date().toISOString(),
+        },
+        null,
+        2
+      );
     } catch {
-      return JSON.stringify({ error: 'Failed to convert content', original: content });
+      return JSON.stringify({
+        error: 'Failed to convert content',
+        original: content,
+      });
     }
   }
 
@@ -444,11 +486,15 @@ export class MessageHandler {
    * @param payload - Payload to send
    * @param options - Request options
    */
-  private async sendHttpPost(url: string, payload: WebhookPayload, options: MessageHandlerOptions): Promise<void> {
+  private async sendHttpPost(
+    url: string,
+    payload: WebhookPayload,
+    options: MessageHandlerOptions
+  ): Promise<void> {
     // Using dynamic import for better compatibility
     const https = await import('https');
     const http = await import('http');
-    
+
     return new Promise((resolve, reject) => {
       const urlObj = new URL(url);
       const isHttps = urlObj.protocol === 'https:';
@@ -468,17 +514,21 @@ export class MessageHandler {
         timeout: SECURITY_LIMITS.TIMEOUT_MS,
       };
 
-      const req = client.request(requestOptions, (res) => {
+      const req = client.request(requestOptions, res => {
         let responseData = '';
-        
-        res.on('data', (chunk) => {
+
+        res.on('data', chunk => {
           responseData += chunk;
         });
 
         res.on('end', () => {
           if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
             if (options.verbose) {
-              console.log(chalk.gray(`   Response: ${res.statusCode} ${responseData.substring(0, 100)}`));
+              console.log(
+                chalk.gray(
+                  `   Response: ${res.statusCode} ${responseData.substring(0, 100)}`
+                )
+              );
             }
             resolve();
           } else {
@@ -487,7 +537,7 @@ export class MessageHandler {
         });
       });
 
-      req.on('error', (error) => {
+      req.on('error', error => {
         reject(new Error(`Request failed: ${error.message}`));
       });
 

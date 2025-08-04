@@ -3,7 +3,7 @@
  * Defines rules and exceptions for translation validation
  */
 
-module.exports = {
+export default {
   // Validation rules
   rules: {
     // Allow empty translations for these keys (they may be intentionally empty)

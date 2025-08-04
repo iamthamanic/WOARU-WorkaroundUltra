@@ -79,7 +79,12 @@ function isSecureContent(content: string, filePath?: string): boolean {
   }
 
   // Skip security checks for test files - they often contain malicious patterns for testing
-  if (filePath && (filePath.includes('.test.') || filePath.includes('__tests__') || filePath.includes('/test/'))) {
+  if (
+    filePath &&
+    (filePath.includes('.test.') ||
+      filePath.includes('__tests__') ||
+      filePath.includes('/test/'))
+  ) {
     return true;
   }
 

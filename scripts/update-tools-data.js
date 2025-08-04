@@ -12,9 +12,14 @@
  * Usage: node scripts/update-tools-data.js
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const https = require('https');
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const fsPromises = fs.promises;
 
 class ToolsDataUpdater {
   constructor() {
@@ -385,12 +390,12 @@ class ToolsDataUpdater {
    * Utility functions
    */
   async loadToolsData() {
-    const data = await fs.readFile(this.toolsFilePath, 'utf8');
+    const data = await fsPromises.readFile(this.toolsFilePath, 'utf8');
     return JSON.parse(data);
   }
 
   async saveToolsData(data) {
-    await fs.writeFile(this.toolsFilePath, JSON.stringify(data, null, 2), 'utf8');
+    await fsPromises.writeFile(this.toolsFilePath, JSON.stringify(data, null, 2), 'utf8');
   }
 
   countTools(toolsData) {
@@ -413,7 +418,7 @@ class ToolsDataUpdater {
 }
 
 // Main execution
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const updater = new ToolsDataUpdater();
   updater.updateToolsDatabase()
     .then(success => {

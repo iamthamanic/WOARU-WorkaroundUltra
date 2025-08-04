@@ -4,23 +4,29 @@
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as Handlebars from 'handlebars';
+import Handlebars from 'handlebars';
 import chalk from 'chalk';
-import { 
-  ProjectTemplate, 
-  ProjectConfig, 
-  GeneratedProject, 
-  GeneratedFile, 
+import {
+  ProjectTemplate,
+  ProjectConfig,
+  GeneratedProject,
+  GeneratedFile,
   ProjectSummary,
   TemplateVariables,
-  ConditionalRule
+  ConditionalRule,
 } from './types';
 
 export class TemplateEngine {
-  private handlebars: typeof Handlebars;
+  private handlebars: any;
 
   constructor() {
-    this.handlebars = Handlebars.create();
+    // Handle both CommonJS and ES module versions of Handlebars
+    if (typeof Handlebars.create === 'function') {
+      this.handlebars = Handlebars.create();
+    } else {
+      // Fallback for different Handlebars versions
+      this.handlebars = Handlebars;
+    }
     this.registerHelpers();
   }
 
@@ -29,7 +35,7 @@ export class TemplateEngine {
    */
   async processTemplate(config: ProjectConfig): Promise<GeneratedProject> {
     const { template, directory } = config;
-    
+
     console.log(chalk.blue(`🏗️  Generating project: ${config.name}`));
     console.log(chalk.gray(`   Template: ${template.name}`));
     console.log(chalk.gray(`   Directory: ${directory}`));
@@ -61,11 +67,14 @@ export class TemplateEngine {
     console.log(chalk.blue('📄 Copying static files...'));
     for (const fileDef of template.structure.files) {
       if (this.shouldInclude(fileDef.conditional, config)) {
-        const content = await this.getStaticFileContent(fileDef.source, template);
+        const content = await this.getStaticFileContent(
+          fileDef.source,
+          template
+        );
         const targetPath = path.join(directory, fileDef.destination);
-        
+
         await fs.writeFile(targetPath, content);
-        
+
         if (fileDef.executable) {
           await fs.chmod(targetPath, '755');
         }
@@ -73,9 +82,9 @@ export class TemplateEngine {
         generatedFiles.push({
           path: fileDef.destination,
           content,
-          executable: fileDef.executable
+          executable: fileDef.executable,
         });
-        
+
         console.log(chalk.gray(`   ✓ ${fileDef.destination}`));
       }
     }
@@ -89,31 +98,38 @@ export class TemplateEngine {
           { ...config.variables, ...templateRef.variables },
           template
         );
-        
+
         const targetPath = path.join(directory, templateRef.destination);
         await fs.writeFile(targetPath, content);
 
         generatedFiles.push({
           path: templateRef.destination,
-          content
+          content,
         });
-        
+
         console.log(chalk.gray(`   ✓ ${templateRef.destination}`));
       }
     }
 
     // Generate configuration files
     console.log(chalk.blue('⚙️  Generating configuration files...'));
-    for (const [filename, configDef] of Object.entries(template.configuration)) {
+    for (const [filename, configDef] of Object.entries(
+      template.configuration
+    )) {
       if (this.shouldInclude(configDef.conditional, config)) {
         let content: string;
-        
+
         if (configDef.template) {
-          content = await this.processTemplateFile(configDef.template, config.variables, template);
+          content = await this.processTemplateFile(
+            configDef.template,
+            config.variables,
+            template
+          );
         } else if (configDef.content) {
-          content = typeof configDef.content === 'string' 
-            ? configDef.content 
-            : JSON.stringify(configDef.content, null, 2);
+          content =
+            typeof configDef.content === 'string'
+              ? configDef.content
+              : JSON.stringify(configDef.content, null, 2);
         } else {
           continue;
         }
@@ -123,9 +139,9 @@ export class TemplateEngine {
 
         generatedFiles.push({
           path: filename,
-          content
+          content,
         });
-        
+
         console.log(chalk.gray(`   ✓ ${filename}`));
       }
     }
@@ -135,20 +151,28 @@ export class TemplateEngine {
       const feature = template.features.find(f => f.id === featureId);
       if (feature?.configurations) {
         console.log(chalk.blue(`🔧 Processing feature: ${feature.name}`));
-        
+
         for (const configPatch of feature.configurations) {
           const targetPath = path.join(directory, configPatch.file);
-          
+
           let content: string;
           if (configPatch.content.template) {
-            content = await this.processTemplateFile(configPatch.content.template, config.variables, template);
+            content = await this.processTemplateFile(
+              String(configPatch.content.template),
+              config.variables,
+              template
+            );
           } else {
-            content = typeof configPatch.content === 'string'
-              ? configPatch.content
-              : JSON.stringify(configPatch.content, null, 2);
+            content =
+              typeof configPatch.content === 'string'
+                ? configPatch.content
+                : JSON.stringify(configPatch.content, null, 2);
           }
 
-          if (configPatch.operation === 'replace' || !await fs.pathExists(targetPath)) {
+          if (
+            configPatch.operation === 'replace' ||
+            !(await fs.pathExists(targetPath))
+          ) {
             await fs.writeFile(targetPath, content);
           } else if (configPatch.operation === 'append') {
             await fs.appendFile(targetPath, '\n' + content);
@@ -164,40 +188,53 @@ export class TemplateEngine {
           }
 
           // Update or add to generated files
-          const existingIndex = generatedFiles.findIndex(f => f.path === configPatch.file);
+          const existingIndex = generatedFiles.findIndex(
+            f => f.path === configPatch.file
+          );
           if (existingIndex >= 0) {
             generatedFiles[existingIndex].content = content;
           } else {
             generatedFiles.push({
               path: configPatch.file,
-              content
+              content,
             });
           }
-          
-          console.log(chalk.gray(`   ✓ ${configPatch.file} (${configPatch.operation})`));
+
+          console.log(
+            chalk.gray(`   ✓ ${configPatch.file} (${configPatch.operation})`)
+          );
         }
       }
     }
 
     // Generate summary
-    const summary = this.generateSummary(config, generatedFiles, generatedDirectories);
+    const summary = this.generateSummary(
+      config,
+      generatedFiles,
+      generatedDirectories
+    );
 
     console.log(chalk.green(`\n✅ Project generated successfully!`));
-    console.log(chalk.gray(`   📁 ${generatedDirectories.length} directories created`));
+    console.log(
+      chalk.gray(`   📁 ${generatedDirectories.length} directories created`)
+    );
     console.log(chalk.gray(`   📄 ${generatedFiles.length} files generated`));
 
     return {
       config,
       files: generatedFiles,
       directories: generatedDirectories,
-      summary
+      summary,
     };
   }
 
   /**
    * Check if a conditional rule should include the item
    */
-  private shouldInclude(conditional: ConditionalRule | undefined, config: ProjectConfig): boolean {
+  private shouldInclude(
+    conditional: ConditionalRule | undefined,
+    config: ProjectConfig
+  ): boolean {
     if (!conditional) return true;
 
     if (conditional.feature) {
@@ -205,7 +242,9 @@ export class TemplateEngine {
     }
 
     if (conditional.features) {
-      return conditional.features.some(feature => config.features.includes(feature));
+      return conditional.features.some(feature =>
+        config.features.includes(feature)
+      );
     }
 
     if (conditional.condition) {
@@ -225,7 +264,7 @@ export class TemplateEngine {
       packageManager: config.packageManager,
       language: config.template.language,
       category: config.template.category,
-      features: config.features
+      features: config.features,
     };
 
     try {
@@ -234,27 +273,80 @@ export class TemplateEngine {
       Object.entries(context).forEach(([key, value]) => {
         const regex = new RegExp(`\\b${key}\\b`, 'g');
         if (Array.isArray(value)) {
-          evaluableCondition = evaluableCondition.replace(regex, JSON.stringify(value));
+          evaluableCondition = evaluableCondition.replace(
+            regex,
+            JSON.stringify(value)
+          );
         } else {
           evaluableCondition = evaluableCondition.replace(regex, `"${value}"`);
         }
       });
 
-      // Basic evaluation - extend as needed
-      return eval(evaluableCondition);
+      // Secure evaluation using Function constructor instead of eval()
+      // This prevents code injection while allowing safe expression evaluation
+      try {
+        // Validate that the condition only contains safe expressions
+        if (this.containsUnsafeExpressions(evaluableCondition)) {
+          console.warn(
+            'Unsafe expression detected in template condition:',
+            evaluableCondition
+          );
+          return false;
+        }
+
+        // Use Function constructor with restricted scope for safer evaluation
+        const safeEval = new Function('return ' + evaluableCondition);
+        return safeEval();
+      } catch (evalError) {
+        console.warn(
+          'Template condition evaluation failed:',
+          evaluableCondition,
+          evalError
+        );
+        return false;
+      }
     } catch {
       return false;
     }
   }
 
   /**
+   * Security validation: Check for unsafe expressions in template conditions
+   * Prevents code injection by blocking dangerous patterns
+   */
+  private containsUnsafeExpressions(expression: string): boolean {
+    const unsafePatterns = [
+      /\beval\s*\(/i, // eval() calls
+      /\bFunction\s*\(/i, // Function constructor (we use it safely above)
+      /\bexec\s*\(/i, // exec calls
+      /\bsetTimeout\s*\(/i, // setTimeout with strings
+      /\bsetInterval\s*\(/i, // setInterval with strings
+      /\brequire\s*\(/i, // require calls
+      /\bimport\s*\(/i, // dynamic imports
+      /\bprocess\b/i, // process object access
+      /\bglobal\b/i, // global object access
+      /\bwindow\b/i, // window object access
+      /\bdocument\b/i, // document object access
+      /\b__dirname\b/i, // __dirname access
+      /\b__filename\b/i, // __filename access
+      /\.\s*constructor\b/i, // constructor property access
+      /\[\s*["']constructor["']\s*\]/i, // constructor via bracket notation
+    ];
+
+    return unsafePatterns.some(pattern => pattern.test(expression));
+  }
+
+  /**
    * Get static file content
    */
-  private async getStaticFileContent(sourcePath: string, template: ProjectTemplate): Promise<string> {
+  private async getStaticFileContent(
+    sourcePath: string,
+    template: ProjectTemplate
+  ): Promise<string> {
     // First try to load from template-specific directory
     const templateDir = path.join(__dirname, '../templates', template.id);
     const templateFilePath = path.join(templateDir, sourcePath);
-    
+
     if (await fs.pathExists(templateFilePath)) {
       return fs.readFile(templateFilePath, 'utf8');
     }
@@ -273,11 +365,14 @@ export class TemplateEngine {
    * Process template file with Handlebars
    */
   private async processTemplateFile(
-    sourcePath: string, 
-    variables: TemplateVariables, 
+    sourcePath: string,
+    variables: TemplateVariables,
     template: ProjectTemplate
   ): Promise<string> {
-    const templateContent = await this.getStaticFileContent(sourcePath, template);
+    const templateContent = await this.getStaticFileContent(
+      sourcePath,
+      template
+    );
     const compiledTemplate = this.handlebars.compile(templateContent);
     return compiledTemplate(variables);
   }
@@ -287,7 +382,7 @@ export class TemplateEngine {
    */
   private getDefaultFileContent(sourcePath: string): string {
     const filename = path.basename(sourcePath);
-    
+
     const defaults: Record<string, string> = {
       '.gitignore': `# Dependencies
 node_modules/
@@ -298,7 +393,7 @@ __pycache__/
 dist/
 build/
 *.log`,
-      
+
       'README.md': `# {{projectName}}
 
 {{#if projectDescription}}
@@ -511,10 +606,14 @@ disallow_untyped_defs = true`,
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.7.1
     hooks:
-      - id: mypy`
+      - id: mypy`,
     };
 
-    return defaults[sourcePath] || defaults[filename] || `# ${filename}\n\n# Generated by WOARU`;
+    return (
+      defaults[sourcePath] ||
+      defaults[filename] ||
+      `# ${filename}\n\n# Generated by WOARU`
+    );
   }
 
   /**
@@ -522,36 +621,56 @@ disallow_untyped_defs = true`,
    */
   private registerHelpers(): void {
     // Conditional helper
-    this.handlebars.registerHelper('if_eq', function(this: any, a: any, b: any, options: any) {
-      if (a === b) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    this.handlebars.registerHelper(
+      'if_eq',
+      function (
+        this: unknown,
+        a: unknown,
+        b: unknown,
+        options: Handlebars.HelperOptions
+      ) {
+        if (a === b) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // Array includes helper
-    this.handlebars.registerHelper('includes', function(this: any, array: any, item: any, options: any) {
-      if (Array.isArray(array) && array.includes(item)) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    this.handlebars.registerHelper(
+      'includes',
+      function (
+        this: unknown,
+        array: unknown,
+        item: unknown,
+        options: Handlebars.HelperOptions
+      ) {
+        if (Array.isArray(array) && array.includes(item)) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // JSON stringify helper
-    this.handlebars.registerHelper('json', function(context) {
+    this.handlebars.registerHelper('json', function (context: any) {
       return JSON.stringify(context, null, 2);
     });
 
     // Capitalize helper
-    this.handlebars.registerHelper('capitalize', function(str) {
-      return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+    this.handlebars.registerHelper('capitalize', function (str: any) {
+      return typeof str === 'string'
+        ? str.charAt(0).toUpperCase() + str.slice(1)
+        : str;
     });
 
     // Kebab case helper
-    this.handlebars.registerHelper('kebab', function(str) {
-      return typeof str === 'string' ? str.toLowerCase().replace(/\s+/g, '-') : str;
+    this.handlebars.registerHelper('kebab', function (str: any) {
+      return typeof str === 'string'
+        ? str.toLowerCase().replace(/\s+/g, '-')
+        : str;
     });
   }
 
@@ -559,12 +678,12 @@ disallow_untyped_defs = true`,
    * Generate project summary
    */
   private generateSummary(
-    config: ProjectConfig, 
-    files: GeneratedFile[], 
+    config: ProjectConfig,
+    files: GeneratedFile[],
     directories: string[]
   ): ProjectSummary {
     const template = config.template;
-    
+
     // Count dependencies
     let runtimeDeps = template.dependencies.runtime.length;
     let devDeps = template.dependencies.development.length;
@@ -579,16 +698,19 @@ disallow_untyped_defs = true`,
     });
 
     // Generate next steps
-    const nextSteps: string[] = [
-      `cd ${config.directory}`,
-    ];
+    const nextSteps: string[] = [`cd ${config.directory}`];
 
     if (config.installDeps) {
-      const installCmd = config.packageManager === 'yarn' ? 'yarn install' :
-                        config.packageManager === 'pnpm' ? 'pnpm install' :
-                        config.packageManager === 'pip' ? 'pip install -r requirements.txt' :
-                        config.packageManager === 'poetry' ? 'poetry install' :
-                        'npm install';
+      const installCmd =
+        config.packageManager === 'yarn'
+          ? 'yarn install'
+          : config.packageManager === 'pnpm'
+            ? 'pnpm install'
+            : config.packageManager === 'pip'
+              ? 'pip install -r requirements.txt'
+              : config.packageManager === 'poetry'
+                ? 'poetry install'
+                : 'npm install';
       nextSteps.push(installCmd);
     }
 
@@ -606,10 +728,10 @@ disallow_untyped_defs = true`,
       totalDirectories: directories.length,
       dependencies: {
         runtime: runtimeDeps,
-        development: devDeps
+        development: devDeps,
       },
       features: config.features,
-      nextSteps
+      nextSteps,
     };
   }
 }

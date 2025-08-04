@@ -1,7 +1,7 @@
 /**
  * Auto-generated translations bundle
- * Generated at: 2025-07-30T12:18:03.563Z
- * Build version: 5.2.2
+ * Generated at: 2025-08-04T06:55:25.054Z
+ * Build version: 5.3.1
  * Languages: de, en
  * 
  * VALIDATION STATUS: ✅ PASSED
@@ -1728,14 +1728,14 @@ export const bundledTranslations = {
 } as const;
 
 export const translationMetadata = {
-  generatedAt: '2025-07-30T12:18:03.563Z',
+  generatedAt: '2025-08-04T06:55:25.054Z',
   languages: ["de","en"],
   stats: {
   "de": 662,
   "en": 599
 },
   totalLanguages: 2,
-  buildVersion: '5.2.2',
+  buildVersion: '5.3.1',
   validated: true
 } as const;
 

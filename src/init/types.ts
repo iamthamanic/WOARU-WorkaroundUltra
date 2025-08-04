@@ -66,7 +66,7 @@ export interface ConfigurationFiles {
 
 export interface ConfigurationContent {
   template?: string;
-  content?: any;
+  content?: Record<string, unknown>;
   conditional?: ConditionalRule;
 }
 
@@ -85,10 +85,16 @@ export interface FeatureDefinition {
 export interface ConfigurationPatch {
   file: string;
   operation: 'merge' | 'replace' | 'append';
-  content: any;
+  content: Record<string, unknown>;
 }
 
-export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'pip' | 'poetry' | 'pipenv';
+export type PackageManager =
+  | 'npm'
+  | 'yarn'
+  | 'pnpm'
+  | 'pip'
+  | 'poetry'
+  | 'pipenv';
 
 export interface ProjectConfig {
   name: string;
@@ -148,20 +154,20 @@ export interface ValidationResult {
 export interface ValidationError {
   code: string;
   message: string;
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export interface ValidationWarning {
   code: string;
   message: string;
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 // Template Registry
 export interface TemplateRegistry {
   templates: Map<string, ProjectTemplate>;
   categories: Map<string, ProjectTemplate[]>;
-  
+
   register(template: ProjectTemplate): void;
   get(id: string): ProjectTemplate | undefined;
   getByCategory(category: string): ProjectTemplate[];
@@ -179,6 +185,9 @@ export interface ProjectTypeSelection {
 export interface InteractivePrompts {
   selectProjectType(): Promise<ProjectTemplate>;
   selectFeatures(template: ProjectTemplate): Promise<string[]>;
-  configureProject(template: ProjectTemplate, features: string[]): Promise<ProjectConfig>;
+  configureProject(
+    template: ProjectTemplate,
+    features: string[]
+  ): Promise<ProjectConfig>;
   confirmGeneration(config: ProjectConfig): Promise<boolean>;
 }

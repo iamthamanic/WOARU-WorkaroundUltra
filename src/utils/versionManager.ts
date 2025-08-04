@@ -1,8 +1,14 @@
-import { execSync, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
 import { t } from '../config/i18n';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * VersionManager handles version checking and updates for WOARU
@@ -44,32 +50,92 @@ export class VersionManager {
   }
 
   /**
-   * Get the latest version from npm registry
+   * Get the latest version from npm registry (secure implementation)
    */
   static async getLatestVersion(): Promise<string> {
-    try {
-      const result = execSync('npm view woaru version', { encoding: 'utf8' });
-      return result.trim();
-    } catch (error) {
-      console.error(t('version_manager.error_fetching_latest'), error);
-      return 'unknown';
-    }
+    return new Promise(resolve => {
+      // Use spawn instead of execSync for security
+      const npmProcess = spawn('npm', ['view', 'woaru', 'version'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 10000, // 10 second timeout
+      });
+
+      let output = '';
+      let errorOutput = '';
+
+      npmProcess.stdout.on('data', data => {
+        output += data.toString();
+      });
+
+      npmProcess.stderr.on('data', data => {
+        errorOutput += data.toString();
+      });
+
+      npmProcess.on('close', code => {
+        if (code === 0 && output.trim()) {
+          resolve(output.trim());
+        } else {
+          console.error(
+            t('version_manager.error_fetching_latest'),
+            errorOutput
+          );
+          resolve('unknown');
+        }
+      });
+
+      npmProcess.on('error', error => {
+        console.error(t('version_manager.error_fetching_latest'), error);
+        resolve('unknown');
+      });
+    });
   }
 
   /**
-   * Get the release date of the latest version
+   * Get the release date of the latest version (secure implementation)
    */
   static async getReleaseDate(): Promise<string | undefined> {
-    try {
-      const result = execSync('npm view woaru time.modified', {
-        encoding: 'utf8',
+    return new Promise(resolve => {
+      // Use spawn instead of execSync for security
+      const npmProcess = spawn('npm', ['view', 'woaru', 'time.modified'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 10000, // 10 second timeout
       });
-      const dateStr = result.trim();
-      return new Date(dateStr).toLocaleDateString('de-DE');
-    } catch (error) {
-      console.error(t('version_manager.error_fetching_release_date'), error);
-      return undefined;
-    }
+
+      let output = '';
+      let errorOutput = '';
+
+      npmProcess.stdout.on('data', data => {
+        output += data.toString();
+      });
+
+      npmProcess.stderr.on('data', data => {
+        errorOutput += data.toString();
+      });
+
+      npmProcess.on('close', code => {
+        if (code === 0 && output.trim()) {
+          const dateStr = output.trim();
+          try {
+            const formattedDate = new Date(dateStr).toLocaleDateString('de-DE');
+            resolve(formattedDate);
+          } catch (dateError) {
+            console.error('Error parsing date:', dateError);
+            resolve(undefined);
+          }
+        } else {
+          console.error(
+            t('version_manager.error_fetching_release_date'),
+            errorOutput
+          );
+          resolve(undefined);
+        }
+      });
+
+      npmProcess.on('error', error => {
+        console.error(t('version_manager.error_fetching_release_date'), error);
+        resolve(undefined);
+      });
+    });
   }
 
   /**

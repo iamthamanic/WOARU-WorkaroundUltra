@@ -434,7 +434,7 @@ export class DocumentationAgent {
    */
   private extractBestDocumentation(
     aiResult: MultiLLMReviewResult,
-_documentationType: 'nopro' | 'pro' | 'forai'
+    _documentationType: 'nopro' | 'pro' | 'forai'
   ): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);

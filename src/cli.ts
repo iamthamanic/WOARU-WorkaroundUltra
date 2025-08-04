@@ -3,16 +3,24 @@
 
 import { Command } from 'commander';
 import { initializeI18n, t } from './config/i18n';
+import { readFileSync } from 'fs';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // WIR WERDEN HIER NACH UND NACH DIE ANDEREN IMPORTS HINZUFÜGEN
 
 // Diese Funktion wird ALLE Befehle definieren, NACHDEM i18n bereit ist.
 function defineCommands(program: Command) {
   // Dynamische Version aus package.json
   const packageJsonPath = path.join(__dirname, '../package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
   program.version(packageJson.version);
 
@@ -299,7 +307,7 @@ function defineCommands(program: Command) {
 
           for (const file of files) {
             const filePath = path.join(wikiPath, file);
-            const content = fs.readFileSync(filePath, 'utf-8');
+            const content = readFileSync(filePath, 'utf-8');
             const title = file.replace('.md', '');
 
             console.log(chalk.yellow(`## ${title.toUpperCase()}`));
@@ -1308,7 +1316,7 @@ function displaySplashScreen() {
 // Helper function to get version
 function getVersion(): string {
   const packageJsonPath = path.join(__dirname, '../package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   return packageJson.version;
 }
 

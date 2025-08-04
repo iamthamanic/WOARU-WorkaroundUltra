@@ -1,15 +1,16 @@
 {
   "name": "woaru",
-  "version": "5.3.0",
+  "version": "5.3.1",
+  "type": "module",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
   "bin": {
     "woaru": "dist/cli.js"
   },
   "scripts": {
-    "build": "node scripts/bundle-translations.js && tsc && node scripts/copy-assets.js",
-    "build:fast": "tsc && node scripts/copy-assets.js",
-    "build:prod": "node scripts/validate-translations-strict.js && node scripts/bundle-translations.js && tsc && node scripts/copy-assets.js",
+    "build": "node scripts/fix-dirname-esm.js && node scripts/bundle-translations.js && tsc && node scripts/fix-esm-imports.js && node scripts/copy-assets.js",
+    "build:fast": "node scripts/fix-dirname-esm.js && tsc && node scripts/fix-esm-imports.js && node scripts/copy-assets.js",
+    "build:prod": "node scripts/fix-dirname-esm.js && node scripts/validate-translations-strict.js && node scripts/bundle-translations.js && tsc && node scripts/fix-esm-imports.js && node scripts/copy-assets.js",
     "validate:translations": "node scripts/validate-translations.js",
     "validate:translations:dev": "node scripts/validate-translations.js --dev",
     "validate:translations:strict": "node scripts/validate-translations-strict.js",
@@ -24,7 +25,8 @@
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build:prod"
+    "validate:package": "node scripts/validate-package.js",
+    "prepublishOnly": "npm run build:prod && npm run validate:package"
   },
   "keywords": [
     "cli",
@@ -65,7 +67,8 @@
     "js-yaml": "^4.1.0",
     "node-notifier": "^10.0.1",
     "ora": "^5.4.1",
-    "semver": "^7.5.4"
+    "semver": "^7.5.4",
+    "woaru": "file:woaru-5.3.0.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
@@ -106,6 +109,12 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "tools/",
+    "ai-models.json",
+    "templates/",
+    "locales/",
+    "src/database/tools-db.json",
+    "src/database/tools-db-schema.json"
   ]
 }

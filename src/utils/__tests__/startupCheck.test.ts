@@ -58,9 +58,9 @@ const mockedVersionManager = VersionManager as jest.Mocked<typeof VersionManager
 import { t, initializeI18n } from '../../config/i18n';
 
 describe('StartupCheck - Production Quality Tests', () => {
-  let consoleLogSpy: jest.MockedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.MockedFunction<typeof console.error>;
-  let consoleDebugSpy: jest.MockedFunction<typeof console.debug>;
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleDebugSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Setup console spies
