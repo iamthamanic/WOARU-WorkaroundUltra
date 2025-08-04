@@ -62,8 +62,8 @@
         "purpose": "Konfiguriert Entwicklungstools und AI-Provider für optimalen Workflow"
       },
       "ai": {
-        "description": "Verwaltung von AI-Providern für Code-Analyse",
-        "purpose": "Konfiguriert und verwaltet AI-gestützte Code-Analyse-Funktionen"
+        "description": "Interaktives AI Control Center - Provider verwalten, Code-Reviews umschalten, Modelle konfigurieren",
+        "purpose": "AI-Provider konfigurieren, Code-Reviews aktivieren/deaktivieren und AI-gestützte Analyse-Funktionen mit verbesserter UX verwalten"
       },
       "update_db": {
         "description": "Aktualisierung der Tools-Datenbank von Remote-Quelle",

@@ -62,8 +62,8 @@
         "purpose": "Configure development tools and AI providers for optimal workflow"
       },
       "ai": {
-        "description": "Manage AI providers for code analysis",
-        "purpose": "Configure and manage AI-powered code analysis capabilities"
+        "description": "Interactive AI Control Center - manage providers, toggle code reviews, configure models",
+        "purpose": "Configure AI providers, enable/disable code reviews, and manage AI-powered analysis capabilities with improved UX"
       },
       "ai_setup": {
         "description": "Setup and configuration of AI providers for code analysis",

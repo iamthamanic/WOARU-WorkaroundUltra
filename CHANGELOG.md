@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.6] - 2025-08-04
+
+### Improved
+- **🎯 AI Control Center UX Enhancement** - Clearer code review management
+  - Improved "Toggle Enabled/Disabled" to "🔛 Toggle Code Reviews (Currently: enabled/disabled)"
+  - Added dynamic status display showing current state before toggling
+  - Enhanced feedback messages explaining what changed after toggling
+  - Users can now easily enable/disable providers for code reviews without reconfiguration
+  - Better clarity on which providers are used for AI code analysis
+
+### Changed
+- **📋 AI Provider Management** - Enhanced user experience
+  - Dynamic status indicators in provider management menu
+  - Clearer terminology for code review functionality
+  - Improved user feedback with status confirmations
+
+## [5.3.5] - 2025-08-04
+
+### Fixed
+- **🛠️ Language Detection Robustness** - Fixed external path analysis issues
+  - Fixed `Could not detect project language` errors when using external paths
+  - Enhanced path handling with proper normalization and validation
+  - Added fallback language detection using direct filesystem checks
+  - Improved support for paths with spaces and special characters
+  - Added comprehensive error messages with debugging information
+  - Enhanced glob pattern handling for better file discovery
+
+### Improved
+- **📁 Path Resolution** - Better handling of project paths
+  - Normalized path resolution with `path.resolve()` for cross-platform compatibility
+  - Enhanced error handling with graceful fallbacks
+  - Improved detection of config files (package.json, requirements.txt, etc.)
+  - Better support for various project structures and locations
+
 ## [5.3.1] - 2025-08-04
 
 ### Fixed

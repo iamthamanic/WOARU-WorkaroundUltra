@@ -310,10 +310,16 @@ async function editProvider(providerId: string): Promise<void> {
   try {
     const { default: inquirer } = await import('inquirer');
 
+    // Get current status for better UX
+    const configManager = ConfigManager.getInstance();
+    const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
+    const providerConfig = aiConfig[providerId] as AiProviderConfig;
+    const currentStatus = providerConfig?.enabled ? 'enabled' : 'disabled';
+    
     const actions = [
       t('cli.provider_management.change_model'),
       t('cli.provider_management.change_api_key'),
-      t('cli.provider_management.toggle_enabled'),
+      `🔛 Toggle Code Reviews (Currently: ${currentStatus})`,
       t('cli.provider_management.remove_provider'),
       t('cli.provider_management.back_to_menu'),
     ];
@@ -329,9 +335,7 @@ async function editProvider(providerId: string): Promise<void> {
       },
     ]);
 
-    const configManager = ConfigManager.getInstance();
-    const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
-    const providerConfig = aiConfig[providerId] as AiProviderConfig;
+    // configManager and aiConfig already loaded above
 
     if (action === t('cli.provider_management.change_model')) {
       const { default: inquirer } = await import('inquirer');
@@ -444,11 +448,12 @@ async function editProvider(providerId: string): Promise<void> {
 
       await configManager.saveApiKey(providerId, newApiKey);
       console.log(chalk.green(t('cli.provider_management.api_key_validation')));
-    } else if (action === t('cli.provider_management.toggle_enabled')) {
+    } else if (action.startsWith('🔛 Toggle Code Reviews')) {
       providerConfig.enabled = !providerConfig.enabled;
       await configManager.saveAiConfig(aiConfig);
       const status = providerConfig.enabled ? 'enabled' : 'disabled';
-      console.log(chalk.green(`Provider ${providerId} is now ${status}`));
+      console.log(chalk.green(`✅ Code reviews for ${providerId} are now ${status}`));
+      console.log(chalk.gray(`   This provider ${providerConfig.enabled ? 'will be used' : 'will NOT be used'} for AI code analysis.`));
     } else if (action === t('cli.provider_management.remove_provider')) {
       const { confirmed } = await inquirer.prompt([
         {

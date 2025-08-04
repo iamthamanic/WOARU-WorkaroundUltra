@@ -1,15 +1,21 @@
-# WOARU 🚀 v5.3.0
+# WOARU 🚀 v5.3.6
 **WorkaroundUltra - Universal Project Setup Autopilot & Production-Readiness Agent**
 
 The ultimate **"Tech Lead in a Box"** - Analyze, monitor, and automatically configure development tools for **ANY programming language** with real-time quality checks, SOLID architecture analysis, and production-readiness audits.
 
-## 🆕 **Latest Release: v5.3.0 - Major Productivity Enhancement**
-**Release Date:** July 30, 2025
+## 🆕 **Latest Release: v5.3.6 - Enhanced AI Control Center**
+**Release Date:** August 4, 2025
 
-### 🚀 **MINOR: Revolutionary Project Initialization System**
-This release introduces major productivity enhancements that revolutionize how developers start new projects and maintain translation quality.
+### 🎯 **PATCH: Enhanced AI Control Center & UX Improvements**
+This release focuses on improving user experience for AI provider management and code review functionality.
 
 **Key Improvements:**
+- **🔛 Enhanced AI Provider Toggle**: Clear "Toggle Code Reviews (Currently: enabled/disabled)" functionality
+- **📊 Dynamic Status Display**: Real-time status indicators showing current provider state
+- **💬 Improved User Feedback**: Clear confirmation messages when toggling code review settings
+- **🎯 Better Provider Management**: Easy enable/disable of providers without full reconfiguration
+
+**Previous Major Features (v5.3.0):**
 - **🚀 Interactive Project Initialization (`woaru init`)**: Complete project scaffolding system with Next.js and Python FastAPI templates
 - **📋 Translation Validation System**: Production-ready i18n quality assurance with automated validation
 - **📤 Message Handler System**: Advanced report management with webhook integration for team collaboration
