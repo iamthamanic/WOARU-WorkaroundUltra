@@ -4,12 +4,66 @@ import { glob } from 'glob';
 import { ProjectAnalysis } from '../types';
 import { LanguageDetector } from './LanguageDetector';
 
+/**
+ * ProjectAnalyzer - Comprehensive project analysis for code structure, dependencies, and frameworks
+ *
+ * The ProjectAnalyzer class provides deep insights into project structure, language detection,
+ * dependency analysis, and framework identification across multiple programming languages.
+ * It serves as the foundation for WOARU's intelligent project understanding and tool recommendations.
+ *
+ * @example
+ * ```typescript
+ * const analyzer = new ProjectAnalyzer();
+ * const analysis = await analyzer.analyzeProject('./my-project');
+ * console.log(`Primary language: ${analysis.language}`);
+ * console.log(`Frameworks: ${analysis.framework.join(', ')}`);
+ * console.log(`Dependencies: ${analysis.dependencies.length}`);
+ * ```
+ *
+ * @since 1.0.0
+ */
 export class ProjectAnalyzer {
+  /** Language detection engine for multi-language project support */
   private languageDetector: LanguageDetector;
 
+  /**
+   * Creates a new ProjectAnalyzer instance with language detection capabilities
+   *
+   * @example
+   * ```typescript
+   * const analyzer = new ProjectAnalyzer();
+   * ```
+   */
   constructor() {
     this.languageDetector = new LanguageDetector();
   }
+  /**
+   * Performs comprehensive analysis of a project directory
+   *
+   * Analyzes the project structure, detects programming languages and frameworks,
+   * extracts dependencies and development dependencies, identifies package managers,
+   * and catalogs configuration files for intelligent tool recommendations.
+   *
+   * @param projectPath - Absolute path to the project directory to analyze
+   * @returns Promise resolving to comprehensive project analysis results
+   *
+   * @throws {Error} When project language cannot be detected or path is invalid
+   *
+   * @example
+   * ```typescript
+   * const analyzer = new ProjectAnalyzer();
+   *
+   * // Analyze a TypeScript project
+   * const analysis = await analyzer.analyzeProject('/path/to/typescript-project');
+   * console.log(`Language: ${analysis.language}`); // "TypeScript"
+   * console.log(`Frameworks: ${analysis.framework}`); // ["react", "nextjs"]
+   * console.log(`Package Manager: ${analysis.packageManager}`); // "npm"
+   *
+   * // Analyze a Python project
+   * const pyAnalysis = await analyzer.analyzeProject('/path/to/python-project');
+   * console.log(`Dependencies: ${pyAnalysis.dependencies.length}`);
+   * ```
+   */
   async analyzeProject(projectPath: string): Promise<ProjectAnalysis> {
     // Detect primary language first
     const primaryLanguage =
@@ -447,6 +501,32 @@ export class ProjectAnalyzer {
     }
   }
 
+  /**
+   * Extracts project metadata from package.json or infers from directory structure
+   *
+   * Reads and parses package.json to extract project name, version, description,
+   * and author information. Falls back to directory-based inference if package.json
+   * is not available or cannot be parsed.
+   *
+   * @param projectPath - Absolute path to the project directory
+   * @returns Promise resolving to project metadata object
+   *
+   * @example
+   * ```typescript
+   * const analyzer = new ProjectAnalyzer();
+   * const metadata = await analyzer.getProjectMetadata('./my-project');
+   *
+   * console.log(metadata.name);        // "my-awesome-app"
+   * console.log(metadata.version);     // "1.2.3"
+   * console.log(metadata.description); // "An awesome application"
+   * console.log(metadata.author);      // "John Doe <john@example.com>"
+   *
+   * // For projects without package.json
+   * const metadata2 = await analyzer.getProjectMetadata('./python-project');
+   * console.log(metadata2.name);    // "python-project" (directory name)
+   * console.log(metadata2.version); // "0.0.0" (default)
+   * ```
+   */
   async getProjectMetadata(projectPath: string): Promise<{
     name: string;
     version: string;

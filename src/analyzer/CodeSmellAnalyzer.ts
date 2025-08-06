@@ -117,6 +117,77 @@ function isSupportedLanguage(language: unknown): language is string {
   );
 }
 
+/**
+ * CodeSmellAnalyzer - Advanced static code analysis engine for detecting code quality issues
+ *
+ * The CodeSmellAnalyzer is a production-ready implementation that provides comprehensive
+ * static code analysis for JavaScript and TypeScript codebases. It detects various types
+ * of code smells, anti-patterns, and quality issues using sophisticated pattern matching,
+ * cyclomatic complexity analysis, and security-first validation approaches.
+ *
+ * Key features:
+ * - Production-ready with comprehensive security validation
+ * - Hook integration for extensible analysis workflows
+ * - Timeout protection and resource management
+ * - Multi-metric analysis (complexity, length, parameters, nesting)
+ * - Detailed pattern detection with context-aware rules
+ * - Performance metrics and analysis tracking
+ *
+ * Supported analysis types:
+ * - Variable declaration patterns (var keyword detection)
+ * - Equality operator analysis (weak vs strict comparison)
+ * - Debug statement detection (console.log, debugger)
+ * - Magic number identification
+ * - Cyclomatic complexity calculation
+ * - Function length analysis
+ * - Parameter count validation
+ * - Nesting depth evaluation
+ *
+ * @example
+ * ```typescript
+ * const analyzer = new CodeSmellAnalyzer();
+ *
+ * // Analyze a TypeScript file for code smells
+ * const findings = await analyzer.analyzeFile('./src/utils/helpers.ts', 'typescript');
+ *
+ * // Process findings by severity
+ * const critical = findings.filter(f => f.severity === 'error');
+ * const warnings = findings.filter(f => f.severity === 'warning');
+ *
+ * console.log(`Found ${critical.length} critical issues:`);
+ * critical.forEach(finding => {
+ *   console.log(`  Line ${finding.line}: ${finding.message}`);
+ *   console.log(`  Suggestion: ${finding.suggestion}`);
+ * });
+ *
+ * // Get analysis performance metrics
+ * const metrics = analyzer.getAnalysisMetrics();
+ * console.log(`Analyzed ${metrics.filesAnalyzed} files`);
+ * console.log(`Average analysis time: ${metrics.averageAnalysisTime}ms`);
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Batch analysis of multiple files
+ * const analyzer = new CodeSmellAnalyzer();
+ * const files = ['app.js', 'utils.js', 'config.js'];
+ *
+ * for (const file of files) {
+ *   const findings = await analyzer.analyzeFile(file, 'javascript');
+ *
+ *   // Group findings by type
+ *   const grouped = findings.reduce((acc, finding) => {
+ *     if (!acc[finding.type]) acc[finding.type] = [];
+ *     acc[finding.type].push(finding);
+ *     return acc;
+ *   }, {});
+ *
+ *   console.log(`${file}: ${Object.keys(grouped).length} issue types found`);
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ */
 export class CodeSmellAnalyzer {
   private readonly complexityThreshold =
     APP_CONFIG.QUALITY.COMPLEXITY_THRESHOLD;
@@ -143,10 +214,96 @@ export class CodeSmellAnalyzer {
   };
 
   /**
-   * Analyze file for code smells with comprehensive security validation
-   * @param filePath - Path to the file to analyze
-   * @param language - Programming language of the file
-   * @returns Promise<CodeSmellFinding[]> Array of code smell findings
+   * Performs comprehensive code smell analysis on a single source file
+   *
+   * Analyzes the specified file for various code quality issues, anti-patterns,
+   * and potential improvements. The analysis is performed with security-first
+   * principles, including input validation, timeout protection, and resource limits.
+   * Integration with the WOARU Hook System enables extensible analysis workflows.
+   *
+   * Analysis categories performed:
+   * - **Pattern Detection**: var keywords, weak equality operators, debug statements
+   * - **Code Complexity**: Cyclomatic complexity calculation with decision point analysis
+   * - **Structure Analysis**: Function length, parameter count, nesting depth evaluation
+   * - **Quality Metrics**: Magic number detection, maintainability indicators
+   * - **Security Validation**: Content scanning, path validation, resource limits
+   *
+   * Security features:
+   * - Path traversal prevention with normalized path validation
+   * - File size limits to prevent memory exhaustion attacks
+   * - Content validation to detect potentially malicious code patterns
+   * - Timeout protection for analysis operations
+   * - Input sanitization for all user-provided data
+   *
+   * @param filePath - Absolute path to the source file to analyze
+   * @param language - Programming language identifier ('javascript', 'typescript', 'js', 'ts')
+   * @returns Promise resolving to array of CodeSmellFinding objects with detailed analysis results
+   *
+   * @throws {Error} Throws errors for invalid file paths or security validation failures
+   *
+   * @example
+   * ```typescript
+   * const analyzer = new CodeSmellAnalyzer();
+   *
+   * // Analyze a TypeScript file for code quality issues
+   * const findings = await analyzer.analyzeFile('./src/components/UserForm.tsx', 'typescript');
+   *
+   * // Filter findings by severity level
+   * const errorFindings = findings.filter(f => f.severity === 'error');
+   * const warningFindings = findings.filter(f => f.severity === 'warning');
+   *
+   * // Display critical issues requiring immediate attention
+   * errorFindings.forEach(finding => {
+   *   console.error(`🔴 ${finding.type} at line ${finding.line}:${finding.column}`);
+   *   console.error(`   ${finding.message}`);
+   *   console.error(`   💡 ${finding.suggestion}`);
+   * });
+   *
+   * // Group findings by issue type for better organization
+   * const byType = findings.reduce((acc, finding) => {
+   *   if (!acc[finding.type]) acc[finding.type] = [];
+   *   acc[finding.type].push(finding);
+   *   return acc;
+   * }, {});
+   *
+   * console.log(`Analysis summary:`);
+   * console.log(`- ${byType['complexity']?.length || 0} complexity issues`);
+   * console.log(`- ${byType['var-keyword']?.length || 0} var declarations`);
+   * console.log(`- ${byType['weak-equality']?.length || 0} weak equality operators`);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Analyze with error handling and metrics tracking
+   * const analyzer = new CodeSmellAnalyzer();
+   *
+   * try {
+   *   const findings = await analyzer.analyzeFile('./legacy/oldCode.js', 'javascript');
+   *
+   *   // Check for specific patterns
+   *   const hasVarUsage = findings.some(f => f.type === 'var-keyword');
+   *   const hasHighComplexity = findings.some(f =>
+   *     f.type === 'complexity' && f.severity === 'error'
+   *   );
+   *
+   *   if (hasVarUsage) {
+   *     console.log('⚠️  Legacy var declarations found - consider refactoring to let/const');
+   *   }
+   *
+   *   if (hasHighComplexity) {
+   *     console.log('🔥 High complexity functions detected - consider breaking down');
+   *   }
+   *
+   *   // Get performance metrics
+   *   const metrics = analyzer.getAnalysisMetrics();
+   *   console.log(`Analysis completed in ${metrics.averageAnalysisTime}ms`);
+   *
+   * } catch (error) {
+   *   console.error('Analysis failed:', error.message);
+   * }
+   * ```
+   *
+   * @since 1.0.0
    */
   async analyzeFile(
     filePath: string,

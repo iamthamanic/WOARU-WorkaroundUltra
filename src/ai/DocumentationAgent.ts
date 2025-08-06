@@ -29,13 +29,98 @@ export interface CodeFunction {
 }
 
 /**
- * DocumentationAgent - Generates and applies AI-powered code documentation
+ * DocumentationAgent - AI-powered automated code documentation generation and management
  *
- * Features:
- * - Analyzes code to identify functions, classes, and methods
- * - Generates human-friendly or technical documentation
- * - Safely inserts documentation without breaking existing code
- * - Handles existing documentation detection and updates
+ * The DocumentationAgent provides sophisticated automated documentation generation
+ * using AI analysis to create comprehensive, context-aware documentation for code
+ * functions, classes, and methods. It supports multiple documentation styles from
+ * beginner-friendly explanations to technical API documentation, with intelligent
+ * insertion and existing documentation management.
+ *
+ * Key features:
+ * - **Multi-style documentation**: Supports 'nopro' (beginner), 'pro' (technical), and 'forai' (AI-optimized)
+ * - **Intelligent code analysis**: Identifies functions, classes, methods with existing documentation
+ * - **Safe insertion**: Non-destructive documentation placement with existing content preservation
+ * - **AI-powered generation**: Leverages multiple LLMs for high-quality, context-aware documentation
+ * - **Batch processing**: Efficiently processes multiple files and functions
+ * - **Framework awareness**: Context-aware documentation based on project type and frameworks
+ *
+ * Documentation styles:
+ * - **nopro**: Human-friendly explanations suitable for beginners and non-technical users
+ * - **pro**: Professional technical documentation with detailed parameter and return information
+ * - **forai**: AI-optimized documentation designed for machine learning and AI analysis workflows
+ *
+ * @example
+ * ```typescript
+ * const aiConfig: AIReviewConfig = {
+ *   providers: [
+ *     { name: 'openai', enabled: true, apiKey: 'your-key' }
+ *   ],
+ *   maxTokens: 2000,
+ *   temperature: 0.3
+ * };
+ *
+ * const docAgent = new DocumentationAgent(aiConfig);
+ *
+ * // Generate human-friendly documentation for a function
+ * const result = await docAgent.generateFunctionDocumentation(
+ *   './src/utils/helpers.ts',
+ *   'calculateTax',
+ *   'nopro' // beginner-friendly style
+ * );
+ *
+ * if (result.success) {
+ *   console.log('Generated documentation:');
+ *   console.log(result.generatedDoc);
+ *
+ *   // Apply the documentation to the file
+ *   await docAgent.applyDocumentation(result);
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Batch process multiple files for professional documentation
+ * const files = ['./src/api/users.ts', './src/api/orders.ts', './src/api/products.ts'];
+ *
+ * for (const filePath of files) {
+ *   const functions = await docAgent.extractFunctions(filePath);
+ *
+ *   for (const func of functions) {
+ *     if (!func.hasExistingDoc) {
+ *       const docResult = await docAgent.generateFunctionDocumentation(
+ *         filePath,
+ *         func.name,
+ *         'pro' // technical documentation
+ *       );
+ *
+ *       if (docResult.success) {
+ *         await docAgent.applyDocumentation(docResult);
+ *         console.log(`✅ Added documentation for ${func.name}`);
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Generate AI-optimized documentation for machine learning workflows
+ * const mlDocAgent = new DocumentationAgent(aiConfig);
+ *
+ * const mlResult = await mlDocAgent.generateFunctionDocumentation(
+ *   './src/ml/neural-network.ts',
+ *   'trainModel',
+ *   'forai' // AI-optimized style
+ * );
+ *
+ * // AI-optimized docs include structured metadata for better AI understanding
+ * console.log('AI-optimized documentation generated');
+ * console.log('Function signature:', mlResult.functionName);
+ * console.log('Documentation style:', mlResult.documentationType);
+ * ```
+ *
+ * @since 1.0.0
  */
 interface PromptTemplate {
   name: string;

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * 🛡️ WOARU Schema Validation - KI-freundliche Regelwelt
- * 
+ *
  * Zod Schema Definitions für alle WOARU Konfigurationsdateien
  * Teil der "KI-freundlichen Regelwelt" - strikte Typen für AI-Assistenten
  */
@@ -15,36 +15,45 @@ import { z } from 'zod';
  * 🔧 Tools Database Package Configuration Schema
  */
 export const ToolPackageSchema = z.object({
-  description: z.string().min(1, "Tool-Beschreibung darf nicht leer sein"),
-  packages: z.array(z.string().min(1, "Package-Name darf nicht leer sein"))
-    .min(1, "Mindestens ein Package muss angegeben werden"),
-  configs: z.record(z.string(), z.array(z.string()))
+  description: z.string().min(1, 'Tool-Beschreibung darf nicht leer sein'),
+  packages: z
+    .array(z.string().min(1, 'Package-Name darf nicht leer sein'))
+    .min(1, 'Mindestens ein Package muss angegeben werden'),
+  configs: z
+    .record(z.string(), z.array(z.string()))
     .optional()
-    .describe("Optionale Konfigurationsvarianten"),
-  configFiles: z.array(z.string())
+    .describe('Optionale Konfigurationsvarianten'),
+  configFiles: z
+    .array(z.string())
     .optional()
-    .describe("Mögliche Konfigurationsdateien"),
-  metadata: z.object({
-    priority: z.number().min(1).max(10).optional(),
-    compatibility: z.array(z.string()).optional(),
-    lastUpdated: z.string().optional()
-  }).optional()
+    .describe('Mögliche Konfigurationsdateien'),
+  metadata: z
+    .object({
+      priority: z.number().min(1).max(10).optional(),
+      compatibility: z.array(z.string()).optional(),
+      lastUpdated: z.string().optional(),
+    })
+    .optional(),
 });
 
 /**
  * 🏗️ Framework Configuration Schema
  */
 export const FrameworkSchema = z.object({
-  name: z.string().min(1, "Framework-Name darf nicht leer sein"),
+  name: z.string().min(1, 'Framework-Name darf nicht leer sein'),
   detectionFiles: z.array(z.string()).optional(),
   detectionPackages: z.array(z.string()).optional(),
   recommendedTools: z.record(z.string(), z.array(z.string())),
   specificPackages: z.array(z.string()).optional(),
-  metadata: z.object({
-    version: z.string().optional(),
-    popularity: z.number().optional(),
-    maintainedStatus: z.enum(['active', 'maintenance', 'deprecated']).optional()
-  }).optional()
+  metadata: z
+    .object({
+      version: z.string().optional(),
+      popularity: z.number().optional(),
+      maintainedStatus: z
+        .enum(['active', 'maintenance', 'deprecated'])
+        .optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -52,30 +61,38 @@ export const FrameworkSchema = z.object({
  */
 export const ToolsDatabaseMetadataSchema = z.object({
   updateFrequency: z.enum(['daily', 'weekly', 'monthly']),
-  sources: z.array(z.object({
-    name: z.string().min(1, "Quelle-Name darf nicht leer sein"),
-    url: z.string().url("Ungültige URL für Quelle"),
-    type: z.enum(['npm', 'github', 'pypi', 'nuget', 'maven', 'other'])
-  })).optional(),
+  sources: z
+    .array(
+      z.object({
+        name: z.string().min(1, 'Quelle-Name darf nicht leer sein'),
+        url: z.string().url('Ungültige URL für Quelle'),
+        type: z.enum(['npm', 'github', 'pypi', 'nuget', 'maven', 'other']),
+      })
+    )
+    .optional(),
   lastDataUpdate: z.string().optional(),
-  totalTools: z.number().optional()
+  totalTools: z.number().optional(),
 });
 
 /**
  * 🗄️ Complete Tools Database Schema
  */
 export const ToolsDatabaseSchema = z.object({
-  version: z.string().regex(/^\d+\.\d+\.\d+$/, "Version muss im Format x.y.z sein"),
-  lastUpdated: z.string().min(1, "Letztes Update-Datum muss angegeben werden"),
-  categories: z.record(z.string(), z.record(z.string(), ToolPackageSchema))
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/, 'Version muss im Format x.y.z sein'),
+  lastUpdated: z.string().min(1, 'Letztes Update-Datum muss angegeben werden'),
+  categories: z
+    .record(z.string(), z.record(z.string(), ToolPackageSchema))
     .refine(data => Object.keys(data).length > 0, {
-      message: "Mindestens eine Tool-Kategorie muss definiert sein"
+      message: 'Mindestens eine Tool-Kategorie muss definiert sein',
     }),
-  frameworks: z.record(z.string(), FrameworkSchema)
+  frameworks: z
+    .record(z.string(), FrameworkSchema)
     .refine(data => Object.keys(data).length > 0, {
-      message: "Mindestens ein Framework muss definiert sein"
+      message: 'Mindestens ein Framework muss definiert sein',
     }),
-  metadata: ToolsDatabaseMetadataSchema.optional()
+  metadata: ToolsDatabaseMetadataSchema.optional(),
 });
 
 /**
@@ -83,40 +100,55 @@ export const ToolsDatabaseSchema = z.object({
  */
 export const UserConfigSchema = z.object({
   language: z.enum(['de', 'en']).optional(),
-  preferences: z.object({
-    theme: z.enum(['dark', 'light', 'auto']).optional(),
-    verbosity: z.enum(['quiet', 'normal', 'verbose']).optional(),
-    autoUpdate: z.boolean().optional(),
-    telemetry: z.boolean().optional()
-  }).optional(),
+  preferences: z
+    .object({
+      theme: z.enum(['dark', 'light', 'auto']).optional(),
+      verbosity: z.enum(['quiet', 'normal', 'verbose']).optional(),
+      autoUpdate: z.boolean().optional(),
+      telemetry: z.boolean().optional(),
+    })
+    .optional(),
   lastModified: z.string().optional(),
-  version: z.string().optional()
+  version: z.string().optional(),
 });
 
 /**
  * 📄 Template Configuration Schema
  */
 export const TemplateConfigSchema = z.object({
-  name: z.string().min(1, "Template-Name darf nicht leer sein"),
-  description: z.string().min(1, "Template-Beschreibung darf nicht leer sein"),
-  version: z.string().regex(/^\d+\.\d+\.\d+$/, "Version muss im Format x.y.z sein"),
+  name: z.string().min(1, 'Template-Name darf nicht leer sein'),
+  description: z.string().min(1, 'Template-Beschreibung darf nicht leer sein'),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/, 'Version muss im Format x.y.z sein'),
   author: z.string().optional(),
-  files: z.array(z.object({
-    path: z.string().min(1, "Dateipfad darf nicht leer sein"),
-    content: z.string(),
-    executable: z.boolean().optional()
-  })).min(1, "Mindestens eine Template-Datei muss definiert sein"),
-  variables: z.record(z.string(), z.object({
-    description: z.string(),
-    default: z.string().or(z.number()).or(z.boolean()).optional(),
-    required: z.boolean().optional(),
-    type: z.enum(['string', 'number', 'boolean']).optional()
-  })).optional(),
-  metadata: z.object({
-    category: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    license: z.string().optional()
-  }).optional()
+  files: z
+    .array(
+      z.object({
+        path: z.string().min(1, 'Dateipfad darf nicht leer sein'),
+        content: z.string(),
+        executable: z.boolean().optional(),
+      })
+    )
+    .min(1, 'Mindestens eine Template-Datei muss definiert sein'),
+  variables: z
+    .record(
+      z.string(),
+      z.object({
+        description: z.string(),
+        default: z.string().or(z.number()).or(z.boolean()).optional(),
+        required: z.boolean().optional(),
+        type: z.enum(['string', 'number', 'boolean']).optional(),
+      })
+    )
+    .optional(),
+  metadata: z
+    .object({
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      license: z.string().optional(),
+    })
+    .optional(),
 });
 
 // =============================================================================

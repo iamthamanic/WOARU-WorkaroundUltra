@@ -303,7 +303,7 @@ export class ToolsDatabaseManager {
           configType: 'tools' as const,
           configPath: this.databasePath,
           configData: null,
-          timestamp: new Date()
+          timestamp: new Date(),
         } as ConfigLoadHookData);
       } catch (hookError) {
         console.debug(`Hook error (onConfigLoad): ${hookError}`);
@@ -313,15 +313,24 @@ export class ToolsDatabaseManager {
 
       // 🛡️ SCHEMA-VALIDIERUNG: Tools Database - KI-freundliche Regelwelt
       try {
-        const validation = SchemaValidator.validateCompleteToolsDatabase(hybridDb);
+        const validation =
+          SchemaValidator.validateCompleteToolsDatabase(hybridDb);
         if (!validation.success) {
-          console.warn(chalk.yellow('⚠️ Tools-Datenbank Schema-Validierung fehlgeschlagen:'));
+          console.warn(
+            chalk.yellow(
+              '⚠️ Tools-Datenbank Schema-Validierung fehlgeschlagen:'
+            )
+          );
           validation.errors?.forEach(error => {
             console.warn(chalk.yellow(`   • ${error}`));
           });
-          console.warn(chalk.gray('💡 Verwende Fallback-Modus für Kompatibilität'));
+          console.warn(
+            chalk.gray('💡 Verwende Fallback-Modus für Kompatibilität')
+          );
         } else {
-          console.log(chalk.green('✅ Tools-Datenbank erfolgreich gegen Schema validiert'));
+          console.log(
+            chalk.green('✅ Tools-Datenbank erfolgreich gegen Schema validiert')
+          );
         }
       } catch (validationError) {
         console.debug(`Schema validation error: ${validationError}`);
@@ -336,7 +345,7 @@ export class ToolsDatabaseManager {
           configType: 'tools' as const,
           configPath: this.databasePath,
           configData: legacyDb,
-          timestamp: new Date()
+          timestamp: new Date(),
         } as ConfigLoadHookData);
       } catch (hookError) {
         console.debug(`Hook error (onConfigLoad after): ${hookError}`);
@@ -345,7 +354,9 @@ export class ToolsDatabaseManager {
       return legacyDb;
     } catch (error) {
       console.warn(
-        chalk.yellow('⚠️ WOARU: Failed to get hybrid database, falling back to legacy:'),
+        chalk.yellow(
+          '⚠️ WOARU: Failed to get hybrid database, falling back to legacy:'
+        ),
         error instanceof Error ? error.message : error
       );
       return this.loadLegacyDatabase();

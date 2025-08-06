@@ -106,13 +106,23 @@ export class WOARUSupervisor extends EventEmitter {
     // 🛡️ SCHEMA-VALIDIERUNG: Supervisor Config - KI-freundliche Regelwelt
     // Note: Currently using basic validation, could extend with Zod schema
     // This ensures configuration follows expected patterns
-    if (mergedConfig.ignorePatterns && !Array.isArray(mergedConfig.ignorePatterns)) {
-      console.warn('⚠️ Invalid ignorePatterns in supervisor config, using defaults');
+    if (
+      mergedConfig.ignorePatterns &&
+      !Array.isArray(mergedConfig.ignorePatterns)
+    ) {
+      console.warn(
+        '⚠️ Invalid ignorePatterns in supervisor config, using defaults'
+      );
       mergedConfig.ignorePatterns = defaultConfig.ignorePatterns;
     }
 
-    if (mergedConfig.watchPatterns && !Array.isArray(mergedConfig.watchPatterns)) {
-      console.warn('⚠️ Invalid watchPatterns in supervisor config, using defaults');
+    if (
+      mergedConfig.watchPatterns &&
+      !Array.isArray(mergedConfig.watchPatterns)
+    ) {
+      console.warn(
+        '⚠️ Invalid watchPatterns in supervisor config, using defaults'
+      );
       mergedConfig.watchPatterns = defaultConfig.watchPatterns;
     }
 
@@ -209,13 +219,15 @@ export class WOARUSupervisor extends EventEmitter {
       files: ['*'], // Supervisor analyzes all files
       projectPath: this.projectPath,
       config: this.config,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     try {
       await triggerHook('beforeAnalysis', beforeData);
     } catch (hookError) {
-      console.debug(`Hook error (beforeAnalysis supervisor start): ${hookError}`);
+      console.debug(
+        `Hook error (beforeAnalysis supervisor start): ${hookError}`
+      );
     }
 
     try {
@@ -257,21 +269,25 @@ export class WOARUSupervisor extends EventEmitter {
       // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt
       const afterData: AfterAnalysisData = {
         files: ['*'],
-        results: [{
-          file: this.projectPath,
-          tool: 'WOARUSupervisor',
-          success: true,
-          issues: []
-        }],
+        results: [
+          {
+            file: this.projectPath,
+            tool: 'WOARUSupervisor',
+            success: true,
+            issues: [],
+          },
+        ],
         duration: 0,
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('afterAnalysis', afterData);
       } catch (hookError) {
-        console.debug(`Hook error (afterAnalysis supervisor start): ${hookError}`);
+        console.debug(
+          `Hook error (afterAnalysis supervisor start): ${hookError}`
+        );
       }
 
       // Run initial checks asynchronously (don't block startup)
@@ -291,7 +307,7 @@ export class WOARUSupervisor extends EventEmitter {
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'supervisor-start',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -431,7 +447,7 @@ export class WOARUSupervisor extends EventEmitter {
       files: changes.map(c => c.path),
       projectPath: this.projectPath,
       config: { changeType: 'batch', changeCount: changes.length },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     try {
@@ -526,11 +542,11 @@ export class WOARUSupervisor extends EventEmitter {
           file: c.path,
           tool: 'file-watcher',
           success: true,
-          issues: []
+          issues: [],
         })),
         duration: 0,
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -538,14 +554,13 @@ export class WOARUSupervisor extends EventEmitter {
       } catch (hookError) {
         console.debug(`Hook error (afterAnalysis file changes): ${hookError}`);
       }
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'file-changes-handler',
         filePath: changes.length > 0 ? changes[0].path : undefined,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {

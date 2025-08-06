@@ -73,14 +73,63 @@ function sanitizeError(error: unknown): string {
   return 'Unknown analysis error';
 }
 
+/**
+ * Code insight structure for comprehensive codebase analysis results
+ *
+ * Represents a single analysis finding or recommendation from the CodeAnalyzer,
+ * including evidence, affected files, and actionable suggestions for improvement.
+ */
 export interface CodeInsight {
+  /** Detailed reason for the insight or recommendation */
   reason: string;
+  /** Array of evidence supporting the insight */
   evidence: string[];
+  /** List of files affected by this insight */
   files: string[];
+  /** Severity level of the finding */
   severity: 'critical' | 'high' | 'medium' | 'low';
+  /** Optional patterns or rules associated with this insight */
   patterns?: string[];
 }
 
+/**
+ * CodeAnalyzer - Advanced multi-language codebase analysis with security validation
+ *
+ * The CodeAnalyzer class provides comprehensive code quality analysis across multiple
+ * programming languages including JavaScript/TypeScript, Python, and C#. It combines
+ * static code analysis, pattern detection, and the specialized WOARU Code Smell Analyzer
+ * to generate actionable insights for improving code quality, maintainability, and
+ * development workflow optimization.
+ *
+ * Key features:
+ * - Multi-language support (JS/TS, Python, C#)
+ * - Security-first analysis with input validation
+ * - Integration with WOARU Code Smell Analyzer
+ * - Performance metrics and timeout protection
+ * - Comprehensive tool recommendations
+ *
+ * @example
+ * ```typescript
+ * const analyzer = new CodeAnalyzer();
+ *
+ * // Analyze a TypeScript project
+ * const insights = await analyzer.analyzeCodebase('./my-project', 'TypeScript');
+ *
+ * // Review insights
+ * for (const [toolName, insight] of insights) {
+ *   console.log(`${toolName}: ${insight.reason}`);
+ *   console.log(`Severity: ${insight.severity}`);
+ *   insight.evidence.forEach(evidence => console.log(`- ${evidence}`));
+ * }
+ *
+ * // Get analysis metrics
+ * const metrics = analyzer.getAnalysisMetrics();
+ * console.log(`Analyzed ${metrics.filesAnalyzed} files`);
+ * console.log(`Generated ${metrics.insightsGenerated} insights`);
+ * ```
+ *
+ * @since 1.0.0
+ */
 export class CodeAnalyzer {
   private codeSmellAnalyzer: CodeSmellAnalyzer;
   private analysisMetrics = {
@@ -95,10 +144,56 @@ export class CodeAnalyzer {
   }
 
   /**
-   * Analyze codebase with comprehensive security validation
-   * @param projectPath - Path to the project to analyze
-   * @param language - Programming language of the project
-   * @returns Promise<Map<string, CodeInsight>> Map of analysis insights
+   * Performs comprehensive codebase analysis with multi-language support and security validation
+   *
+   * Analyzes the entire codebase for code quality issues, potential improvements, and tool
+   * recommendations. The analysis is performed with security-first principles, input validation,
+   * and timeout protection. Supports JavaScript, TypeScript, Python, and C# projects.
+   *
+   * The method performs the following analysis types:
+   * - Formatting consistency and style issues
+   * - Missing type definitions and type safety
+   * - Debug statements and console outputs
+   * - Comprehensive WOARU Code Smell Analysis
+   * - Missing testing infrastructure
+   * - Git workflow and pre-commit hooks
+   * - Language-specific best practices
+   *
+   * @param projectPath - Absolute path to the project directory to analyze
+   * @param language - Primary programming language of the project ('JavaScript', 'TypeScript', 'Python', 'C#')
+   * @returns Promise resolving to Map of tool names to CodeInsight recommendations
+   *
+   * @throws {Error} When project path is invalid or analysis encounters security issues
+   *
+   * @example
+   * ```typescript
+   * const analyzer = new CodeAnalyzer();
+   *
+   * // Analyze a TypeScript project for code quality
+   * const insights = await analyzer.analyzeCodebase('./my-app', 'TypeScript');
+   *
+   * // Check for Prettier recommendations
+   * if (insights.has('prettier')) {
+   *   const prettierInsight = insights.get('prettier');
+   *   console.log(`Formatting issues: ${prettierInsight.evidence.length}`);
+   *   prettierInsight.files.forEach(file => console.log(`- ${file}`));
+   * }
+   *
+   * // Check for code smell findings
+   * if (insights.has('code-smells')) {
+   *   const smellInsight = insights.get('code-smells');
+   *   console.log(`Code smells found: ${smellInsight.patterns.length} types`);
+   *   console.log(`Severity: ${smellInsight.severity}`);
+   * }
+   *
+   * // Analyze a Python project
+   * const pythonInsights = await analyzer.analyzeCodebase('./python-app', 'Python');
+   * if (pythonInsights.has('black')) {
+   *   console.log('Python formatting issues detected');
+   * }
+   * ```
+   *
+   * @since 1.0.0
    */
   async analyzeCodebase(
     projectPath: string,

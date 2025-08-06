@@ -20,6 +20,96 @@ import {
   type ErrorHookData,
 } from '../core/HookSystem';
 
+/**
+ * AIReviewAgent - Multi-LLM powered code review and analysis system
+ *
+ * The AIReviewAgent provides sophisticated AI-powered code review capabilities by leveraging
+ * multiple Large Language Model (LLM) providers simultaneously. It performs comprehensive
+ * code analysis, identifies potential issues, suggests improvements, and provides detailed
+ * findings with actionable recommendations. The agent supports multiple AI providers
+ * including OpenAI, Anthropic, and others, enabling robust and diverse code analysis.
+ *
+ * Key features:
+ * - Multi-LLM analysis for comprehensive code reviews
+ * - Hook system integration for extensible workflows
+ * - Usage tracking and performance monitoring
+ * - Provider-specific configuration and failover
+ * - Internationalization support for multilingual analysis
+ * - Secure API communication with error handling
+ *
+ * Supported analysis types:
+ * - Code quality assessment and best practices
+ * - Bug detection and potential security issues
+ * - Performance optimization recommendations
+ * - Architecture and design pattern suggestions
+ * - Maintainability and readability improvements
+ * - Language-specific idioms and conventions
+ *
+ * @example
+ * ```typescript
+ * // Configure AI review with multiple providers
+ * const config: AIReviewConfig = {
+ *   providers: [
+ *     { name: 'openai', enabled: true, apiKey: 'your-openai-key' },
+ *     { name: 'anthropic', enabled: true, apiKey: 'your-anthropic-key' }
+ *   ],
+ *   maxTokens: 4000,
+ *   temperature: 0.1
+ * };
+ *
+ * const reviewAgent = new AIReviewAgent(config);
+ *
+ * // Perform code review
+ * const codeContext: CodeContext = {
+ *   fileName: 'UserService.ts',
+ *   language: 'typescript',
+ *   framework: 'express',
+ *   projectType: 'web-api'
+ * };
+ *
+ * const result = await reviewAgent.performMultiLLMReview(sourceCode, codeContext);
+ *
+ * // Process results from multiple providers
+ * result.results.forEach(providerResult => {
+ *   console.log(`${providerResult.provider} findings:`);
+ *   providerResult.findings.forEach(finding => {
+ *     console.log(`- ${finding.type}: ${finding.message}`);
+ *     console.log(`  Severity: ${finding.severity}`);
+ *     if (finding.suggestion) {
+ *       console.log(`  Suggestion: ${finding.suggestion}`);
+ *     }
+ *   });
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Advanced usage with custom prompt templates
+ * const customPrompts = {
+ *   security: {
+ *     name: 'Security Review',
+ *     description: 'Focus on security vulnerabilities',
+ *     system_prompt: 'You are a security expert reviewing code for vulnerabilities...',
+ *     user_prompt: 'Analyze this code for security issues: {{code}}'
+ *   }
+ * };
+ *
+ * const reviewAgent = new AIReviewAgent(config, customPrompts);
+ *
+ * // Perform focused security review
+ * const securityResult = await reviewAgent.performMultiLLMReview(
+ *   authenticationCode,
+ *   { fileName: 'auth.ts', language: 'typescript', focus: 'security' }
+ * );
+ *
+ * // Handle review completion with metrics
+ * console.log(`Review completed with ${securityResult.results.length} providers`);
+ * console.log(`Total findings: ${securityResult.totalFindings}`);
+ * console.log(`Success rate: ${securityResult.successRate}%`);
+ * ```
+ *
+ * @since 1.0.0
+ */
 export class AIReviewAgent {
   private config: AIReviewConfig;
   private promptTemplate: PromptTemplate;
@@ -41,8 +131,111 @@ export class AIReviewAgent {
   }
 
   /**
-   * Perform multi-LLM code review analysis
-   * 🪝 KI-freundliche Regelwelt: Integriert Hooks für AI Review Lifecycle
+   * Performs comprehensive multi-LLM code review analysis with hook integration
+   *
+   * Executes parallel code analysis using all enabled LLM providers to generate
+   * comprehensive code review findings. Each provider analyzes the code independently,
+   * and results are aggregated with consensus scoring and conflict resolution.
+   * The method integrates with the WOARU Hook System for extensible analysis workflows
+   * and provides detailed performance metrics.
+   *
+   * Analysis workflow:
+   * 1. **Pre-analysis hooks**: Context preparation and provider validation
+   * 2. **Parallel LLM requests**: Simultaneous analysis across all enabled providers
+   * 3. **Response processing**: JSON parsing, validation, and finding extraction
+   * 4. **Result aggregation**: Consensus building and confidence scoring
+   * 5. **Post-analysis hooks**: Result validation and metrics collection
+   * 6. **Error handling**: Graceful provider failures with partial results
+   *
+   * Features:
+   * - Parallel provider execution for optimal performance
+   * - Automatic retry logic with exponential backoff
+   * - Response validation and malformed data handling
+   * - Usage tracking for cost and performance monitoring
+   * - Internationalization support for multilingual contexts
+   * - Comprehensive error logging and debugging
+   *
+   * 🪝 **Hook Integration**: Seamlessly integrates with WOARU's rule-based AI system
+   *
+   * @param code - Source code content to analyze (supports all major programming languages)
+   * @param context - Contextual information about the code being analyzed
+   * @param context.fileName - Name of the file being analyzed for context-aware suggestions
+   * @param context.language - Programming language for language-specific analysis
+   * @param context.framework - Framework context (e.g., 'react', 'express', 'django')
+   * @param context.projectType - Project type for targeted recommendations
+   * @returns Promise resolving to comprehensive multi-provider review results
+   *
+   * @throws {Error} When no providers are enabled or all providers fail
+   *
+   * @example
+   * ```typescript
+   * const reviewAgent = new AIReviewAgent(config);
+   *
+   * // Analyze a React component
+   * const reactCode = `
+   * import React, { useState } from 'react';
+   *
+   * function UserProfile({ userId }) {
+   *   const [user, setUser] = useState(null);
+   *   // ... component implementation
+   * }`;
+   *
+   * const context: CodeContext = {
+   *   fileName: 'UserProfile.tsx',
+   *   language: 'typescript',
+   *   framework: 'react',
+   *   projectType: 'spa'
+   * };
+   *
+   * const result = await reviewAgent.performMultiLLMReview(reactCode, context);
+   *
+   * // Access aggregated results
+   * console.log(`Total findings: ${result.totalFindings}`);
+   * console.log(`Success rate: ${result.successRate}%`);
+   * console.log(`Analysis duration: ${result.totalDuration}ms`);
+   *
+   * // Process provider-specific findings
+   * result.results.forEach(providerResult => {
+   *   if (providerResult.success) {
+   *     console.log(`\n${providerResult.provider} Analysis:`);
+   *     providerResult.findings.forEach(finding => {
+   *       console.log(`- [${finding.severity}] ${finding.type}: ${finding.message}`);
+   *       if (finding.lineNumber) console.log(`  Line: ${finding.lineNumber}`);
+   *       if (finding.suggestion) console.log(`  💡 ${finding.suggestion}`);
+   *     });
+   *   } else {
+   *     console.warn(`${providerResult.provider} failed: ${providerResult.error}`);
+   *   }
+   * });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Handle analysis with error recovery
+   * try {
+   *   const result = await reviewAgent.performMultiLLMReview(complexCode, context);
+   *
+   *   // Check if we have usable results despite some failures
+   *   if (result.successRate >= 50) {
+   *     const highSeverityIssues = result.results
+   *       .flatMap(r => r.findings)
+   *       .filter(f => f.severity === 'high' || f.severity === 'critical');
+   *
+   *     if (highSeverityIssues.length > 0) {
+   *       console.log('🚨 Critical issues found:');
+   *       highSeverityIssues.forEach(issue => {
+   *         console.log(`- ${issue.message}`);
+   *       });
+   *     }
+   *   } else {
+   *     console.warn('Analysis quality may be compromised due to provider failures');
+   *   }
+   * } catch (error) {
+   *   console.error('Multi-LLM review failed completely:', error.message);
+   * }
+   * ```
+   *
+   * @since 1.0.0
    */
   async performMultiLLMReview(
     code: string,
@@ -63,9 +256,9 @@ export class AIReviewAgent {
         language: context.language,
         enabledProviders: this.enabledProviders.map(p => p.id),
         tokenLimit: this.config.tokenLimit,
-        parallelRequests: this.config.parallelRequests
+        parallelRequests: this.config.parallelRequests,
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     try {
@@ -116,7 +309,11 @@ export class AIReviewAgent {
         // Sequential execution
         for (const provider of this.enabledProviders) {
           try {
-            const response = await this.callLLMProvider(provider, code, context);
+            const response = await this.callLLMProvider(
+              provider,
+              code,
+              context
+            );
             results[provider.id] = response.findings;
             responseTimesMs[provider.id] = response.responseTime;
             tokensUsed[provider.id] = response.tokensUsed || 0;
@@ -160,15 +357,17 @@ export class AIReviewAgent {
       // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt
       const afterData: AfterAnalysisData = {
         files: [context.filePath],
-        results: [{
-          file: context.filePath,
-          tool: 'ai-review',
-          success: true,
-          issues: Object.values(results).flat()
-        }],
+        results: [
+          {
+            file: context.filePath,
+            tool: 'ai-review',
+            success: true,
+            issues: Object.values(results).flat(),
+          },
+        ],
         duration: endTime.getTime() - startTime.getTime(),
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -178,14 +377,13 @@ export class AIReviewAgent {
       }
 
       return reviewResult;
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'ai-review-analysis',
         filePath: context.filePath,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {

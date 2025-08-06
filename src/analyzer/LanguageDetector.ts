@@ -2,15 +2,56 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
 
+/**
+ * Language information structure for comprehensive programming language support
+ *
+ * Contains all necessary metadata for detecting and working with different
+ * programming languages including file extensions, configuration files,
+ * package managers, build systems, and popular frameworks.
+ */
 export interface LanguageInfo {
+  /** Human-readable language name */
   name: string;
+  /** File extensions associated with this language */
   extensions: string[];
+  /** Configuration files that indicate this language */
   configFiles: string[];
+  /** Package managers used by this language */
   packageManagers: string[];
+  /** Build configuration files for this language */
   buildFiles: string[];
+  /** Popular frameworks for this language */
   frameworks: string[];
 }
 
+/**
+ * LanguageDetector - Advanced multi-language project detection and analysis
+ *
+ * The LanguageDetector class provides sophisticated programming language detection
+ * capabilities across multiple languages including JavaScript/TypeScript, Python,
+ * C#, Java, Go, Rust, PHP, and Ruby. It uses a scoring algorithm that considers
+ * file extensions, configuration files, and project structure to determine the
+ * primary language and detect all languages present in a project.
+ *
+ * @example
+ * ```typescript
+ * const detector = new LanguageDetector();
+ *
+ * // Detect all languages in a project
+ * const languages = await detector.detectLanguages('./my-project');
+ * console.log('Detected languages:', languages);
+ *
+ * // Get primary language
+ * const primary = await detector.detectPrimaryLanguage('./my-project');
+ * console.log('Primary language:', primary);
+ *
+ * // Get language information
+ * const info = detector.getLanguageInfo('javascript');
+ * console.log('Extensions:', info?.extensions);
+ * ```
+ *
+ * @since 1.0.0
+ */
 export class LanguageDetector {
   private languages: Map<string, LanguageInfo> = new Map([
     [
@@ -128,6 +169,28 @@ export class LanguageDetector {
     ],
   ]);
 
+  /**
+   * Detects all programming languages present in a project directory
+   *
+   * Scans the project directory for configuration files and source code files
+   * to identify all programming languages used in the project. This method
+   * performs comprehensive analysis including file extensions and language-specific
+   * configuration files to provide complete language coverage.
+   *
+   * @param projectPath - Absolute path to the project directory to analyze
+   * @returns Promise resolving to array of detected language identifiers
+   *
+   * @example
+   * ```typescript
+   * const detector = new LanguageDetector();
+   * const languages = await detector.detectLanguages('./full-stack-app');
+   * // Returns: ['javascript', 'python', 'csharp']
+   *
+   * // For a simple Node.js project
+   * const simpleLanguages = await detector.detectLanguages('./node-app');
+   * // Returns: ['javascript']
+   * ```
+   */
   async detectLanguages(projectPath: string): Promise<string[]> {
     const detectedLanguages: Set<string> = new Set();
 
