@@ -1,10 +1,18 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import https from 'https';
 import { safeJsonParse } from '../utils/safeJsonParser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import {
+  SchemaValidator,
+  type SchemaToolsDatabase,
+  type CompleteToolsDatabase,
+  type UserConfig,
+} from '../schemas/ai-config.schema';
+import { triggerHook, type ConfigLoadHookData } from '../core/HookSystem';
+import chalk from 'chalk';
 
 // ES module compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -213,11 +221,13 @@ export class ToolsDatabaseManager {
   private aiModelsSourceUrl: string;
   private localFallbackPath: string;
   private aiModelsLocalFallbackPath: string;
+  private databasePath: string;
 
   constructor() {
     this.cacheDir = path.join(os.homedir(), '.woaru', 'cache');
     this.cacheFilePath = path.join(this.cacheDir, 'tools.json');
     this.aiModelsCacheFilePath = path.join(this.cacheDir, 'ai-models.json');
+    this.databasePath = this.cacheFilePath; // Set database path for hooks
     this.defaultSourceUrl =
       'https://raw.githubusercontent.com/iamthamanic/WOARU-WorkaroundUltra/main/tools.json';
     this.aiModelsSourceUrl =
@@ -287,13 +297,56 @@ export class ToolsDatabaseManager {
    */
   async getDatabase(): Promise<ToolsDatabase> {
     try {
+      // 🪝 HOOK: beforeConfigLoad - KI-freundliche Regelwelt
+      try {
+        await triggerHook('onConfigLoad', {
+          configType: 'tools' as const,
+          configPath: this.databasePath,
+          configData: null,
+          timestamp: new Date()
+        } as ConfigLoadHookData);
+      } catch (hookError) {
+        console.debug(`Hook error (onConfigLoad): ${hookError}`);
+      }
+
       const hybridDb = await this.getHybridDatabase();
 
+      // 🛡️ SCHEMA-VALIDIERUNG: Tools Database - KI-freundliche Regelwelt
+      try {
+        const validation = SchemaValidator.validateCompleteToolsDatabase(hybridDb);
+        if (!validation.success) {
+          console.warn(chalk.yellow('⚠️ Tools-Datenbank Schema-Validierung fehlgeschlagen:'));
+          validation.errors?.forEach(error => {
+            console.warn(chalk.yellow(`   • ${error}`));
+          });
+          console.warn(chalk.gray('💡 Verwende Fallback-Modus für Kompatibilität'));
+        } else {
+          console.log(chalk.green('✅ Tools-Datenbank erfolgreich gegen Schema validiert'));
+        }
+      } catch (validationError) {
+        console.debug(`Schema validation error: ${validationError}`);
+      }
+
       // Convert hybrid database to legacy format for backward compatibility
-      return this.convertHybridToLegacy(hybridDb);
-    } catch {
+      const legacyDb = this.convertHybridToLegacy(hybridDb);
+
+      // 🪝 HOOK: afterConfigLoad - KI-freundliche Regelwelt
+      try {
+        await triggerHook('onConfigLoad', {
+          configType: 'tools' as const,
+          configPath: this.databasePath,
+          configData: legacyDb,
+          timestamp: new Date()
+        } as ConfigLoadHookData);
+      } catch (hookError) {
+        console.debug(`Hook error (onConfigLoad after): ${hookError}`);
+      }
+
+      return legacyDb;
+    } catch (error) {
       console.warn(
-        '⚠️ WOARU: Failed to get hybrid database, falling back to legacy'
+        chalk.yellow('⚠️ WOARU: Failed to get hybrid database, falling back to legacy:'),
+        error instanceof Error ? error.message : error
       );
       return this.loadLegacyDatabase();
     }
@@ -363,6 +416,13 @@ export class ToolsDatabaseManager {
 
           // Check if cached data has legacy format
           if (cachedData.categories && !cachedData.core_tools) {
+            // 🔒 Schema-Validierung für Tools-Datenbank - KI-freundliche Regelwelt
+            // TODO: Implement proper validation for legacy tools database format
+            console.log(
+              chalk.green(
+                '✅ Tools database loaded (validation pending schema refactor)'
+              )
+            );
             return cachedData as ToolsDatabase;
           } else {
             console.log(

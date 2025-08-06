@@ -315,7 +315,7 @@ async function editProvider(providerId: string): Promise<void> {
     const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
     const providerConfig = aiConfig[providerId] as AiProviderConfig;
     const currentStatus = providerConfig?.enabled ? 'enabled' : 'disabled';
-    
+
     const actions = [
       t('cli.provider_management.change_model'),
       t('cli.provider_management.change_api_key'),
@@ -452,8 +452,14 @@ async function editProvider(providerId: string): Promise<void> {
       providerConfig.enabled = !providerConfig.enabled;
       await configManager.saveAiConfig(aiConfig);
       const status = providerConfig.enabled ? 'enabled' : 'disabled';
-      console.log(chalk.green(`✅ Code reviews for ${providerId} are now ${status}`));
-      console.log(chalk.gray(`   This provider ${providerConfig.enabled ? 'will be used' : 'will NOT be used'} for AI code analysis.`));
+      console.log(
+        chalk.green(`✅ Code reviews for ${providerId} are now ${status}`)
+      );
+      console.log(
+        chalk.gray(
+          `   This provider ${providerConfig.enabled ? 'will be used' : 'will NOT be used'} for AI code analysis.`
+        )
+      );
     } else if (action === t('cli.provider_management.remove_provider')) {
       const { confirmed } = await inquirer.prompt([
         {

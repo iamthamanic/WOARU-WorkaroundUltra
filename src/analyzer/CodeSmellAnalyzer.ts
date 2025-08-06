@@ -3,10 +3,15 @@
  * Production-Ready implementation with comprehensive security and error handling
  */
 
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { CodeSmellFinding } from '../types/code-smell';
 import { APP_CONFIG } from '../config/constants';
 import { t, initializeI18n } from '../config/i18n';
+import {
+  triggerHook,
+  type BeforeFileAnalysisData,
+  type AfterFileAnalysisData,
+} from '../core/HookSystem';
 
 /**
  * Type definition for function metadata
@@ -184,7 +189,41 @@ export class CodeSmellAnalyzer {
         return [];
       }
 
+      // 🪝 HOOK: beforeFileAnalysis - KI-freundliche Regelwelt
+      const beforeAnalysisData: BeforeFileAnalysisData = {
+        filePath: sanitizedPath,
+        language: context.language,
+        fileSize: context.contentLength,
+        timestamp: new Date(),
+      };
+
+      try {
+        await triggerHook('beforeFileAnalysis', beforeAnalysisData);
+      } catch (hookError) {
+        console.debug(
+          `Hook error (beforeFileAnalysis): ${this.sanitizeError(hookError)}`
+        );
+      }
+
       const findings = await this.performAnalysisWithTimeout(context);
+
+      // 🪝 HOOK: afterFileAnalysis - KI-freundliche Regelwelt
+      const afterAnalysisData: AfterFileAnalysisData = {
+        filePath: sanitizedPath,
+        language: context.language,
+        results: findings,
+        duration: Date.now() - startTime,
+        timestamp: new Date(),
+        success: true,
+      };
+
+      try {
+        await triggerHook('afterFileAnalysis', afterAnalysisData);
+      } catch (hookError) {
+        console.debug(
+          `Hook error (afterFileAnalysis): ${this.sanitizeError(hookError)}`
+        );
+      }
 
       // Update metrics
       this.analysisMetrics.filesAnalyzed++;

@@ -5,7 +5,7 @@
  * and provides comprehensive validation for internationalization requirements.
  */
 
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
 import { fileURLToPath } from 'url';

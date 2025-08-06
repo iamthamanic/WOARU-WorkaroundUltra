@@ -1,5 +1,5 @@
 import * as path from 'path';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { QualityCheckResult, SnykResult } from '../quality/QualityRunner';
 import { ProductionAudit } from '../auditor/ProductionReadinessAuditor';
 import { GitDiffResult } from '../utils/GitDiffAnalyzer';

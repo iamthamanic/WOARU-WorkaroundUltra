@@ -4,7 +4,7 @@
 import { Command } from 'commander';
 import { initializeI18n, t } from './config/i18n';
 import { readFileSync } from 'fs';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
@@ -709,14 +709,31 @@ function defineCommands(program: Command) {
             return;
           }
 
+          // Load actual AI configuration from ConfigLoader
+          const { ConfigLoader } = await import('./ai/ConfigLoader');
+          const configLoader = ConfigLoader.getInstance();
+          const aiConfig = await configLoader.loadConfig(path);
+          
+          if (!aiConfig || !aiConfig.providers || aiConfig.providers.length === 0) {
+            console.error(chalk.red('❌ Fehler: Keine aktivierten AI-Provider für den Review gefunden.'));
+            console.log(chalk.blue('💡 Bitte aktiviere mindestens einen Provider mit: woaru ai setup'));
+            return;
+          }
+
+          // Filter enabled providers only
+          const enabledProviders = aiConfig.providers.filter(p => p.enabled);
+          if (enabledProviders.length === 0) {
+            console.error(chalk.red('❌ Fehler: Keine aktivierten AI-Provider für den Review gefunden.'));
+            console.log(chalk.blue('💡 Bitte aktiviere mindestens einen Provider mit: woaru ai setup'));
+            return;
+          }
+
+          console.log(chalk.green(`🤖 Found ${enabledProviders.length} enabled AI provider(s): ${enabledProviders.map(p => p.id).join(', ')}`));
+
           const { AIReviewAgent } = await import('./ai/AIReviewAgent');
           const agent = new AIReviewAgent({
-            providers: [],
-            parallelRequests: true,
-            consensusMode: false,
-            minConsensusCount: 1,
-            tokenLimit: 4000,
-            costThreshold: 1.0,
+            ...aiConfig,
+            providers: enabledProviders, // Use only enabled providers
           });
           const result = await agent.performMultiLLMReview('', {
             filePath: path,

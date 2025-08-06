@@ -2,7 +2,7 @@
  * Template Engine - Processes templates and generates project files
  */
 
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import Handlebars from 'handlebars';
 import chalk from 'chalk';

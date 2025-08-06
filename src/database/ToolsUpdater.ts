@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import { ToolsDatabase } from '../types';
 // import * as semver from 'semver'; // Currently unused

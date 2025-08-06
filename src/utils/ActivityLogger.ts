@@ -5,7 +5,7 @@
 
 // Explain-for-humans: This system tracks every action WOARU takes, recording when commands start, succeed, or fail, along with performance metrics and context information for complete transparency.
 
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 // Removed unused FilenameHelper import
 import { APP_CONFIG } from '../config/constants';

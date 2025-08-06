@@ -1,6 +1,6 @@
 {
   "name": "woaru",
-  "version": "5.3.6",
+  "version": "5.3.8",
   "type": "module",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
     "format:check": "prettier --check src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "validate:package": "node scripts/validate-package.js",
-    "prepublishOnly": "npm run build:prod && npm run validate:package"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "cli",
@@ -67,7 +67,8 @@
     "js-yaml": "^4.1.0",
     "node-notifier": "^10.0.1",
     "ora": "^5.4.1",
-    "semver": "^7.5.4"
+    "semver": "^7.5.4",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

@@ -5,6 +5,10 @@ export default {
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
+      tsconfig: {
+        module: 'ES2020',
+        target: 'ES2020',
+      }
     }],
   },
   moduleNameMapper: {

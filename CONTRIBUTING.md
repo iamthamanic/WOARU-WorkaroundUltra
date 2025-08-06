@@ -1,6 +1,171 @@
 # Contributing to WOARU (WorkAroundUltra)
 
-Thank you for your interest in contributing to WOARU! This guide will help you understand our development workflow, especially the critical npm packaging requirements.
+Thank you for your interest in contributing to WOARU! This guide will help you understand our development workflow, AI-friendly architecture, and critical npm packaging requirements.
+
+## 🤖 **KI-freundliche Regelwelt** (AI-Friendly Rule World)
+
+WOARU has been architected as an **AI-friendly rule world** that follows strict patterns and validation rules. This makes the codebase predictable, safe, and optimal for AI assistants to work with.
+
+### 🛡️ Core Architecture Principles
+
+#### **Schema-Zwang** (Schema Enforcement)
+**REGEL**: All configuration files MUST be validated against Zod schemas before use.
+
+```typescript
+// ✅ CORRECT: Always validate before using config
+const validation = SchemaValidator.validateAIConfig(config);
+if (!validation.success) {
+  throw new Error('Config validation failed');
+}
+const safeConfig = validation.data;
+
+// ❌ WRONG: Never use raw config without validation
+const unsafeConfig = JSON.parse(configFile); // No validation!
+```
+
+**Schema Files**:
+- `src/schemas/ai-config.schema.ts` - AI configuration validation
+- All schemas include German error messages for user feedback
+- Use `SchemaValidator` class for consistent validation
+
+#### **Hook-System** (Event-Based Extensibility)
+**REGEL**: All major operations MUST trigger hooks for extensibility.
+
+```typescript
+// ✅ CORRECT: Always trigger hooks around operations
+await triggerHook('beforeFileAnalysis', {
+  filePath: sanitizedPath,
+  language: context.language,
+  contentLength: context.contentLength,
+  timestamp: Date.now()
+});
+
+const result = await performOperation();
+
+await triggerHook('afterFileAnalysis', {
+  filePath: sanitizedPath,
+  findingsCount: result.length,
+  analysisTime: Date.now() - startTime,
+  timestamp: Date.now()
+});
+```
+
+**Hook System Features**:
+- EventEmitter-based architecture in `src/core/HookSystem.ts`
+- Priority-based execution with error isolation
+- Built-in debug mode and performance tracking
+- Type-safe hook data interfaces
+
+#### **Regelwelt Best Practices**
+
+1. **🔒 Validation First**: Never trust input data - validate everything
+2. **🪝 Hook Everything**: Major operations should be extensible via hooks  
+3. **📝 Type Safety**: Use TypeScript strictly - no `any` types allowed
+4. **🐛 Error Isolation**: Hooks and validators must not crash the main flow
+5. **📊 Observability**: All operations should be observable via hooks
+
+### 🏗️ Architecture Components
+
+#### **Configuration Management** (`src/config/ConfigManager.ts`)
+- Zod schema validation for `ai_config.json`
+- Metadata key filtering (excludes `_metadata`, `multi_ai_review_enabled`, etc.)
+- German error messages for validation failures
+- Secure permission handling
+
+#### **Hook System** (`src/core/HookSystem.ts`)
+```typescript
+// Register a hook handler
+registerHook('beforeFileAnalysis', async (data) => {
+  console.log(`Analyzing ${data.filePath}...`);
+}, 10); // Priority 10
+
+// Trigger hooks with error isolation
+await triggerHook('afterFileAnalysis', analysisData);
+```
+
+#### **Schema Validation** (`src/schemas/ai-config.schema.ts`)
+```typescript
+// AI Provider Configuration Schema
+const LLMProviderConfigSchema = z.object({
+  id: z.string().min(1, "Provider ID darf nicht leer sein"),
+  providerType: ProviderTypeSchema,
+  apiKeyEnvVar: z.string().regex(/^[A-Z_]+$/),
+  baseUrl: z.string().url(),
+  model: z.string().min(1),
+  enabled: z.boolean()
+});
+
+// Use the validator
+const result = SchemaValidator.validateAIConfig(rawConfig);
+if (result.success) {
+  // Safe to use result.data
+}
+```
+
+### 🚨 Architecture Rules for AI Assistants
+
+When working on WOARU, AI assistants (like Claude) MUST follow these rules:
+
+#### **Rule 1: Schema-First Development**
+- **BEFORE** saving any config: Validate with Zod schema
+- **BEFORE** loading any config: Validate with Zod schema  
+- **NEVER** bypass validation "for speed" or "temporarily"
+
+#### **Rule 2: Hook-Driven Extensions**
+- **ADD** hooks to any new major operation
+- **TRIGGER** existing hooks when extending functionality
+- **RESPECT** hook priorities and error isolation
+
+#### **Rule 3: German Error Messages**
+- **USE** German messages for user-facing errors (matching user's language)
+- **INCLUDE** technical details in debug logs (can be English)
+- **PROVIDE** actionable suggestions in error messages
+
+#### **Rule 4: Predictable Patterns**
+```typescript
+// ✅ PREDICTABLE: Standard validation pattern
+async function loadConfig(): Promise<ConfigType> {
+  const raw = await fs.readFile(configPath, 'utf-8');
+  const validation = SchemaValidator.validateConfig(JSON.parse(raw));
+  if (!validation.success) {
+    throw new ConfigValidationError(validation.errors);
+  }
+  return validation.data;
+}
+
+// ✅ PREDICTABLE: Standard hook pattern  
+async function processFile(file: string): Promise<Result> {
+  await triggerHook('beforeProcess', { file });
+  try {
+    const result = await actualProcessing(file);
+    await triggerHook('afterProcess', { file, result });
+    return result;
+  } catch (error) {
+    await triggerHook('onProcessError', { file, error });
+    throw error;
+  }
+}
+```
+
+### 🔍 Code Review Checklist for Regelwelt
+
+When reviewing WOARU code, ensure:
+
+- [ ] **Schema Validation**: All config loading/saving uses Zod validation
+- [ ] **Hook Integration**: Major operations trigger appropriate hooks
+- [ ] **Error Handling**: Validation errors include helpful German messages
+- [ ] **Type Safety**: No `any` types, proper TypeScript usage
+- [ ] **Security**: Input sanitization and secure file operations
+- [ ] **Observability**: Operations are traceable via hooks and logs
+- [ ] **Consistency**: Follows established patterns and conventions
+
+### 📚 Learning the Regelwelt
+
+For new contributors, start by studying these key files:
+1. `src/schemas/ai-config.schema.ts` - Learn the validation patterns
+2. `src/core/HookSystem.ts` - Understand the hook architecture
+3. `src/config/ConfigManager.ts` - See schema validation in action
+4. `src/analyzer/CodeSmellAnalyzer.ts` - Example of hook integration
 
 ## 🚨 Critical: NPM Packaging Requirements
 

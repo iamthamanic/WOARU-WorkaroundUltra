@@ -1,6 +1,6 @@
 import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
 import { execSync } from 'child_process';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { VersionManager } from '../versionManager';

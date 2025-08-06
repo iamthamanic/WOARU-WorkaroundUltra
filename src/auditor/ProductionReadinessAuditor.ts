@@ -4,7 +4,7 @@
  */
 
 import * as path from 'path';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { PackageJson } from '../types';
 import { ToolsDatabaseManager } from '../database/ToolsDatabaseManager';
 import { QualityRunner } from '../quality/QualityRunner';

@@ -3,7 +3,7 @@
  * Verwendet einfache Regex-basierte Parsing für Quick Win Implementation
  */
 
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { ClassAnalysis, MethodAnalysis } from '../types/solid-types';
 
 export class TypeScriptParser {

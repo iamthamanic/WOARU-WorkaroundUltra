@@ -1,8 +1,14 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import { APP_CONFIG } from './constants';
 import chalk from 'chalk';
+import {
+  SchemaValidator,
+  type AIConfigFile,
+  type UserConfig,
+} from '../schemas/ai-config.schema';
+import { triggerHook, type ConfigLoadHookData } from '../core/HookSystem';
 
 /**
  * ConfigManager - Secure management of WOARU configuration and API keys
@@ -222,17 +228,41 @@ export class ConfigManager {
   }
 
   /**
-   * Store AI configuration in global config file
+   * Store AI configuration in global config file with Zod schema validation
+   * 🛡️ REGEL: Alle Konfigurationsdateien MÜSSEN vor dem Speichern validiert werden
    */
   async storeAiConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
-      await fs.writeFile(this.aiConfigFile, JSON.stringify(config, null, 2));
+
+      // 🔒 Schema-Validierung vor dem Speichern - KI-freundliche Regelwelt
+      const validation = SchemaValidator.validateAIConfig(config);
+
+      if (!validation.success) {
+        console.error(chalk.red('❌ Cannot store invalid AI config:'));
+        validation.errors?.forEach(error => {
+          console.error(chalk.red(`   • ${error}`));
+        });
+        throw new Error('AI configuration validation failed');
+      }
+
+      await fs.writeFile(
+        this.aiConfigFile,
+        JSON.stringify(validation.data, null, 2)
+      );
       await this.setSecurePermissions();
       console.log(
-        chalk.green(`✅ AI configuration stored in ${this.aiConfigFile}`)
+        chalk.green(
+          `✅ AI configuration validated and stored in ${this.aiConfigFile}`
+        )
       );
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('validation failed')
+      ) {
+        throw error; // Re-throw validation errors
+      }
       throw new Error(
         `Failed to store AI config: ${error instanceof Error ? error.message : error}`
       );
@@ -240,21 +270,52 @@ export class ConfigManager {
   }
 
   /**
-   * Load AI configuration from global config file
+   * Load AI configuration from global config file with Zod schema validation
+   * 🛡️ REGEL: Alle Konfigurationsdateien MÜSSEN validiert werden
    */
-  async loadAiConfig(): Promise<Record<string, unknown>> {
+  async loadAiConfig(): Promise<AIConfigFile | Record<string, unknown>> {
     try {
       if (!(await fs.pathExists(this.aiConfigFile))) {
+        console.log(
+          chalk.gray('📄 No AI config file found, creating default config...')
+        );
         return {};
       }
+
       const content = await fs.readFile(this.aiConfigFile, 'utf-8');
-      return JSON.parse(content);
+      const rawData = JSON.parse(content);
+
+      // 🔒 Schema-Validierung - KI-freundliche Regelwelt
+      const validation = SchemaValidator.validateAIConfig(rawData);
+
+      if (validation.success && validation.data) {
+        console.log(
+          chalk.green('✅ AI config successfully validated against schema')
+        );
+        return validation.data;
+      } else {
+        console.error(chalk.red('❌ AI config validation failed:'));
+        validation.errors?.forEach(error => {
+          console.error(chalk.red(`   • ${error}`));
+        });
+        console.error(
+          chalk.yellow('⚠️ Using fallback empty config to prevent crashes')
+        );
+        return {};
+      }
     } catch (error) {
-      console.warn(
-        chalk.yellow(
-          `⚠️ Warning: Could not load AI config: ${error instanceof Error ? error.message : error}`
-        )
-      );
+      if (error instanceof SyntaxError) {
+        console.error(chalk.red('❌ AI config contains invalid JSON:'));
+        console.error(chalk.red(`   ${error.message}`));
+        console.error(chalk.yellow('💡 Please fix the JSON syntax in:'));
+        console.error(chalk.gray(`   ${this.aiConfigFile}`));
+      } else {
+        console.warn(
+          chalk.yellow(
+            `⚠️ Warning: Could not load AI config: ${error instanceof Error ? error.message : error}`
+          )
+        );
+      }
       return {};
     }
   }
@@ -277,6 +338,21 @@ export class ConfigManager {
   }
 
   /**
+   * Check if a key is a metadata or configuration key (not a provider)
+   */
+  private isMetadataKey(key: string): boolean {
+    return (
+      key === '_metadata' ||
+      key === 'multi_ai_review_enabled' ||
+      key === 'primary_review_provider_id' ||
+      key === 'multiAi' ||
+      key === 'primaryProvider' ||
+      key === 'lastDataUpdate' ||
+      key.startsWith('_') // Any key starting with underscore is metadata
+    );
+  }
+
+  /**
    * Get all configured AI providers
    */
   async getConfiguredAiProviders(): Promise<string[]> {
@@ -286,11 +362,7 @@ export class ConfigManager {
 
       for (const [key, value] of Object.entries(config)) {
         // Skip metadata and configuration entries
-        if (
-          key === '_metadata' ||
-          key === 'multi_ai_review_enabled' ||
-          key === 'primary_review_provider_id'
-        ) {
+        if (this.isMetadataKey(key)) {
           continue;
         }
 
@@ -398,11 +470,7 @@ export class ConfigManager {
 
     for (const [providerId, providerConfig] of Object.entries(config)) {
       // Skip metadata and configuration entries
-      if (
-        providerId === '_metadata' ||
-        providerId === 'multi_ai_review_enabled' ||
-        providerId === 'primary_review_provider_id'
-      ) {
+      if (this.isMetadataKey(providerId)) {
         continue;
       }
 
@@ -429,11 +497,7 @@ export class ConfigManager {
 
     for (const [providerId, providerConfig] of Object.entries(config)) {
       // Skip metadata and configuration entries
-      if (
-        providerId === '_metadata' ||
-        providerId === 'multi_ai_review_enabled' ||
-        providerId === 'primary_review_provider_id'
-      ) {
+      if (this.isMetadataKey(providerId)) {
         continue;
       }
 
@@ -611,15 +675,56 @@ export class ConfigManager {
   }
 
   /**
-   * Load user configuration from global user config file
+   * Load user configuration from global user config file with schema validation
+   * 🛡️ REGEL: Alle User-Konfigurationen MÜSSEN validiert werden
    */
   async loadUserConfig(): Promise<Record<string, unknown>> {
     try {
+      // 🪝 HOOK: beforeConfigLoad - KI-freundliche Regelwelt
+      try {
+        await triggerHook('onConfigLoad', {
+          configType: 'user' as const,
+          configPath: this.userConfigFile,
+          configData: null,
+          timestamp: new Date()
+        } as ConfigLoadHookData);
+      } catch (hookError) {
+        console.debug(`Hook error (onConfigLoad user): ${hookError}`);
+      }
+
       if (!(await fs.pathExists(this.userConfigFile))) {
         return {};
       }
+      
       const content = await fs.readFile(this.userConfigFile, 'utf-8');
-      return JSON.parse(content);
+      const rawData = JSON.parse(content);
+
+      // 🛡️ SCHEMA-VALIDIERUNG: User Config - KI-freundliche Regelwelt
+      const validation = SchemaValidator.validateUserConfig(rawData);
+      if (validation.success && validation.data) {
+        console.log(chalk.green('✅ User-Konfiguration erfolgreich validiert'));
+        
+        // 🪝 HOOK: afterConfigLoad - KI-freundliche Regelwelt
+        try {
+          await triggerHook('onConfigLoad', {
+            configType: 'user' as const,
+            configPath: this.userConfigFile,
+            configData: validation.data,
+            timestamp: new Date()
+          } as ConfigLoadHookData);
+        } catch (hookError) {
+          console.debug(`Hook error (onConfigLoad user after): ${hookError}`);
+        }
+
+        return validation.data as Record<string, unknown>;
+      } else {
+        console.warn(chalk.yellow('⚠️ User-Config Schema-Validierung fehlgeschlagen:'));
+        validation.errors?.forEach(error => {
+          console.warn(chalk.yellow(`   • ${error}`));
+        });
+        console.warn(chalk.yellow('💡 Verwende Fallback für Kompatibilität'));
+        return rawData; // Fallback to raw data for compatibility
+      }
     } catch (error) {
       console.warn(
         chalk.yellow(
@@ -631,14 +736,31 @@ export class ConfigManager {
   }
 
   /**
-   * Store user configuration in global user config file
+   * Store user configuration in global user config file with schema validation
+   * 🛡️ REGEL: Alle User-Konfigurationen MÜSSEN vor dem Speichern validiert werden
    */
   async storeUserConfig(config: Record<string, unknown>): Promise<void> {
     try {
       await this.initialize();
-      await fs.writeFile(this.userConfigFile, JSON.stringify(config, null, 2));
+
+      // 🛡️ SCHEMA-VALIDIERUNG vor dem Speichern - KI-freundliche Regelwelt
+      const validation = SchemaValidator.validateUserConfig(config);
+      if (!validation.success) {
+        console.error(chalk.red('❌ Cannot store invalid User config:'));
+        validation.errors?.forEach(error => {
+          console.error(chalk.red(`   • ${error}`));
+        });
+        throw new Error('User configuration validation failed');
+      }
+
+      await fs.writeFile(this.userConfigFile, JSON.stringify(validation.data, null, 2));
       await this.setSecurePermissions();
+      
+      console.log(chalk.green(`✅ User-Konfiguration validiert und gespeichert in ${this.userConfigFile}`));
     } catch (error) {
+      if (error instanceof Error && error.message.includes('validation failed')) {
+        throw error; // Re-throw validation errors
+      }
       throw new Error(
         `Failed to store user config: ${error instanceof Error ? error.message : error}`
       );
