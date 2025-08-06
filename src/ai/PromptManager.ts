@@ -1,8 +1,14 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export interface PromptTemplate {
   name: string;

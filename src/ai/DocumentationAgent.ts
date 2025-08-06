@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
 import {
@@ -434,7 +434,7 @@ export class DocumentationAgent {
    */
   private extractBestDocumentation(
     aiResult: MultiLLMReviewResult,
-_documentationType: 'nopro' | 'pro' | 'forai'
+    _documentationType: 'nopro' | 'pro' | 'forai'
   ): string | null {
     // Find the first successful result
     const providers = Object.keys(aiResult.results);

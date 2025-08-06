@@ -13,6 +13,12 @@ import {
 } from '../types/ai-review';
 import { UsageTracker } from './UsageTracker';
 import { getAILanguageInstruction } from '../config/i18n';
+import {
+  triggerHook,
+  type BeforeAnalysisData,
+  type AfterAnalysisData,
+  type ErrorHookData,
+} from '../core/HookSystem';
 
 export class AIReviewAgent {
   private config: AIReviewConfig;
@@ -36,6 +42,7 @@ export class AIReviewAgent {
 
   /**
    * Perform multi-LLM code review analysis
+   * 🪝 KI-freundliche Regelwelt: Integriert Hooks für AI Review Lifecycle
    */
   async performMultiLLMReview(
     code: string,
@@ -48,87 +55,147 @@ export class AIReviewAgent {
     const estimatedCosts: { [llmId: string]: number } = {};
     const errors: { [llmId: string]: string | null } = {};
 
-    // Validate code length
-    if (code.length > this.config.tokenLimit * 4) {
-      // Rough estimate: 1 token ≈ 4 chars
-      throw new Error(
-        `Code too long for analysis (${code.length} chars). Max: ${this.config.tokenLimit * 4}`
-      );
+    // 🪝 HOOK: beforeAnalysis - KI-freundliche Regelwelt
+    const beforeData: BeforeAnalysisData = {
+      files: [context.filePath],
+      projectPath: '', // CodeContext doesn't have projectPath, using empty string
+      config: {
+        language: context.language,
+        enabledProviders: this.enabledProviders.map(p => p.id),
+        tokenLimit: this.config.tokenLimit,
+        parallelRequests: this.config.parallelRequests
+      },
+      timestamp: new Date()
+    };
+
+    try {
+      await triggerHook('beforeAnalysis', beforeData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeAnalysis AI review): ${hookError}`);
     }
 
-    console.log(
-      `🧠 Starting AI Code Review with ${this.enabledProviders.length} LLM providers...`
-    );
+    try {
+      // Validate code length
+      if (code.length > this.config.tokenLimit * 4) {
+        // Rough estimate: 1 token ≈ 4 chars
+        throw new Error(
+          `Code too long for analysis (${code.length} chars). Max: ${this.config.tokenLimit * 4}`
+        );
+      }
 
-    // Run LLM requests (parallel or sequential based on config)
-    if (this.config.parallelRequests) {
-      const promises = this.enabledProviders.map(provider =>
-        this.callLLMProvider(provider, code, context)
+      console.log(
+        `🧠 Starting AI Code Review with ${this.enabledProviders.length} LLM providers...`
       );
 
-      const responses = await Promise.allSettled(promises);
+      // Run LLM requests (parallel or sequential based on config)
+      if (this.config.parallelRequests) {
+        const promises = this.enabledProviders.map(provider =>
+          this.callLLMProvider(provider, code, context)
+        );
 
-      responses.forEach((result, index) => {
-        const provider = this.enabledProviders[index];
-        if (result.status === 'fulfilled') {
-          const response = result.value;
-          results[provider.id] = response.findings;
-          responseTimesMs[provider.id] = response.responseTime;
-          tokensUsed[provider.id] = response.tokensUsed || 0;
-          estimatedCosts[provider.id] = response.estimatedCost || 0;
-          errors[provider.id] = response.error || null;
-        } else {
-          results[provider.id] = [];
-          errors[provider.id] = result.reason?.toString() || 'Unknown error';
-          responseTimesMs[provider.id] = 0;
-          tokensUsed[provider.id] = 0;
-          estimatedCosts[provider.id] = 0;
-        }
-      });
-    } else {
-      // Sequential execution
-      for (const provider of this.enabledProviders) {
-        try {
-          const response = await this.callLLMProvider(provider, code, context);
-          results[provider.id] = response.findings;
-          responseTimesMs[provider.id] = response.responseTime;
-          tokensUsed[provider.id] = response.tokensUsed || 0;
-          estimatedCosts[provider.id] = response.estimatedCost || 0;
-          errors[provider.id] = response.error || null;
-        } catch (error) {
-          results[provider.id] = [];
-          errors[provider.id] =
-            error instanceof Error ? error.message : 'Unknown error';
-          responseTimesMs[provider.id] = 0;
-          tokensUsed[provider.id] = 0;
-          estimatedCosts[provider.id] = 0;
+        const responses = await Promise.allSettled(promises);
+
+        responses.forEach((result, index) => {
+          const provider = this.enabledProviders[index];
+          if (result.status === 'fulfilled') {
+            const response = result.value;
+            results[provider.id] = response.findings;
+            responseTimesMs[provider.id] = response.responseTime;
+            tokensUsed[provider.id] = response.tokensUsed || 0;
+            estimatedCosts[provider.id] = response.estimatedCost || 0;
+            errors[provider.id] = response.error || null;
+          } else {
+            results[provider.id] = [];
+            errors[provider.id] = result.reason?.toString() || 'Unknown error';
+            responseTimesMs[provider.id] = 0;
+            tokensUsed[provider.id] = 0;
+            estimatedCosts[provider.id] = 0;
+          }
+        });
+      } else {
+        // Sequential execution
+        for (const provider of this.enabledProviders) {
+          try {
+            const response = await this.callLLMProvider(provider, code, context);
+            results[provider.id] = response.findings;
+            responseTimesMs[provider.id] = response.responseTime;
+            tokensUsed[provider.id] = response.tokensUsed || 0;
+            estimatedCosts[provider.id] = response.estimatedCost || 0;
+            errors[provider.id] = response.error || null;
+          } catch (error) {
+            results[provider.id] = [];
+            errors[provider.id] =
+              error instanceof Error ? error.message : 'Unknown error';
+            responseTimesMs[provider.id] = 0;
+            tokensUsed[provider.id] = 0;
+            estimatedCosts[provider.id] = 0;
+          }
         }
       }
+
+      const endTime = new Date();
+
+      // Aggregate results
+      const aggregation = this.aggregateResults(results);
+
+      const reviewResult: MultiLLMReviewResult = {
+        codeContext: context,
+        results,
+        aggregation,
+        meta: {
+          analysisStartTime: startTime,
+          analysisEndTime: endTime,
+          totalDuration: endTime.getTime() - startTime.getTime(),
+          llmResponseTimes: responseTimesMs,
+          tokensUsed,
+          estimatedCost: estimatedCosts,
+          totalEstimatedCost: Object.values(estimatedCosts).reduce(
+            (sum, cost) => sum + cost,
+            0
+          ),
+          llmErrors: errors,
+        },
+      };
+
+      // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt
+      const afterData: AfterAnalysisData = {
+        files: [context.filePath],
+        results: [{
+          file: context.filePath,
+          tool: 'ai-review',
+          success: true,
+          issues: Object.values(results).flat()
+        }],
+        duration: endTime.getTime() - startTime.getTime(),
+        success: true,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterAnalysis', afterData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterAnalysis AI review): ${hookError}`);
+      }
+
+      return reviewResult;
+
+    } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt
+      const errorData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'ai-review-analysis',
+        filePath: context.filePath,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError AI review): ${hookError}`);
+      }
+
+      throw error;
     }
-
-    const endTime = new Date();
-
-    // Aggregate results
-    const aggregation = this.aggregateResults(results);
-
-    return {
-      codeContext: context,
-      results,
-      aggregation,
-      meta: {
-        analysisStartTime: startTime,
-        analysisEndTime: endTime,
-        totalDuration: endTime.getTime() - startTime.getTime(),
-        llmResponseTimes: responseTimesMs,
-        tokensUsed,
-        estimatedCost: estimatedCosts,
-        totalEstimatedCost: Object.values(estimatedCosts).reduce(
-          (sum, cost) => sum + cost,
-          0
-        ),
-        llmErrors: errors,
-      },
-    };
   }
 
   /**

@@ -1,18 +1,44 @@
 #!/usr/bin/env node
 // src/cli.ts - NEUE, SAUBERE IMPLEMENTIERUNG
 
+// Initialize Sentry first, before any other imports
+import * as Sentry from '@sentry/node';
+
+// Initialize Sentry with environment variable
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  environment: process.env.NODE_ENV || 'development',
+  enabled: !!process.env.SENTRY_DSN, // Only enable if DSN is provided
+  beforeSend(event) {
+    // Filter out non-critical errors in development
+    if (process.env.NODE_ENV !== 'production' && event.level === 'warning') {
+      return null;
+    }
+    return event;
+  },
+});
+
 import { Command } from 'commander';
 import { initializeI18n, t } from './config/i18n';
-import * as fs from 'fs-extra';
+import { readFileSync } from 'fs';
+import fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // WIR WERDEN HIER NACH UND NACH DIE ANDEREN IMPORTS HINZUFÜGEN
 
 // Diese Funktion wird ALLE Befehle definieren, NACHDEM i18n bereit ist.
 function defineCommands(program: Command) {
   // Dynamische Version aus package.json
   const packageJsonPath = path.join(__dirname, '../package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
   program.version(packageJson.version);
 
@@ -299,7 +325,7 @@ function defineCommands(program: Command) {
 
           for (const file of files) {
             const filePath = path.join(wikiPath, file);
-            const content = fs.readFileSync(filePath, 'utf-8');
+            const content = readFileSync(filePath, 'utf-8');
             const title = file.replace('.md', '');
 
             console.log(chalk.yellow(`## ${title.toUpperCase()}`));
@@ -701,14 +727,31 @@ function defineCommands(program: Command) {
             return;
           }
 
+          // Load actual AI configuration from ConfigLoader
+          const { ConfigLoader } = await import('./ai/ConfigLoader');
+          const configLoader = ConfigLoader.getInstance();
+          const aiConfig = await configLoader.loadConfig(path);
+          
+          if (!aiConfig || !aiConfig.providers || aiConfig.providers.length === 0) {
+            console.error(chalk.red('❌ Fehler: Keine aktivierten AI-Provider für den Review gefunden.'));
+            console.log(chalk.blue('💡 Bitte aktiviere mindestens einen Provider mit: woaru ai setup'));
+            return;
+          }
+
+          // Filter enabled providers only
+          const enabledProviders = aiConfig.providers.filter(p => p.enabled);
+          if (enabledProviders.length === 0) {
+            console.error(chalk.red('❌ Fehler: Keine aktivierten AI-Provider für den Review gefunden.'));
+            console.log(chalk.blue('💡 Bitte aktiviere mindestens einen Provider mit: woaru ai setup'));
+            return;
+          }
+
+          console.log(chalk.green(`🤖 Found ${enabledProviders.length} enabled AI provider(s): ${enabledProviders.map(p => p.id).join(', ')}`));
+
           const { AIReviewAgent } = await import('./ai/AIReviewAgent');
           const agent = new AIReviewAgent({
-            providers: [],
-            parallelRequests: true,
-            consensusMode: false,
-            minConsensusCount: 1,
-            tokenLimit: 4000,
-            costThreshold: 1.0,
+            ...aiConfig,
+            providers: enabledProviders, // Use only enabled providers
           });
           const result = await agent.performMultiLLMReview('', {
             filePath: path,
@@ -1215,7 +1258,21 @@ async function main() {
     // SCHRITT 4: Führe das Programm aus
     await program.parseAsync(process.argv);
   } catch (error) {
-    console.error('A critical error occurred:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(chalk.red('❌ A critical error occurred:'), errorMessage);
+    
+    // Report error to Sentry with context
+    Sentry.withScope((scope) => {
+      scope.setTag('component', 'cli-main');
+      scope.setLevel('fatal');
+      scope.setContext('process', {
+        argv: process.argv,
+        cwd: process.cwd(),
+        version: getVersion(),
+      });
+      Sentry.captureException(error);
+    });
+    
     process.exit(1);
   }
 }
@@ -1308,9 +1365,42 @@ function displaySplashScreen() {
 // Helper function to get version
 function getVersion(): string {
   const packageJsonPath = path.join(__dirname, '../package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   return packageJson.version;
 }
 
+/**
+ * Global error handlers for unhandled exceptions and rejections
+ * All errors are automatically reported to Sentry for production monitoring
+ */
+process.on('uncaughtException', (error) => {
+  console.error(chalk.red('❌ Uncaught Exception:'), error.message);
+  Sentry.captureException(error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(chalk.red('❌ Unhandled Rejection at:'), promise, chalk.red('reason:'), reason);
+  Sentry.captureException(reason);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log(chalk.yellow('\n⚡ Gracefully shutting down...'));
+  await Sentry.close(2000);
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log(chalk.yellow('\n⚡ Received SIGTERM, shutting down...'));
+  await Sentry.close(2000);
+  process.exit(0);
+});
+
 // Starte die Anwendung
-main();
+main().catch((error) => {
+  console.error(chalk.red('❌ Fatal error in main():'), error.message);
+  Sentry.captureException(error);
+  process.exit(1);
+});

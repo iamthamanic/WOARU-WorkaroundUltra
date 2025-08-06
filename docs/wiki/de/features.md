@@ -62,7 +62,21 @@ Der **Code Smell Analyzer** identifiziert problematische Code-Muster:
 - **Context-Aware Analysis**: Framework-spezifische und projektbezogene Analyse
 - **Human-AI Collaboration**: Kombination von automatisierter und manueller Review
 
-**Supported LLM Providers:**
+### **AI Control Center (Verbesserte UX):**
+- **Interaktive Provider-Verwaltung**: Einfache Einrichtung, Konfiguration und Verwaltung von AI-Providern
+- **Code-Reviews Umschalten**: Einfaches Aktivieren/Deaktivieren von Providern mit `🔛 Toggle Code Reviews (Currently: enabled/disabled)`
+- **Dynamische Status-Anzeige**: Echtzeitstatus-Indikatoren zeigen Provider-Zustand vor Aktionen
+- **Klares Feedback**: Bestätigungsnachrichten erklären Änderungen nach dem Umschalten
+- **Keine Neukonfiguration Erforderlich**: Provider aktivieren/deaktivieren ohne Verlust bestehender Konfigurationen
+
+### **Provider-Konfiguration Befehle:**
+```bash
+woaru ai                    # Interaktives AI Control Center öffnen
+woaru ai setup              # Neuen AI-Provider mit geführter Einrichtung hinzufügen
+woaru ai status             # Visueller Status aller konfigurierten Provider anzeigen
+```
+
+**Unterstützte LLM Provider:**
 - **Anthropic Claude**: 3.5 Sonnet, Haiku, Opus
 - **OpenAI GPT**: GPT-4o, GPT-4o Mini, GPT-4 Turbo
 - **Google Gemini**: 1.5 Pro, 1.5 Flash

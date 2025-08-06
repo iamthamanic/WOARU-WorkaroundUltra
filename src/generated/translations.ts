@@ -1,7 +1,7 @@
 /**
  * Auto-generated translations bundle
- * Generated at: 2025-07-30T12:18:03.563Z
- * Build version: 5.2.2
+ * Generated at: 2025-08-06T12:17:31.319Z
+ * Build version: 5.3.9
  * Languages: de, en
  * 
  * VALIDATION STATUS: ✅ PASSED
@@ -77,8 +77,8 @@ export const bundledTranslations = {
             "purpose": "Konfiguriert Entwicklungstools und AI-Provider für optimalen Workflow"
           },
           "ai": {
-            "description": "Verwaltung von AI-Providern für Code-Analyse",
-            "purpose": "Konfiguriert und verwaltet AI-gestützte Code-Analyse-Funktionen"
+            "description": "Interaktives AI Control Center - Provider verwalten, Code-Reviews umschalten, Modelle konfigurieren",
+            "purpose": "AI-Provider konfigurieren, Code-Reviews aktivieren/deaktivieren und AI-gestützte Analyse-Funktionen mit verbesserter UX verwalten"
           },
           "update_db": {
             "description": "Aktualisierung der Tools-Datenbank von Remote-Quelle",
@@ -1003,8 +1003,8 @@ export const bundledTranslations = {
             "purpose": "Configure development tools and AI providers for optimal workflow"
           },
           "ai": {
-            "description": "Manage AI providers for code analysis",
-            "purpose": "Configure and manage AI-powered code analysis capabilities"
+            "description": "Interactive AI Control Center - manage providers, toggle code reviews, configure models",
+            "purpose": "Configure AI providers, enable/disable code reviews, and manage AI-powered analysis capabilities with improved UX"
           },
           "ai_setup": {
             "description": "Setup and configuration of AI providers for code analysis",
@@ -1728,14 +1728,14 @@ export const bundledTranslations = {
 } as const;
 
 export const translationMetadata = {
-  generatedAt: '2025-07-30T12:18:03.563Z',
+  generatedAt: '2025-08-06T12:17:31.319Z',
   languages: ["de","en"],
   stats: {
   "de": 662,
   "en": 599
 },
   totalLanguages: 2,
-  buildVersion: '5.2.2',
+  buildVersion: '5.3.9',
   validated: true
 } as const;
 

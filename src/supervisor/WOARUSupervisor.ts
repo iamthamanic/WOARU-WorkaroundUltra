@@ -22,6 +22,13 @@ import {
   ToolRecommendation,
   CodeIssue,
 } from './types';
+import {
+  triggerHook,
+  type BeforeAnalysisData,
+  type AfterAnalysisData,
+  type ErrorHookData,
+} from '../core/HookSystem';
+import { SchemaValidator } from '../schemas/ai-config.schema';
 
 export class WOARUSupervisor extends EventEmitter {
   private stateManager: StateManager;
@@ -67,14 +74,13 @@ export class WOARUSupervisor extends EventEmitter {
   }
 
   private mergeConfig(config: Partial<SupervisorConfig>): SupervisorConfig {
-    return {
+    const defaultConfig: SupervisorConfig = {
       autoFix: false,
       autoSetup: false,
       notifications: {
         terminal: true,
         desktop: false,
         webhook: undefined,
-        ...config.notifications,
       },
       ignoreTools: [],
       watchPatterns: ['**/*'],
@@ -86,8 +92,31 @@ export class WOARUSupervisor extends EventEmitter {
         '**/.next/**',
       ],
       dashboard: false,
-      ...config,
     };
+
+    const mergedConfig = {
+      ...defaultConfig,
+      ...config,
+      notifications: {
+        ...defaultConfig.notifications,
+        ...config.notifications,
+      },
+    };
+
+    // 🛡️ SCHEMA-VALIDIERUNG: Supervisor Config - KI-freundliche Regelwelt
+    // Note: Currently using basic validation, could extend with Zod schema
+    // This ensures configuration follows expected patterns
+    if (mergedConfig.ignorePatterns && !Array.isArray(mergedConfig.ignorePatterns)) {
+      console.warn('⚠️ Invalid ignorePatterns in supervisor config, using defaults');
+      mergedConfig.ignorePatterns = defaultConfig.ignorePatterns;
+    }
+
+    if (mergedConfig.watchPatterns && !Array.isArray(mergedConfig.watchPatterns)) {
+      console.warn('⚠️ Invalid watchPatterns in supervisor config, using defaults');
+      mergedConfig.watchPatterns = defaultConfig.watchPatterns;
+    }
+
+    return mergedConfig;
   }
 
   private setupEventListeners(): void {
@@ -175,6 +204,20 @@ export class WOARUSupervisor extends EventEmitter {
       throw new Error('Supervisor is already running');
     }
 
+    // 🪝 HOOK: beforeAnalysis - KI-freundliche Regelwelt
+    const beforeData: BeforeAnalysisData = {
+      files: ['*'], // Supervisor analyzes all files
+      projectPath: this.projectPath,
+      config: this.config,
+      timestamp: new Date()
+    };
+
+    try {
+      await triggerHook('beforeAnalysis', beforeData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeAnalysis supervisor start): ${hookError}`);
+    }
+
     try {
       this.notificationManager.showProgress('Starting WOARU Supervisor...');
 
@@ -211,6 +254,26 @@ export class WOARUSupervisor extends EventEmitter {
 
       this.emit('started');
 
+      // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt
+      const afterData: AfterAnalysisData = {
+        files: ['*'],
+        results: [{
+          file: this.projectPath,
+          tool: 'WOARUSupervisor',
+          success: true,
+          issues: []
+        }],
+        duration: 0,
+        success: true,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterAnalysis', afterData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterAnalysis supervisor start): ${hookError}`);
+      }
+
       // Run initial checks asynchronously (don't block startup)
       this.checkRecommendations().catch(error =>
         this.notificationManager.showError(
@@ -224,6 +287,19 @@ export class WOARUSupervisor extends EventEmitter {
         )
       );
     } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt
+      const errorData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'supervisor-start',
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError supervisor start): ${hookError}`);
+      }
+
       this.notificationManager.showError(
         `Failed to start supervisor: ${error}`
       );
@@ -350,6 +426,20 @@ export class WOARUSupervisor extends EventEmitter {
   }
 
   private async handleFileChanges(changes: FileChange[]): Promise<void> {
+    // 🪝 HOOK: beforeAnalysis - KI-freundliche Regelwelt
+    const beforeData: BeforeAnalysisData = {
+      files: changes.map(c => c.path),
+      projectPath: this.projectPath,
+      config: { changeType: 'batch', changeCount: changes.length },
+      timestamp: new Date()
+    };
+
+    try {
+      await triggerHook('beforeAnalysis', beforeData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeAnalysis file changes): ${hookError}`);
+    }
+
     try {
       // Apply changes to state and emit events
       changes.forEach(change => {
@@ -428,7 +518,42 @@ export class WOARUSupervisor extends EventEmitter {
       }
 
       // Note: Periodic checks are now handled by dedicated interval
+
+      // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt
+      const afterData: AfterAnalysisData = {
+        files: changes.map(c => c.path),
+        results: changes.map(c => ({
+          file: c.path,
+          tool: 'file-watcher',
+          success: true,
+          issues: []
+        })),
+        duration: 0,
+        success: true,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterAnalysis', afterData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterAnalysis file changes): ${hookError}`);
+      }
+
     } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt
+      const errorData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'file-changes-handler',
+        filePath: changes.length > 0 ? changes[0].path : undefined,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError file changes): ${hookError}`);
+      }
+
       this.notificationManager.showError(
         `Quality check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

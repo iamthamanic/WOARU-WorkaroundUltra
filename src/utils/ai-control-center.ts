@@ -66,7 +66,9 @@ async function displayCurrentStatus(): Promise<void> {
   // Show Multi-AI status
   const multiAiEnabled = aiConfig.multiAi === true;
   if (multiAiEnabled) {
-    console.log(`  • ${chalk.green(t('cli.ai_control_center.multi_ai_enabled'))}`);
+    console.log(
+      `  • ${chalk.green(t('cli.ai_control_center.multi_ai_enabled'))}`
+    );
   } else {
     console.log(`  • ${chalk.gray(t('ai_control_center.multi_ai_disabled'))}`);
   }
@@ -112,7 +114,9 @@ async function showInteractiveMenu(): Promise<void> {
     const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
 
     while (true) {
-      const choices = [t('cli.ai_control_center.menu_options.add_edit_provider')];
+      const choices = [
+        t('cli.ai_control_center.menu_options.add_edit_provider'),
+      ];
 
       // Add Multi-AI toggle option
       if (aiConfig.multiAi === true) {
@@ -290,7 +294,9 @@ async function addNewProvider(): Promise<void> {
     await configManager.saveAiConfig(aiConfig);
 
     console.log(
-      chalk.green(t('cli.setup.provider_setup_complete', { provider: providerId }))
+      chalk.green(
+        t('cli.setup.provider_setup_complete', { provider: providerId })
+      )
     );
   } catch (error) {
     console.error(chalk.red('Failed to add provider:'), error);
@@ -304,10 +310,16 @@ async function editProvider(providerId: string): Promise<void> {
   try {
     const { default: inquirer } = await import('inquirer');
 
+    // Get current status for better UX
+    const configManager = ConfigManager.getInstance();
+    const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
+    const providerConfig = aiConfig[providerId] as AiProviderConfig;
+    const currentStatus = providerConfig?.enabled ? 'enabled' : 'disabled';
+
     const actions = [
       t('cli.provider_management.change_model'),
       t('cli.provider_management.change_api_key'),
-      t('cli.provider_management.toggle_enabled'),
+      `🔛 Toggle Code Reviews (Currently: ${currentStatus})`,
       t('cli.provider_management.remove_provider'),
       t('cli.provider_management.back_to_menu'),
     ];
@@ -323,35 +335,100 @@ async function editProvider(providerId: string): Promise<void> {
       },
     ]);
 
-    const configManager = ConfigManager.getInstance();
-    const aiConfig = (await configManager.loadAiConfig()) as AiConfig;
-    const providerConfig = aiConfig[providerId] as AiProviderConfig;
+    // configManager and aiConfig already loaded above
 
     if (action === t('cli.provider_management.change_model')) {
+      const { default: inquirer } = await import('inquirer');
       const apiKey = await configManager.getApiKey(providerId);
       if (apiKey) {
-        const models = await AIProviderUtils.fetchModelsForProvider(
+        // First show recommended models with option to see all
+        const allModels = await AIProviderUtils.fetchModelsForProvider(
           providerId,
           apiKey
         );
-        if (models.length > 0) {
-          const { newModel } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'newModel',
-              message: 'Select new model:',
-              choices: models.map(m => ({
-                name: `${m.name} - ${m.description}`,
-                value: m.id,
-              })),
-            },
-          ]);
 
-          providerConfig.model = newModel;
+        if (allModels.length > 0) {
+          const recommendedModels = allModels.filter(m => m.isRecommended);
+          const showRecommendedFirst = recommendedModels.length > 0;
+
+          let selectedModel: string;
+
+          if (showRecommendedFirst) {
+            // Show recommended models first with option to see all
+            const { modelChoice } = await inquirer.prompt([
+              {
+                type: 'list',
+                name: 'modelChoice',
+                message: `🎯 Select ${providerId} model (showing ${recommendedModels.length} recommended):`,
+                choices: [
+                  ...recommendedModels.map(m => ({
+                    name: `${m.tier === 'flagship' ? '⭐' : m.tier === 'fast' ? '⚡' : '📊'} ${m.name} - ${m.description}`,
+                    value: m.id,
+                  })),
+                  new inquirer.Separator(),
+                  {
+                    name: `📋 Show all ${allModels.length} models (including legacy/deprecated)`,
+                    value: '__SHOW_ALL__',
+                  },
+                ],
+              },
+            ]);
+
+            if (modelChoice === '__SHOW_ALL__') {
+              // Show all models with clear categorization
+              const { newModel } = await inquirer.prompt([
+                {
+                  type: 'list',
+                  name: 'newModel',
+                  message: `📋 All ${providerId} models (${allModels.length} total):`,
+                  choices: allModels
+                    .sort((a, b) => {
+                      // Sort: recommended first, then by tier, then deprecated last
+                      if (a.isRecommended !== b.isRecommended) {
+                        return b.isRecommended ? 1 : -1;
+                      }
+                      if (a.isDeprecated !== b.isDeprecated) {
+                        return a.isDeprecated ? 1 : -1;
+                      }
+                      return a.name.localeCompare(b.name);
+                    })
+                    .map(m => ({
+                      name: `${
+                        m.isRecommended ? '✅' : m.isDeprecated ? '⚠️ ' : '🔸'
+                      } ${m.name} - ${m.description}${
+                        m.isDeprecated ? ' (DEPRECATED)' : ''
+                      }`,
+                      value: m.id,
+                    })),
+                },
+              ]);
+              selectedModel = newModel;
+            } else {
+              selectedModel = modelChoice;
+            }
+          } else {
+            // Fallback: show all models if no recommended models
+            const { newModel } = await inquirer.prompt([
+              {
+                type: 'list',
+                name: 'newModel',
+                message: 'Select new model:',
+                choices: allModels.map(m => ({
+                  name: `${m.name} - ${m.description}`,
+                  value: m.id,
+                })),
+              },
+            ]);
+            selectedModel = newModel;
+          }
+
+          providerConfig.model = selectedModel;
           await configManager.saveAiConfig(aiConfig);
           console.log(
             chalk.green(
-              t('cli.provider_management.model_changed', { model: newModel })
+              t('cli.provider_management.model_changed', {
+                model: selectedModel,
+              })
             )
           );
         }
@@ -371,11 +448,18 @@ async function editProvider(providerId: string): Promise<void> {
 
       await configManager.saveApiKey(providerId, newApiKey);
       console.log(chalk.green(t('cli.provider_management.api_key_validation')));
-    } else if (action === t('cli.provider_management.toggle_enabled')) {
+    } else if (action.startsWith('🔛 Toggle Code Reviews')) {
       providerConfig.enabled = !providerConfig.enabled;
       await configManager.saveAiConfig(aiConfig);
       const status = providerConfig.enabled ? 'enabled' : 'disabled';
-      console.log(chalk.green(`Provider ${providerId} is now ${status}`));
+      console.log(
+        chalk.green(`✅ Code reviews for ${providerId} are now ${status}`)
+      );
+      console.log(
+        chalk.gray(
+          `   This provider ${providerConfig.enabled ? 'will be used' : 'will NOT be used'} for AI code analysis.`
+        )
+      );
     } else if (action === t('cli.provider_management.remove_provider')) {
       const { confirmed } = await inquirer.prompt([
         {
@@ -394,7 +478,9 @@ async function editProvider(providerId: string): Promise<void> {
         await configManager.removeApiKey(providerId);
         console.log(
           chalk.green(
-            t('cli.provider_management.provider_removed', { provider: providerId })
+            t('cli.provider_management.provider_removed', {
+              provider: providerId,
+            })
           )
         );
       } else {
@@ -495,7 +581,9 @@ async function selectPrimaryProvider(): Promise<void> {
 
     console.log(
       chalk.green(
-        t('cli.provider_management.primary_selected', { provider: primaryProvider })
+        t('cli.provider_management.primary_selected', {
+          provider: primaryProvider,
+        })
       )
     );
   } catch (error) {

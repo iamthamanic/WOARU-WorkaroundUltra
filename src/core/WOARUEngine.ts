@@ -30,15 +30,46 @@ import { t } from '../config/i18n';
 
 const execAsync = promisify(exec);
 
+/**
+ * WOARUEngine - Core orchestration engine for the WOARU project analysis and setup system
+ * 
+ * This class serves as the central coordinator for all WOARU operations, managing
+ * project analysis, code quality checks, security audits, and automated setup processes.
+ * It orchestrates multiple specialized analyzers and managers to provide comprehensive
+ * development environment recommendations.
+ * 
+ * @example
+ * ```typescript
+ * const engine = new WOARUEngine();
+ * const result = await engine.analyzeProject('./my-project');
+ * console.log(result.setup_recommendations);
+ * ```
+ * 
+ * @class WOARUEngine
+ * @since 1.0.0
+ */
 export class WOARUEngine {
+  /** Handles project structure and framework detection */
   private projectAnalyzer: ProjectAnalyzer;
+  /** Performs static code analysis and quality checks */
   private codeAnalyzer: CodeAnalyzer;
+  /** Manages tool configurations and recommendations database */
   private databaseManager: DatabaseManager;
+  /** Coordinates language-specific plugin functionality */
   private pluginManager: PluginManager;
+  /** Executes recommended actions and installations */
   private actionManager: ActionManager;
+  /** Runs comprehensive code quality checks */
   private qualityRunner: QualityRunner;
+  /** Manages user notifications across different channels */
   private notificationManager: NotificationManager;
 
+  /**
+   * Initializes a new instance of the WOARU Engine with all required components
+   * 
+   * Sets up all internal analyzers and managers with default configurations.
+   * The engine is ready to analyze projects immediately after construction.
+   */
   constructor() {
     this.projectAnalyzer = new ProjectAnalyzer();
     this.codeAnalyzer = new CodeAnalyzer();
@@ -52,6 +83,29 @@ export class WOARUEngine {
     this.qualityRunner = new QualityRunner(this.notificationManager);
   }
 
+  /**
+   * Performs comprehensive analysis of a project directory
+   * 
+   * This method orchestrates multiple analysis phases:
+   * 1. Project structure and framework detection
+   * 2. Code quality and pattern analysis
+   * 3. Security vulnerability scanning
+   * 4. Infrastructure configuration audit
+   * 5. Production readiness assessment
+   * 
+   * @param {string} projectPath - Absolute or relative path to the project directory
+   * @returns {Promise<AnalysisResult>} Complete analysis results including recommendations,
+   *                                     security findings, and improvement suggestions
+   * @throws {Error} If the project path is invalid or analysis fails
+   * 
+   * @example
+   * ```typescript
+   * const results = await engine.analyzeProject('/path/to/project');
+   * if (results.security_summary.critical > 0) {
+   *   console.error('Critical security issues found!');
+   * }
+   * ```
+   */
   async analyzeProject(projectPath: string): Promise<AnalysisResult> {
     try {
       console.log(chalk.blue(t('woaru_engine.analyzing_project')));
@@ -249,6 +303,31 @@ export class WOARUEngine {
     }
   }
 
+  /**
+   * Automatically sets up recommended tools and configurations for a project
+   * 
+   * Based on the analysis results, this method can:
+   * - Install recommended development tools
+   * - Configure linters and formatters
+   * - Set up pre-commit hooks
+   * - Initialize testing frameworks
+   * 
+   * @param {string} projectPath - Path to the project directory to set up
+   * @param {SetupOptions} options - Configuration options for the setup process
+   * @param {boolean} options.dryRun - If true, only simulates actions without making changes
+   * @param {boolean} options.force - If true, overwrites existing configurations
+   * @param {string[]} options.skip - Array of tool names to skip during setup
+   * @returns {Promise<boolean>} True if setup completed successfully, false otherwise
+   * @throws {Error} If setup fails due to permissions or other issues
+   * 
+   * @example
+   * ```typescript
+   * // Perform a dry run first
+   * await engine.setupProject('./my-project', { dryRun: true });
+   * // Then execute actual setup
+   * const success = await engine.setupProject('./my-project');
+   * ```
+   */
   async setupProject(
     projectPath: string,
     options: SetupOptions = {}

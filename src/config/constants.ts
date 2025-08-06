@@ -1,5 +1,11 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Read version from package.json dynamically
 const packageJsonPath = join(__dirname, '../../package.json');

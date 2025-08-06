@@ -1,9 +1,21 @@
 import { EventEmitter } from 'events';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 import { ProjectState, ToolRecommendation, CodeEvidence } from './types';
 import { CodeAnalyzer } from '../analyzer/CodeAnalyzer';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import {
+  triggerHook,
+  type BeforeToolExecutionData,
+  type AfterToolExecutionData,
+  type ErrorHookData,
+} from '../core/HookSystem';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface ToolDefinition {
   name: string;
@@ -69,28 +81,83 @@ export class ToolRecommendationEngine extends EventEmitter {
   }
 
   async getRecommendations(state: ProjectState): Promise<ToolRecommendation[]> {
-    const recommendations: ToolRecommendation[] = [];
+    const startTime = new Date();
+    
+    // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt
+    const beforeData: BeforeToolExecutionData = {
+      toolName: 'tool-recommendation-engine',
+      filePath: state.projectPath,
+      command: 'generate-recommendations',
+      timestamp: startTime
+    };
 
-    // Get language and framework specific tools
-    const relevantTools = this.getRelevantTools(
-      state.language,
-      state.frameworks
-    );
-
-    // Check each tool
-    for (const tool of relevantTools) {
-      if (state.detectedTools.has(tool.name)) {
-        continue; // Tool already installed
-      }
-
-      const recommendation = await this.evaluateTool(tool, state);
-      if (recommendation) {
-        recommendations.push(recommendation);
-      }
+    try {
+      await triggerHook('beforeToolExecution', beforeData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeToolExecution recommendation): ${hookError}`);
     }
 
-    // Sort by priority
-    return this.prioritizeRecommendations(recommendations);
+    try {
+      const recommendations: ToolRecommendation[] = [];
+
+      // Get language and framework specific tools
+      const relevantTools = this.getRelevantTools(
+        state.language,
+        state.frameworks
+      );
+
+      // Check each tool
+      for (const tool of relevantTools) {
+        if (state.detectedTools.has(tool.name)) {
+          continue; // Tool already installed
+        }
+
+        const recommendation = await this.evaluateTool(tool, state);
+        if (recommendation) {
+          recommendations.push(recommendation);
+        }
+      }
+
+      // Sort by priority
+      const finalRecommendations = this.prioritizeRecommendations(recommendations);
+
+      // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt
+      const afterData: AfterToolExecutionData = {
+        toolName: 'tool-recommendation-engine',
+        filePath: state.projectPath,
+        command: 'generate-recommendations',
+        output: `Generated ${finalRecommendations.length} recommendations`,
+        exitCode: 0,
+        success: true,
+        duration: new Date().getTime() - startTime.getTime(),
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterToolExecution', afterData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterToolExecution recommendation): ${hookError}`);
+      }
+
+      return finalRecommendations;
+
+    } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt
+      const errorData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'tool-recommendation-generation',
+        filePath: state.projectPath,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError recommendation): ${hookError}`);
+      }
+
+      throw error;
+    }
   }
 
   private getRelevantTools(
@@ -320,45 +387,98 @@ export class ToolRecommendationEngine extends EventEmitter {
     filePath: string,
     state: ProjectState
   ): Promise<ToolRecommendation[]> {
-    // Quick check for single file changes
-    const recommendations: ToolRecommendation[] = [];
+    const startTime = new Date();
 
-    // Check if this file triggers any tool recommendations
-    const relevantTools = this.getRelevantTools(
-      state.language,
-      state.frameworks
-    );
+    // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt (Single File)
+    const beforeData: BeforeToolExecutionData = {
+      toolName: 'tool-recommendation-single-file',
+      filePath: filePath,
+      command: 'check-single-file',
+      timestamp: startTime
+    };
 
-    for (const tool of relevantTools) {
-      if (state.detectedTools.has(tool.name)) continue;
+    try {
+      await triggerHook('beforeToolExecution', beforeData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeToolExecution single file): ${hookError}`);
+    }
 
-      // Quick pattern check for this file only
-      for (const pattern of tool.detectPatterns) {
-        if (pattern.type === 'code_smell') {
-          // Analyze just this file
-          const fileContent = await fs.readFile(filePath, 'utf-8');
-          // Simple pattern matching - would be more sophisticated
-          if (fileContent.includes(pattern.pattern)) {
-            recommendations.push({
-              tool: tool.name,
-              reason: `Found ${pattern.pattern} in ${path.basename(filePath)}`,
-              priority: pattern.severity || 'medium',
-              evidence: [
-                {
-                  file: filePath,
-                  pattern: pattern.pattern,
-                },
-              ],
-              autoFixable: true,
-              setupCommand: this.getSetupCommand(tool, state.projectPath),
-              category: tool.category,
-            });
-            break;
+    try {
+      // Quick check for single file changes
+      const recommendations: ToolRecommendation[] = [];
+
+      // Check if this file triggers any tool recommendations
+      const relevantTools = this.getRelevantTools(
+        state.language,
+        state.frameworks
+      );
+
+      for (const tool of relevantTools) {
+        if (state.detectedTools.has(tool.name)) continue;
+
+        // Quick pattern check for this file only
+        for (const pattern of tool.detectPatterns) {
+          if (pattern.type === 'code_smell') {
+            // Analyze just this file
+            const fileContent = await fs.readFile(filePath, 'utf-8');
+            // Simple pattern matching - would be more sophisticated
+            if (fileContent.includes(pattern.pattern)) {
+              recommendations.push({
+                tool: tool.name,
+                reason: `Found ${pattern.pattern} in ${path.basename(filePath)}`,
+                priority: pattern.severity || 'medium',
+                evidence: [
+                  {
+                    file: filePath,
+                    pattern: pattern.pattern,
+                  },
+                ],
+                autoFixable: true,
+                setupCommand: this.getSetupCommand(tool, state.projectPath),
+                category: tool.category,
+              });
+              break;
+            }
           }
         }
       }
-    }
 
-    return recommendations;
+      // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt (Single File)
+      const afterData: AfterToolExecutionData = {
+        toolName: 'tool-recommendation-single-file',
+        filePath: filePath,
+        command: 'check-single-file',
+        output: `Checked ${path.basename(filePath)}, found ${recommendations.length} recommendations`,
+        exitCode: 0,
+        success: true,
+        duration: new Date().getTime() - startTime.getTime(),
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterToolExecution', afterData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterToolExecution single file): ${hookError}`);
+      }
+
+      return recommendations;
+
+    } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt (Single File)
+      const errorData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'single-file-recommendation',
+        filePath: filePath,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError single file): ${hookError}`);
+      }
+
+      throw error;
+    }
   }
 }

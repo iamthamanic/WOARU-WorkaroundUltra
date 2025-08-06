@@ -5,9 +5,14 @@
 
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { ProjectTemplate, ProjectConfig, InteractivePrompts, TemplateVariables } from './types';
+import {
+  ProjectTemplate,
+  ProjectConfig,
+  InteractivePrompts,
+  TemplateVariables,
+  FeatureDefinition,
+} from './types';
 import { TemplateRegistry } from './TemplateRegistry';
-import { t } from '../config/i18n';
 
 export class ProjectSelector implements InteractivePrompts {
   constructor(private registry: TemplateRegistry) {}
@@ -18,17 +23,19 @@ export class ProjectSelector implements InteractivePrompts {
   async selectProjectType(): Promise<ProjectTemplate> {
     console.log(chalk.cyan.bold('\n🚀 WOARU Project Initializer'));
     console.log(chalk.gray('═'.repeat(50)));
-    console.log(chalk.white('Let\'s set up your new project with best practices!\n'));
+    console.log(
+      chalk.white("Let's set up your new project with best practices!\n")
+    );
 
     const templates = this.registry.list();
-    
+
     if (templates.length === 0) {
       throw new Error('No project templates available');
     }
 
     // Group templates by category for better organization
     const categories = this.groupTemplatesByCategory(templates);
-    
+
     // If only one category, skip category selection
     if (categories.length === 1) {
       return this.selectFromTemplates(categories[0].templates);
@@ -38,7 +45,7 @@ export class ProjectSelector implements InteractivePrompts {
     const categoryChoices = categories.map(cat => ({
       name: `${this.getCategoryIcon(cat.name)} ${cat.name} (${cat.templates.length} templates)`,
       value: cat.name,
-      short: cat.name
+      short: cat.name,
     }));
 
     const { selectedCategory } = await inquirer.prompt([
@@ -47,22 +54,25 @@ export class ProjectSelector implements InteractivePrompts {
         name: 'selectedCategory',
         message: 'What type of project are you building?',
         choices: categoryChoices,
-        pageSize: 10
-      }
+        pageSize: 10,
+      },
     ]);
 
-    const categoryTemplates = categories.find(cat => cat.name === selectedCategory)?.templates || [];
+    const categoryTemplates =
+      categories.find(cat => cat.name === selectedCategory)?.templates || [];
     return this.selectFromTemplates(categoryTemplates);
   }
 
   /**
    * Select specific template from a list
    */
-  private async selectFromTemplates(templates: ProjectTemplate[]): Promise<ProjectTemplate> {
+  private async selectFromTemplates(
+    templates: ProjectTemplate[]
+  ): Promise<ProjectTemplate> {
     const templateChoices = templates.map(template => ({
       name: `${template.name}\n  ${chalk.gray(template.description)}\n  ${chalk.yellow(`Language: ${template.language}`)} ${chalk.blue(`Frameworks: ${template.frameworks.join(', ')}`)}`,
       value: template.id,
-      short: template.name
+      short: template.name,
     }));
 
     const { selectedTemplate } = await inquirer.prompt([
@@ -71,8 +81,8 @@ export class ProjectSelector implements InteractivePrompts {
         name: 'selectedTemplate',
         message: 'Choose your project template:',
         choices: templateChoices,
-        pageSize: 8
-      }
+        pageSize: 8,
+      },
     ]);
 
     const template = this.registry.get(selectedTemplate);
@@ -88,7 +98,9 @@ export class ProjectSelector implements InteractivePrompts {
    */
   async selectFeatures(template: ProjectTemplate): Promise<string[]> {
     if (!template.features || template.features.length === 0) {
-      console.log(chalk.yellow('\n📦 No optional features available for this template.'));
+      console.log(
+        chalk.yellow('\n📦 No optional features available for this template.')
+      );
       return [];
     }
 
@@ -108,12 +120,16 @@ export class ProjectSelector implements InteractivePrompts {
     for (const [category, features] of featuresByCategory.entries()) {
       if (features.length === 0) continue;
 
-      console.log(chalk.blue.bold(`\n${category.charAt(0).toUpperCase() + category.slice(1)} Features:`));
-      
+      console.log(
+        chalk.blue.bold(
+          `\n${category.charAt(0).toUpperCase() + category.slice(1)} Features:`
+        )
+      );
+
       const choices = features.map(feature => ({
         name: `${feature.name} - ${chalk.gray(feature.description)}`,
         value: feature.id,
-        checked: feature.default || false
+        checked: feature.default || false,
       }));
 
       const { categoryFeatures } = await inquirer.prompt([
@@ -122,8 +138,8 @@ export class ProjectSelector implements InteractivePrompts {
           name: 'categoryFeatures',
           message: `Select ${category} features:`,
           choices,
-          pageSize: 15
-        }
+          pageSize: 15,
+        },
       ]);
 
       // Add selected features (avoiding duplicates)
@@ -135,10 +151,17 @@ export class ProjectSelector implements InteractivePrompts {
     }
 
     // Validate feature dependencies and conflicts
-    const validatedFeatures = this.validateFeatureDependencies(template, selectedFeatures);
-    
+    const validatedFeatures = this.validateFeatureDependencies(
+      template,
+      selectedFeatures
+    );
+
     if (validatedFeatures.length !== selectedFeatures.length) {
-      console.log(chalk.yellow('\n⚠️  Some features were adjusted due to dependencies/conflicts.'));
+      console.log(
+        chalk.yellow(
+          '\n⚠️  Some features were adjusted due to dependencies/conflicts.'
+        )
+      );
     }
 
     return validatedFeatures;
@@ -147,7 +170,10 @@ export class ProjectSelector implements InteractivePrompts {
   /**
    * Configure project details
    */
-  async configureProject(template: ProjectTemplate, features: string[]): Promise<ProjectConfig> {
+  async configureProject(
+    template: ProjectTemplate,
+    features: string[]
+  ): Promise<ProjectConfig> {
     console.log(chalk.cyan.bold('\n📋 Project Configuration'));
     console.log(chalk.gray('Configure your project details:\n'));
 
@@ -159,22 +185,23 @@ export class ProjectSelector implements InteractivePrompts {
         default: 'my-project',
         validate: (input: string) => {
           if (!input.trim()) return 'Project name is required';
-          if (!/^[a-zA-Z0-9-_]+$/.test(input)) return 'Project name can only contain letters, numbers, hyphens, and underscores';
+          if (!/^[a-zA-Z0-9-_]+$/.test(input))
+            return 'Project name can only contain letters, numbers, hyphens, and underscores';
           return true;
-        }
+        },
       },
       {
         type: 'input',
         name: 'description',
         message: 'Project description (optional):',
-        default: ''
+        default: '',
       },
       {
         type: 'input',
         name: 'author',
         message: 'Author name (optional):',
-        default: ''
-      }
+        default: '',
+      },
     ];
 
     // Add package manager selection if template supports multiple
@@ -186,9 +213,9 @@ export class ProjectSelector implements InteractivePrompts {
         message: 'Package manager:',
         choices: packageManagers.map(pm => ({
           name: `${pm} ${this.getPackageManagerDescription(pm)}`,
-          value: pm
+          value: pm,
         })),
-        default: template.packageManager
+        default: template.packageManager,
       } as any);
     }
 
@@ -198,23 +225,23 @@ export class ProjectSelector implements InteractivePrompts {
         type: 'input',
         name: 'directory',
         message: 'Target directory:',
-        default: (answers: any) => `./${answers.name}`,
+        default: (answers: { name: string }) => `./${answers.name}`,
         validate: (input: string) => {
           if (!input.trim()) return 'Directory is required';
           return true;
-        }
+        },
       } as any,
       {
         type: 'confirm',
         name: 'gitInit',
         message: 'Initialize Git repository?',
-        default: true
+        default: true,
       } as any,
       {
         type: 'confirm',
         name: 'installDeps',
         message: 'Install dependencies after generation?',
-        default: true
+        default: true,
       } as any
     );
 
@@ -225,13 +252,16 @@ export class ProjectSelector implements InteractivePrompts {
       projectName: answers.name,
       projectDescription: answers.description,
       author: answers.author,
-      features: features.reduce((acc, featureId) => {
-        acc[featureId] = true;
-        return acc;
-      }, {} as Record<string, boolean>),
+      features: features.reduce(
+        (acc, featureId) => {
+          acc[featureId] = true;
+          return acc;
+        },
+        {} as Record<string, boolean>
+      ),
       packageManager: answers.packageManager || template.packageManager,
       year: new Date().getFullYear(),
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
     };
 
     return {
@@ -244,7 +274,7 @@ export class ProjectSelector implements InteractivePrompts {
       packageManager: answers.packageManager || template.packageManager,
       gitInit: answers.gitInit,
       installDeps: answers.installDeps,
-      variables
+      variables,
     };
   }
 
@@ -256,24 +286,38 @@ export class ProjectSelector implements InteractivePrompts {
     console.log(chalk.gray('═'.repeat(50)));
     console.log(chalk.white(`Project Name: ${chalk.green(config.name)}`));
     console.log(chalk.white(`Template: ${chalk.green(config.template.name)}`));
-    console.log(chalk.white(`Language: ${chalk.green(config.template.language)}`));
-    console.log(chalk.white(`Package Manager: ${chalk.green(config.packageManager)}`));
+    console.log(
+      chalk.white(`Language: ${chalk.green(config.template.language)}`)
+    );
+    console.log(
+      chalk.white(`Package Manager: ${chalk.green(config.packageManager)}`)
+    );
     console.log(chalk.white(`Directory: ${chalk.green(config.directory)}`));
-    
+
     if (config.features.length > 0) {
-      console.log(chalk.white(`Features: ${chalk.green(config.features.join(', '))}`));
+      console.log(
+        chalk.white(`Features: ${chalk.green(config.features.join(', '))}`)
+      );
     }
 
-    console.log(chalk.white(`Git Init: ${config.gitInit ? chalk.green('Yes') : chalk.red('No')}`));
-    console.log(chalk.white(`Install Dependencies: ${config.installDeps ? chalk.green('Yes') : chalk.red('No')}`));
+    console.log(
+      chalk.white(
+        `Git Init: ${config.gitInit ? chalk.green('Yes') : chalk.red('No')}`
+      )
+    );
+    console.log(
+      chalk.white(
+        `Install Dependencies: ${config.installDeps ? chalk.green('Yes') : chalk.red('No')}`
+      )
+    );
 
     const { confirm } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'confirm',
         message: 'Generate project with these settings?',
-        default: true
-      }
+        default: true,
+      },
     ]);
 
     return confirm;
@@ -282,32 +326,45 @@ export class ProjectSelector implements InteractivePrompts {
   /**
    * Group templates by category
    */
-  private groupTemplatesByCategory(templates: ProjectTemplate[]): Array<{name: string, templates: ProjectTemplate[]}> {
+  private groupTemplatesByCategory(
+    templates: ProjectTemplate[]
+  ): Array<{ name: string; templates: ProjectTemplate[] }> {
     const categories = new Map<string, ProjectTemplate[]>();
-    
+
     templates.forEach(template => {
       const category = template.category;
       if (!categories.has(category)) {
         categories.set(category, []);
       }
-      categories.get(category)!.push(template);
+      const categoryList = categories.get(category);
+      if (categoryList) {
+        categoryList.push(template);
+      }
     });
 
-    return Array.from(categories.entries()).map(([name, templates]) => ({ name, templates }));
+    return Array.from(categories.entries()).map(([name, templates]) => ({
+      name,
+      templates,
+    }));
   }
 
   /**
    * Group features by category
    */
-  private groupFeaturesByCategory(features: any[]): Map<string, any[]> {
-    const categories = new Map<string, any[]>();
-    
+  private groupFeaturesByCategory(
+    features: FeatureDefinition[]
+  ): Map<string, FeatureDefinition[]> {
+    const categories = new Map<string, FeatureDefinition[]>();
+
     features.forEach(feature => {
       const category = feature.category || 'general';
       if (!categories.has(category)) {
         categories.set(category, []);
       }
-      categories.get(category)!.push(feature);
+      const categoryList = categories.get(category);
+      if (categoryList) {
+        categoryList.push(feature);
+      }
     });
 
     return categories;
@@ -316,7 +373,10 @@ export class ProjectSelector implements InteractivePrompts {
   /**
    * Validate feature dependencies and resolve conflicts
    */
-  private validateFeatureDependencies(template: ProjectTemplate, selectedFeatures: string[]): string[] {
+  private validateFeatureDependencies(
+    template: ProjectTemplate,
+    selectedFeatures: string[]
+  ): string[] {
     const validFeatures = new Set<string>(selectedFeatures);
     const featureMap = new Map(template.features.map(f => [f.id, f]));
 
@@ -360,7 +420,7 @@ export class ProjectSelector implements InteractivePrompts {
       backend: '⚙️',
       fullstack: '🚀',
       mobile: '📱',
-      desktop: '🖥️'
+      desktop: '🖥️',
     };
     return icons[category] || '📦';
   }
@@ -370,7 +430,9 @@ export class ProjectSelector implements InteractivePrompts {
    */
   private supportsMultiplePackageManagers(template: ProjectTemplate): boolean {
     // For now, only frontend projects support multiple package managers
-    return template.category === 'frontend' && template.language === 'TypeScript';
+    return (
+      template.category === 'frontend' && template.language === 'TypeScript'
+    );
   }
 
   /**
@@ -380,7 +442,7 @@ export class ProjectSelector implements InteractivePrompts {
     if (template.language === 'Python') {
       return ['pip', 'poetry', 'pipenv'];
     }
-    
+
     if (template.category === 'frontend') {
       return ['npm', 'yarn', 'pnpm'];
     }
@@ -398,7 +460,7 @@ export class ProjectSelector implements InteractivePrompts {
       pnpm: '(Fast, disk space efficient)',
       pip: '(Python Package Installer)',
       poetry: '(Python dependency management)',
-      pipenv: '(Python dev workflow)'
+      pipenv: '(Python dev workflow)',
     };
     return descriptions[pm] || '';
   }

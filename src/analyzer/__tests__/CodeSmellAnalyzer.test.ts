@@ -1,5 +1,5 @@
 import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { CodeSmellAnalyzer } from '../CodeSmellAnalyzer';
 import { APP_CONFIG } from '../../config/constants';
 

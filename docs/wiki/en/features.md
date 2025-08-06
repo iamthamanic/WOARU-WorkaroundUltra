@@ -52,6 +52,20 @@ WOARU's **Multi-LLM Review System** provides comprehensive AI-powered code analy
 - **Architecture Review**: Design pattern validation and architectural guidance
 - **Documentation Assessment**: Code documentation quality and completeness
 
+### **AI Control Center (Enhanced UX):**
+- **Interactive Provider Management**: Easy setup, configuration, and management of AI providers
+- **Toggle Code Reviews**: Simple enable/disable of providers for code analysis with `🔛 Toggle Code Reviews (Currently: enabled/disabled)`
+- **Dynamic Status Display**: Real-time status indicators showing provider state before actions
+- **Clear Feedback**: Confirmation messages explaining changes after toggling providers
+- **No Reconfiguration Required**: Enable/disable providers without losing existing configurations
+
+### **Provider Configuration Commands:**
+```bash
+woaru ai                    # Open interactive AI Control Center
+woaru ai setup              # Add new AI provider with guided setup
+woaru ai status             # Show visual status of all configured providers
+```
+
 ### **Cost Management:**
 - **Real-time Cost Tracking**: Monitor API usage costs across all providers
 - **Budget Controls**: Set spending limits and receive alerts

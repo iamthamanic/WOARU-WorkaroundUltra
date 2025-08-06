@@ -4,8 +4,8 @@
  * For CI/production builds - requires all translations to be complete
  */
 
-const { TranslationValidator } = require('./validate-translations');
-const chalk = require('chalk');
+import { TranslationValidator } from './validate-translations.js';
+import chalk from 'chalk';
 
 async function main() {
   console.log(chalk.blue('🔒 Running strict translation validation for production build...'));

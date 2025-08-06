@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { ToolExecutor } from '../utils/toolExecutor';
 import * as path from 'path';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { APP_CONFIG } from '../config/constants';
 import { NotificationManager } from '../supervisor/NotificationManager';
 import i18next from 'i18next';
@@ -26,6 +26,17 @@ import {
   SnykVulnerability as ImportedSnykVulnerability,
   SnykResult as ImportedSnykResult,
 } from '../types';
+import {
+  hookManager,
+  triggerHook,
+  type BeforeAnalysisData,
+  type AfterAnalysisData,
+  type BeforeFileAnalysisData,
+  type AfterFileAnalysisData,
+  type BeforeToolExecutionData,
+  type AfterToolExecutionData,
+  type ErrorHookData,
+} from '../core/HookSystem';
 
 const execAsync = promisify(exec);
 
@@ -113,14 +124,58 @@ export class QualityRunner {
       new EslintPlugin() as unknown as Record<string, unknown>
     );
     // More core plugins would be added here as they're implemented
+
+    // 🎣 Hook-System Debug aktivieren in Entwicklungsumgebung
+    if (process.env.NODE_ENV === 'development') {
+      hookManager.setDebugMode(true);
+    }
+  }
+
+  /**
+   * 🗂️ Hilfsmethode: Sprache aus Dateierweiterung ableiten
+   */
+  private getLanguageFromExtension(ext: string): string {
+    const languageMap: Record<string, string> = {
+      '.js': 'javascript',
+      '.jsx': 'javascript',
+      '.ts': 'typescript',
+      '.tsx': 'typescript',
+      '.py': 'python',
+      '.go': 'go',
+      '.rs': 'rust',
+      '.java': 'java',
+      '.cs': 'csharp',
+      '.php': 'php',
+      '.rb': 'ruby',
+      '.cpp': 'cpp',
+      '.c': 'c',
+      '.h': 'c',
+      '.hpp': 'cpp',
+    };
+    return languageMap[ext.toLowerCase()] || 'unknown';
   }
 
   /**
    * HYBRID ARCHITECTURE: Run quality checks using both core plugins and experimental tools
+   * 🪝 KI-freundliche Regelwelt: Integriert Hooks für Erweiterbarkeit
    */
   async runChecksOnFileChange(filePath: string): Promise<void> {
     const ext = path.extname(filePath).toLowerCase();
     const relativePath = path.relative(process.cwd(), filePath);
+
+    // 🪝 HOOK: beforeAnalysis - KI-freundliche Regelwelt
+    const beforeAnalysisData: BeforeAnalysisData = {
+      files: [relativePath],
+      projectPath: process.cwd(),
+      config: { fileExtension: ext, phase: 'file-change-analysis' },
+      timestamp: new Date()
+    };
+
+    try {
+      await triggerHook('beforeAnalysis', beforeAnalysisData);
+    } catch (hookError) {
+      console.debug(`Hook error (beforeAnalysis): ${hookError}`);
+    }
 
     try {
       // Phase 0: Always run internal code smell analysis first (no external dependencies)
@@ -130,6 +185,21 @@ export class QualityRunner {
       const coreHandled = await this.runCorePluginCheck(relativePath, ext);
 
       if (coreHandled) {
+        // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with core plugin)
+        const afterAnalysisData: AfterAnalysisData = {
+          files: [relativePath],
+          results: [{ file: relativePath, tool: 'core-plugin', success: true, issues: [] }],
+          duration: 0,
+          success: true,
+          timestamp: new Date()
+        };
+
+        try {
+          await triggerHook('afterAnalysis', afterAnalysisData);
+        } catch (hookError) {
+          console.debug(`Hook error (afterAnalysis core): ${hookError}`);
+        }
+
         return; // Core plugin handled the file successfully
       }
 
@@ -140,12 +210,57 @@ export class QualityRunner {
       );
 
       if (experimentalHandled) {
+        // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with experimental tool)
+        const afterAnalysisData: AfterAnalysisData = {
+          files: [relativePath],
+          results: [{ file: relativePath, tool: 'experimental-tool', success: true, issues: [] }],
+          duration: 0,
+          success: true,
+          timestamp: new Date()
+        };
+
+        try {
+          await triggerHook('afterAnalysis', afterAnalysisData);
+        } catch (hookError) {
+          console.debug(`Hook error (afterAnalysis experimental): ${hookError}`);
+        }
+
         return; // Experimental tool handled the file successfully
       }
 
       // Phase 3: Fallback to legacy hardcoded checks
       await this.runLegacyChecks(relativePath, ext);
+
+      // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with legacy)
+      const afterAnalysisData: AfterAnalysisData = {
+        files: [relativePath],
+        results: [{ file: relativePath, tool: 'legacy-check', success: true, issues: [] }],
+        duration: 0,
+        success: true,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('afterAnalysis', afterAnalysisData);
+      } catch (hookError) {
+        console.debug(`Hook error (afterAnalysis legacy): ${hookError}`);
+      }
+
     } catch (error) {
+      // 🪝 HOOK: onError - KI-freundliche Regelwelt
+      const errorHookData: ErrorHookData = {
+        error: error instanceof Error ? error : new Error(String(error)),
+        context: 'file-change-analysis',
+        filePath: relativePath,
+        timestamp: new Date()
+      };
+
+      try {
+        await triggerHook('onError', errorHookData);
+      } catch (hookError) {
+        console.debug(`Hook error (onError): ${hookError}`);
+      }
+
       console.warn(
         i18next.t('quality_runner.check_failed', { file: relativePath }),
         error
@@ -155,6 +270,7 @@ export class QualityRunner {
 
   /**
    * Phase 1: Run checks using secure core plugins
+   * 🪝 KI-freundliche Regelwelt: Integriert Tool-Execution Hooks
    */
   private async runCorePluginCheck(
     filePath: string,
@@ -184,6 +300,20 @@ export class QualityRunner {
           pluginWithMethods.canHandleFile &&
           (await pluginWithMethods.canHandleFile(filePath))
         ) {
+          // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt
+          const beforeToolData: BeforeToolExecutionData = {
+            toolName: coreTool.name,
+            filePath,
+            command: `${coreTool.name} ${filePath}`,
+            timestamp: new Date()
+          };
+
+          try {
+            await triggerHook('beforeToolExecution', beforeToolData);
+          } catch (hookError) {
+            console.debug(`Hook error (beforeToolExecution ${coreTool.name}): ${hookError}`);
+          }
+
           console.log(
             `🔧 ${i18next.t('quality_runner.core_plugin_running', { tool: coreTool.name, file: filePath })}`
           );
@@ -192,6 +322,24 @@ export class QualityRunner {
             const result = await pluginWithMethods.runLinter(filePath, {
               fix: false,
             });
+
+            // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt
+            const afterToolData: AfterToolExecutionData = {
+              toolName: coreTool.name,
+              filePath,
+              command: `${coreTool.name} ${filePath}`,
+              output: result.output,
+              exitCode: result.hasErrors ? 1 : 0,
+              duration: 0, // Could track actual duration if needed
+              success: !result.hasErrors,
+              timestamp: new Date()
+            };
+
+            try {
+              await triggerHook('afterToolExecution', afterToolData);
+            } catch (hookError) {
+              console.debug(`Hook error (afterToolExecution ${coreTool.name}): ${hookError}`);
+            }
 
             if (result.hasErrors) {
               this.notificationManager.showCriticalQualityError(
@@ -224,6 +372,7 @@ export class QualityRunner {
 
   /**
    * Phase 2: Run checks using experimental tools (dynamic command templates)
+   * 🪝 KI-freundliche Regelwelt: Integriert Tool-Execution Hooks
    */
   private async runExperimentalToolCheck(
     filePath: string,
@@ -238,6 +387,20 @@ export class QualityRunner {
 
       for (const experimentalTool of experimentalTools) {
         if (await this.canRunExperimentalTool(experimentalTool)) {
+          // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt
+          const beforeToolData: BeforeToolExecutionData = {
+            toolName: experimentalTool.name,
+            filePath,
+            command: experimentalTool.commandTemplate.replace('{filePath}', filePath),
+            timestamp: new Date()
+          };
+
+          try {
+            await triggerHook('beforeToolExecution', beforeToolData);
+          } catch (hookError) {
+            console.debug(`Hook error (beforeToolExecution ${experimentalTool.name}): ${hookError}`);
+          }
+
           console.log(
             `🧪 ${i18next.t('quality_runner.experimental_tool_running', { tool: experimentalTool.name, file: filePath })}`
           );
@@ -246,6 +409,24 @@ export class QualityRunner {
             experimentalTool,
             filePath
           );
+
+          // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt
+          const afterToolData: AfterToolExecutionData = {
+            toolName: experimentalTool.name,
+            filePath,
+            command: experimentalTool.commandTemplate.replace('{filePath}', filePath),
+            output: result.output,
+            exitCode: result.success ? 0 : 1,
+            duration: 0, // Could track actual duration if needed
+            success: result.success,
+            timestamp: new Date()
+          };
+
+          try {
+            await triggerHook('afterToolExecution', afterToolData);
+          } catch (hookError) {
+            console.debug(`Hook error (afterToolExecution ${experimentalTool.name}): ${hookError}`);
+          }
 
           if (result.success) {
             if (result.output.includes('error')) {
@@ -539,6 +720,17 @@ export class QualityRunner {
           issues: [`Failed to check file: ${error}`],
         });
       }
+    }
+
+    // 🪝 HOOK: onReportGeneration - KI-freundliche Regelwelt
+    try {
+      await triggerHook('onReportGeneration', {
+        reportType: 'file-list-quality-check',
+        data: results,
+        timestamp: new Date()
+      });
+    } catch (hookError) {
+      console.debug(`Hook error (onReportGeneration): ${hookError}`);
     }
 
     return results;
@@ -1401,6 +1593,17 @@ export class QualityRunner {
       results.push(basicSecurityResult);
     }
 
+    // 🪝 HOOK: onReportGeneration - KI-freundliche Regelwelt
+    try {
+      await triggerHook('onReportGeneration', {
+        reportType: 'security-analysis',
+        data: results,
+        timestamp: new Date()
+      });
+    } catch (hookError) {
+      console.debug(`Hook error (onReportGeneration security): ${hookError}`);
+    }
+
     return results;
   }
 
@@ -1857,22 +2060,6 @@ export class QualityRunner {
         error
       );
     }
-  }
-
-  /**
-   * Helper method to determine language from file extension
-   */
-  private getLanguageFromExtension(extension: string): string {
-    const languageMap: Record<string, string> = {
-      '.js': 'javascript',
-      '.jsx': 'javascript',
-      '.mjs': 'javascript',
-      '.cjs': 'javascript',
-      '.ts': 'typescript',
-      '.tsx': 'typescript',
-    };
-
-    return languageMap[extension] || 'javascript';
   }
 
   /**

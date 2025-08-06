@@ -7,6 +7,12 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { t, initializeI18n } from '../config/i18n';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * Type definition for package.json structure
@@ -127,9 +133,7 @@ export async function displaySplashScreen(
     console.log(WOARU_FRAMED_SPLASH);
 
     if (version && finalConfig.showVersion) {
-      console.log(
-        chalk.gray(`   Version ${version}`)
-      );
+      console.log(chalk.gray(`   Version ${version}`));
     }
 
     console.log();
@@ -204,7 +208,9 @@ async function displayFallbackSplash(config: SplashConfig): Promise<void> {
       console.log(chalk.gray('  • woaru analyze    - Analyze project'));
       console.log(chalk.gray('  • woaru commands   - Show all commands'));
       console.log();
-      console.log(chalk.yellow('💡 Type "woaru --help" to see all available commands'));
+      console.log(
+        chalk.yellow('💡 Type "woaru --help" to see all available commands')
+      );
     }
 
     console.log();

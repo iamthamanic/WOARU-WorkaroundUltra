@@ -3,8 +3,8 @@
  * Production-Ready implementation with comprehensive security and error handling
  */
 
-import { execSync } from 'child_process';
-import * as fs from 'fs-extra';
+import { spawn } from 'child_process';
+import fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -110,6 +110,47 @@ function isValidVersionInfo(versionInfo: unknown): versionInfo is VersionInfo {
 }
 
 export class StartupCheck {
+  /**
+   * Secure command execution using spawn instead of execSync
+   * Prevents command injection vulnerabilities
+   */
+  private static secureCommandExecution(
+    command: string,
+    args: string[],
+    timeout: number
+  ): Promise<string> {
+    return new Promise(resolve => {
+      const process = spawn(command, args, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout,
+      });
+
+      let output = '';
+      let errorOutput = '';
+
+      process.stdout.on('data', data => {
+        output += data.toString();
+      });
+
+      process.stderr.on('data', data => {
+        errorOutput += data.toString();
+      });
+
+      process.on('close', code => {
+        if (code === 0) {
+          resolve(output.trim());
+        } else {
+          console.error(`Command failed: ${command}`, errorOutput);
+          resolve('');
+        }
+      });
+
+      process.on('error', error => {
+        console.error(`Command error: ${command}`, error);
+        resolve('');
+      });
+    });
+  }
   private static readonly CACHE_FILE = path.join(
     process.env.HOME || process.env.USERPROFILE || '~',
     '.woaru',
@@ -217,11 +258,18 @@ export class StartupCheck {
         };
       }
 
-      const output = execSync('git --version', {
-        stdio: 'pipe',
-        timeout: 5000, // 5 second timeout
-        encoding: 'utf8',
-      });
+      // Use secure spawn instead of execSync
+      const output = await this.secureCommandExecution(
+        'git',
+        ['--version'],
+        5000
+      );
+      if (!output) {
+        return {
+          available: false,
+          error: t('startup_check.git_command_failed'),
+        };
+      }
 
       // Extract version for logging (optional)
       const versionMatch = output.toString().match(/git version ([\d.]+)/);
@@ -253,11 +301,18 @@ export class StartupCheck {
         };
       }
 
-      const output = execSync('docker --version', {
-        stdio: 'pipe',
-        timeout: 5000,
-        encoding: 'utf8',
-      });
+      // Use secure spawn instead of execSync
+      const output = await this.secureCommandExecution(
+        'docker',
+        ['--version'],
+        5000
+      );
+      if (!output) {
+        return {
+          available: false,
+          error: t('startup_check.docker_command_failed'),
+        };
+      }
 
       const versionMatch = output.toString().match(/Docker version ([\d.]+)/);
       const version = versionMatch ? versionMatch[1] : 'unknown';
@@ -288,11 +343,18 @@ export class StartupCheck {
         };
       }
 
-      const output = execSync('snyk --version', {
-        stdio: 'pipe',
-        timeout: 10000, // Snyk might be slower
-        encoding: 'utf8',
-      });
+      // Use secure spawn instead of execSync
+      const output = await this.secureCommandExecution(
+        'snyk',
+        ['--version'],
+        10000
+      );
+      if (!output) {
+        return {
+          available: false,
+          error: t('startup_check.snyk_command_failed'),
+        };
+      }
 
       const version = output.toString().trim();
 

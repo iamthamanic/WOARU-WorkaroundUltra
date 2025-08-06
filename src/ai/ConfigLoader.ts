@@ -139,7 +139,10 @@ export class ConfigLoader {
             '_metadata',
             'multi_ai_review_enabled',
             'primary_review_provider_id',
-          ].includes(key)
+            'multiAi',
+            'primaryProvider',
+            'lastDataUpdate',
+          ].includes(key) && !key.startsWith('_') // Exclude any metadata keys
       );
 
       if (!availableProviders.includes(primaryProvider as string)) {
@@ -155,7 +158,11 @@ export class ConfigLoader {
       if (
         providerId === '_metadata' ||
         providerId === 'multi_ai_review_enabled' ||
-        providerId === 'primary_review_provider_id'
+        providerId === 'primary_review_provider_id' ||
+        providerId === 'multiAi' ||
+        providerId === 'primaryProvider' ||
+        providerId === 'lastDataUpdate' ||
+        providerId.startsWith('_') // Any key starting with underscore is metadata
       )
         continue;
 

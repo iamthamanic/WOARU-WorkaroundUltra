@@ -1,6 +1,6 @@
 import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
 import { execSync } from 'child_process';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { VersionManager } from '../versionManager';
@@ -58,9 +58,9 @@ const mockedVersionManager = VersionManager as jest.Mocked<typeof VersionManager
 import { t, initializeI18n } from '../../config/i18n';
 
 describe('StartupCheck - Production Quality Tests', () => {
-  let consoleLogSpy: jest.MockedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.MockedFunction<typeof console.error>;
-  let consoleDebugSpy: jest.MockedFunction<typeof console.debug>;
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleDebugSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Setup console spies
