@@ -1,6 +1,24 @@
 #!/usr/bin/env node
 // src/cli.ts - NEUE, SAUBERE IMPLEMENTIERUNG
 
+// Initialize Sentry first, before any other imports
+import * as Sentry from '@sentry/node';
+
+// Initialize Sentry with environment variable
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  environment: process.env.NODE_ENV || 'development',
+  enabled: !!process.env.SENTRY_DSN, // Only enable if DSN is provided
+  beforeSend(event) {
+    // Filter out non-critical errors in development
+    if (process.env.NODE_ENV !== 'production' && event.level === 'warning') {
+      return null;
+    }
+    return event;
+  },
+});
+
 import { Command } from 'commander';
 import { initializeI18n, t } from './config/i18n';
 import { readFileSync } from 'fs';
@@ -1240,7 +1258,21 @@ async function main() {
     // SCHRITT 4: Führe das Programm aus
     await program.parseAsync(process.argv);
   } catch (error) {
-    console.error('A critical error occurred:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(chalk.red('❌ A critical error occurred:'), errorMessage);
+    
+    // Report error to Sentry with context
+    Sentry.withScope((scope) => {
+      scope.setTag('component', 'cli-main');
+      scope.setLevel('fatal');
+      scope.setContext('process', {
+        argv: process.argv,
+        cwd: process.cwd(),
+        version: getVersion(),
+      });
+      Sentry.captureException(error);
+    });
+    
     process.exit(1);
   }
 }
@@ -1337,5 +1369,38 @@ function getVersion(): string {
   return packageJson.version;
 }
 
+/**
+ * Global error handlers for unhandled exceptions and rejections
+ * All errors are automatically reported to Sentry for production monitoring
+ */
+process.on('uncaughtException', (error) => {
+  console.error(chalk.red('❌ Uncaught Exception:'), error.message);
+  Sentry.captureException(error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(chalk.red('❌ Unhandled Rejection at:'), promise, chalk.red('reason:'), reason);
+  Sentry.captureException(reason);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log(chalk.yellow('\n⚡ Gracefully shutting down...'));
+  await Sentry.close(2000);
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log(chalk.yellow('\n⚡ Received SIGTERM, shutting down...'));
+  await Sentry.close(2000);
+  process.exit(0);
+});
+
 // Starte die Anwendung
-main();
+main().catch((error) => {
+  console.error(chalk.red('❌ Fatal error in main():'), error.message);
+  Sentry.captureException(error);
+  process.exit(1);
+});

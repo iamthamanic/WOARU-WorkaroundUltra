@@ -1,6 +1,6 @@
 {
   "name": "woaru",
-  "version": "5.3.8",
+  "version": "5.3.9",
   "type": "module",
   "description": "Universal Project Setup Autopilot - Analyze and automatically configure development tools for ANY programming language",
   "main": "dist/index.js",
@@ -51,6 +51,7 @@
   "author": "iamthamanic",
   "license": "MIT",
   "dependencies": {
+    "@sentry/node": "^7.120.4",
     "axios": "^1.6.2",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
