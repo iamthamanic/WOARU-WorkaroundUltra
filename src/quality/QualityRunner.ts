@@ -168,7 +168,7 @@ export class QualityRunner {
       files: [relativePath],
       projectPath: process.cwd(),
       config: { fileExtension: ext, phase: 'file-change-analysis' },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     try {
@@ -188,10 +188,17 @@ export class QualityRunner {
         // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with core plugin)
         const afterAnalysisData: AfterAnalysisData = {
           files: [relativePath],
-          results: [{ file: relativePath, tool: 'core-plugin', success: true, issues: [] }],
+          results: [
+            {
+              file: relativePath,
+              tool: 'core-plugin',
+              success: true,
+              issues: [],
+            },
+          ],
           duration: 0,
           success: true,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
 
         try {
@@ -213,16 +220,25 @@ export class QualityRunner {
         // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with experimental tool)
         const afterAnalysisData: AfterAnalysisData = {
           files: [relativePath],
-          results: [{ file: relativePath, tool: 'experimental-tool', success: true, issues: [] }],
+          results: [
+            {
+              file: relativePath,
+              tool: 'experimental-tool',
+              success: true,
+              issues: [],
+            },
+          ],
           duration: 0,
           success: true,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
 
         try {
           await triggerHook('afterAnalysis', afterAnalysisData);
         } catch (hookError) {
-          console.debug(`Hook error (afterAnalysis experimental): ${hookError}`);
+          console.debug(
+            `Hook error (afterAnalysis experimental): ${hookError}`
+          );
         }
 
         return; // Experimental tool handled the file successfully
@@ -234,10 +250,17 @@ export class QualityRunner {
       // 🪝 HOOK: afterAnalysis - KI-freundliche Regelwelt (success with legacy)
       const afterAnalysisData: AfterAnalysisData = {
         files: [relativePath],
-        results: [{ file: relativePath, tool: 'legacy-check', success: true, issues: [] }],
+        results: [
+          {
+            file: relativePath,
+            tool: 'legacy-check',
+            success: true,
+            issues: [],
+          },
+        ],
         duration: 0,
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -245,14 +268,13 @@ export class QualityRunner {
       } catch (hookError) {
         console.debug(`Hook error (afterAnalysis legacy): ${hookError}`);
       }
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt
       const errorHookData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'file-change-analysis',
         filePath: relativePath,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -305,13 +327,15 @@ export class QualityRunner {
             toolName: coreTool.name,
             filePath,
             command: `${coreTool.name} ${filePath}`,
-            timestamp: new Date()
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('beforeToolExecution', beforeToolData);
           } catch (hookError) {
-            console.debug(`Hook error (beforeToolExecution ${coreTool.name}): ${hookError}`);
+            console.debug(
+              `Hook error (beforeToolExecution ${coreTool.name}): ${hookError}`
+            );
           }
 
           console.log(
@@ -332,13 +356,15 @@ export class QualityRunner {
               exitCode: result.hasErrors ? 1 : 0,
               duration: 0, // Could track actual duration if needed
               success: !result.hasErrors,
-              timestamp: new Date()
+              timestamp: new Date(),
             };
 
             try {
               await triggerHook('afterToolExecution', afterToolData);
             } catch (hookError) {
-              console.debug(`Hook error (afterToolExecution ${coreTool.name}): ${hookError}`);
+              console.debug(
+                `Hook error (afterToolExecution ${coreTool.name}): ${hookError}`
+              );
             }
 
             if (result.hasErrors) {
@@ -391,14 +417,19 @@ export class QualityRunner {
           const beforeToolData: BeforeToolExecutionData = {
             toolName: experimentalTool.name,
             filePath,
-            command: experimentalTool.commandTemplate.replace('{filePath}', filePath),
-            timestamp: new Date()
+            command: experimentalTool.commandTemplate.replace(
+              '{filePath}',
+              filePath
+            ),
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('beforeToolExecution', beforeToolData);
           } catch (hookError) {
-            console.debug(`Hook error (beforeToolExecution ${experimentalTool.name}): ${hookError}`);
+            console.debug(
+              `Hook error (beforeToolExecution ${experimentalTool.name}): ${hookError}`
+            );
           }
 
           console.log(
@@ -414,18 +445,23 @@ export class QualityRunner {
           const afterToolData: AfterToolExecutionData = {
             toolName: experimentalTool.name,
             filePath,
-            command: experimentalTool.commandTemplate.replace('{filePath}', filePath),
+            command: experimentalTool.commandTemplate.replace(
+              '{filePath}',
+              filePath
+            ),
             output: result.output,
             exitCode: result.success ? 0 : 1,
             duration: 0, // Could track actual duration if needed
             success: result.success,
-            timestamp: new Date()
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('afterToolExecution', afterToolData);
           } catch (hookError) {
-            console.debug(`Hook error (afterToolExecution ${experimentalTool.name}): ${hookError}`);
+            console.debug(
+              `Hook error (afterToolExecution ${experimentalTool.name}): ${hookError}`
+            );
           }
 
           if (result.success) {
@@ -727,7 +763,7 @@ export class QualityRunner {
       await triggerHook('onReportGeneration', {
         reportType: 'file-list-quality-check',
         data: results,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     } catch (hookError) {
       console.debug(`Hook error (onReportGeneration): ${hookError}`);
@@ -1598,7 +1634,7 @@ export class QualityRunner {
       await triggerHook('onReportGeneration', {
         reportType: 'security-analysis',
         data: results,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     } catch (hookError) {
       console.debug(`Hook error (onReportGeneration security): ${hookError}`);

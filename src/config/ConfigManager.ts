@@ -686,7 +686,7 @@ export class ConfigManager {
           configType: 'user' as const,
           configPath: this.userConfigFile,
           configData: null,
-          timestamp: new Date()
+          timestamp: new Date(),
         } as ConfigLoadHookData);
       } catch (hookError) {
         console.debug(`Hook error (onConfigLoad user): ${hookError}`);
@@ -695,7 +695,7 @@ export class ConfigManager {
       if (!(await fs.pathExists(this.userConfigFile))) {
         return {};
       }
-      
+
       const content = await fs.readFile(this.userConfigFile, 'utf-8');
       const rawData = JSON.parse(content);
 
@@ -703,14 +703,14 @@ export class ConfigManager {
       const validation = SchemaValidator.validateUserConfig(rawData);
       if (validation.success && validation.data) {
         console.log(chalk.green('✅ User-Konfiguration erfolgreich validiert'));
-        
+
         // 🪝 HOOK: afterConfigLoad - KI-freundliche Regelwelt
         try {
           await triggerHook('onConfigLoad', {
             configType: 'user' as const,
             configPath: this.userConfigFile,
             configData: validation.data,
-            timestamp: new Date()
+            timestamp: new Date(),
           } as ConfigLoadHookData);
         } catch (hookError) {
           console.debug(`Hook error (onConfigLoad user after): ${hookError}`);
@@ -718,7 +718,9 @@ export class ConfigManager {
 
         return validation.data as Record<string, unknown>;
       } else {
-        console.warn(chalk.yellow('⚠️ User-Config Schema-Validierung fehlgeschlagen:'));
+        console.warn(
+          chalk.yellow('⚠️ User-Config Schema-Validierung fehlgeschlagen:')
+        );
         validation.errors?.forEach(error => {
           console.warn(chalk.yellow(`   • ${error}`));
         });
@@ -753,12 +755,22 @@ export class ConfigManager {
         throw new Error('User configuration validation failed');
       }
 
-      await fs.writeFile(this.userConfigFile, JSON.stringify(validation.data, null, 2));
+      await fs.writeFile(
+        this.userConfigFile,
+        JSON.stringify(validation.data, null, 2)
+      );
       await this.setSecurePermissions();
-      
-      console.log(chalk.green(`✅ User-Konfiguration validiert und gespeichert in ${this.userConfigFile}`));
+
+      console.log(
+        chalk.green(
+          `✅ User-Konfiguration validiert und gespeichert in ${this.userConfigFile}`
+        )
+      );
     } catch (error) {
-      if (error instanceof Error && error.message.includes('validation failed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('validation failed')
+      ) {
         throw error; // Re-throw validation errors
       }
       throw new Error(

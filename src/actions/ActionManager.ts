@@ -33,7 +33,8 @@ export class ActionManager {
     results: Array<{ tool: string; success: boolean; error?: string }>;
   }> {
     const startTime = new Date();
-    const results: Array<{ tool: string; success: boolean; error?: string }> = [];
+    const results: Array<{ tool: string; success: boolean; error?: string }> =
+      [];
     let overallSuccess = true;
 
     // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt (Batch Setup)
@@ -41,7 +42,7 @@ export class ActionManager {
       toolName: 'action-manager-batch',
       filePath: projectPath,
       command: 'execute-recommendations-batch',
-      timestamp: startTime
+      timestamp: startTime,
     };
 
     try {
@@ -77,13 +78,15 @@ export class ActionManager {
           toolName: recommendation.tool,
           filePath: projectPath,
           command: 'execute-action',
-          timestamp: toolStartTime
+          timestamp: toolStartTime,
         };
 
         try {
           await triggerHook('beforeToolExecution', beforeData);
         } catch (hookError) {
-          console.debug(`Hook error (beforeToolExecution ${recommendation.tool}): ${hookError}`);
+          console.debug(
+            `Hook error (beforeToolExecution ${recommendation.tool}): ${hookError}`
+          );
         }
 
         try {
@@ -109,13 +112,15 @@ export class ActionManager {
               exitCode: 0,
               success: true,
               duration: new Date().getTime() - toolStartTime.getTime(),
-              timestamp: new Date()
+              timestamp: new Date(),
             };
 
             try {
               await triggerHook('afterToolExecution', afterSkippedData);
             } catch (hookError) {
-              console.debug(`Hook error (afterToolExecution skipped ${recommendation.tool}): ${hookError}`);
+              console.debug(
+                `Hook error (afterToolExecution skipped ${recommendation.tool}): ${hookError}`
+              );
             }
 
             continue;
@@ -143,20 +148,23 @@ export class ActionManager {
             exitCode: success ? 0 : 1,
             success: success,
             duration: new Date().getTime() - toolStartTime.getTime(),
-            timestamp: new Date()
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('afterToolExecution', afterData);
           } catch (hookError) {
-            console.debug(`Hook error (afterToolExecution ${recommendation.tool}): ${hookError}`);
+            console.debug(
+              `Hook error (afterToolExecution ${recommendation.tool}): ${hookError}`
+            );
           }
-
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
           console.log(
-            chalk.red(`❌ ${recommendation.tool} setup failed: ${errorMessage}\n`)
+            chalk.red(
+              `❌ ${recommendation.tool} setup failed: ${errorMessage}\n`
+            )
           );
 
           results.push({
@@ -172,13 +180,15 @@ export class ActionManager {
             context: 'action-execution',
             filePath: projectPath,
             toolName: recommendation.tool,
-            timestamp: new Date()
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('onError', errorData);
           } catch (hookError) {
-            console.debug(`Hook error (onError ${recommendation.tool}): ${hookError}`);
+            console.debug(
+              `Hook error (onError ${recommendation.tool}): ${hookError}`
+            );
           }
 
           // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt (Failed Tool)
@@ -190,13 +200,15 @@ export class ActionManager {
             exitCode: 1,
             success: false,
             duration: new Date().getTime() - toolStartTime.getTime(),
-            timestamp: new Date()
+            timestamp: new Date(),
           };
 
           try {
             await triggerHook('afterToolExecution', afterErrorData);
           } catch (hookError) {
-            console.debug(`Hook error (afterToolExecution error ${recommendation.tool}): ${hookError}`);
+            console.debug(
+              `Hook error (afterToolExecution error ${recommendation.tool}): ${hookError}`
+            );
           }
         }
       }
@@ -223,7 +235,7 @@ export class ActionManager {
         exitCode: overallSuccess ? 0 : 1,
         success: overallSuccess,
         duration: new Date().getTime() - startTime.getTime(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -233,14 +245,13 @@ export class ActionManager {
       }
 
       return { success: overallSuccess, results };
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt (Batch Error)
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'batch-action-execution',
         filePath: projectPath,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -267,13 +278,15 @@ export class ActionManager {
       toolName: `${toolName}-rollback`,
       filePath: projectPath,
       command: 'rollback-action',
-      timestamp: startTime
+      timestamp: startTime,
     };
 
     try {
       await triggerHook('beforeToolExecution', beforeData);
     } catch (hookError) {
-      console.debug(`Hook error (beforeToolExecution rollback ${toolName}): ${hookError}`);
+      console.debug(
+        `Hook error (beforeToolExecution rollback ${toolName}): ${hookError}`
+      );
     }
 
     try {
@@ -295,13 +308,15 @@ export class ActionManager {
         exitCode: success ? 0 : 1,
         success: success,
         duration: new Date().getTime() - startTime.getTime(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('afterToolExecution', afterData);
       } catch (hookError) {
-        console.debug(`Hook error (afterToolExecution rollback ${toolName}): ${hookError}`);
+        console.debug(
+          `Hook error (afterToolExecution rollback ${toolName}): ${hookError}`
+        );
       }
 
       return success;
@@ -316,13 +331,15 @@ export class ActionManager {
         context: 'rollback-action',
         filePath: projectPath,
         toolName: toolName,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('onError', errorData);
       } catch (hookError) {
-        console.debug(`Hook error (onError rollback ${toolName}): ${hookError}`);
+        console.debug(
+          `Hook error (onError rollback ${toolName}): ${hookError}`
+        );
       }
 
       // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt (Rollback Failed)
@@ -334,13 +351,15 @@ export class ActionManager {
         exitCode: 1,
         success: false,
         duration: new Date().getTime() - startTime.getTime(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('afterToolExecution', afterErrorData);
       } catch (hookError) {
-        console.debug(`Hook error (afterToolExecution rollback error ${toolName}): ${hookError}`);
+        console.debug(
+          `Hook error (afterToolExecution rollback error ${toolName}): ${hookError}`
+        );
       }
 
       return false;

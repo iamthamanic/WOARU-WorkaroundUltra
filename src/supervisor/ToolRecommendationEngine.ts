@@ -82,19 +82,21 @@ export class ToolRecommendationEngine extends EventEmitter {
 
   async getRecommendations(state: ProjectState): Promise<ToolRecommendation[]> {
     const startTime = new Date();
-    
+
     // 🪝 HOOK: beforeToolExecution - KI-freundliche Regelwelt
     const beforeData: BeforeToolExecutionData = {
       toolName: 'tool-recommendation-engine',
       filePath: state.projectPath,
       command: 'generate-recommendations',
-      timestamp: startTime
+      timestamp: startTime,
     };
 
     try {
       await triggerHook('beforeToolExecution', beforeData);
     } catch (hookError) {
-      console.debug(`Hook error (beforeToolExecution recommendation): ${hookError}`);
+      console.debug(
+        `Hook error (beforeToolExecution recommendation): ${hookError}`
+      );
     }
 
     try {
@@ -119,7 +121,8 @@ export class ToolRecommendationEngine extends EventEmitter {
       }
 
       // Sort by priority
-      const finalRecommendations = this.prioritizeRecommendations(recommendations);
+      const finalRecommendations =
+        this.prioritizeRecommendations(recommendations);
 
       // 🪝 HOOK: afterToolExecution - KI-freundliche Regelwelt
       const afterData: AfterToolExecutionData = {
@@ -130,24 +133,25 @@ export class ToolRecommendationEngine extends EventEmitter {
         exitCode: 0,
         success: true,
         duration: new Date().getTime() - startTime.getTime(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('afterToolExecution', afterData);
       } catch (hookError) {
-        console.debug(`Hook error (afterToolExecution recommendation): ${hookError}`);
+        console.debug(
+          `Hook error (afterToolExecution recommendation): ${hookError}`
+        );
       }
 
       return finalRecommendations;
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'tool-recommendation-generation',
         filePath: state.projectPath,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
@@ -394,13 +398,15 @@ export class ToolRecommendationEngine extends EventEmitter {
       toolName: 'tool-recommendation-single-file',
       filePath: filePath,
       command: 'check-single-file',
-      timestamp: startTime
+      timestamp: startTime,
     };
 
     try {
       await triggerHook('beforeToolExecution', beforeData);
     } catch (hookError) {
-      console.debug(`Hook error (beforeToolExecution single file): ${hookError}`);
+      console.debug(
+        `Hook error (beforeToolExecution single file): ${hookError}`
+      );
     }
 
     try {
@@ -452,24 +458,25 @@ export class ToolRecommendationEngine extends EventEmitter {
         exitCode: 0,
         success: true,
         duration: new Date().getTime() - startTime.getTime(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {
         await triggerHook('afterToolExecution', afterData);
       } catch (hookError) {
-        console.debug(`Hook error (afterToolExecution single file): ${hookError}`);
+        console.debug(
+          `Hook error (afterToolExecution single file): ${hookError}`
+        );
       }
 
       return recommendations;
-
     } catch (error) {
       // 🪝 HOOK: onError - KI-freundliche Regelwelt (Single File)
       const errorData: ErrorHookData = {
         error: error instanceof Error ? error : new Error(String(error)),
         context: 'single-file-recommendation',
         filePath: filePath,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       try {

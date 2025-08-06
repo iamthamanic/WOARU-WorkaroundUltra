@@ -32,19 +32,19 @@ const execAsync = promisify(exec);
 
 /**
  * WOARUEngine - Core orchestration engine for the WOARU project analysis and setup system
- * 
+ *
  * This class serves as the central coordinator for all WOARU operations, managing
  * project analysis, code quality checks, security audits, and automated setup processes.
  * It orchestrates multiple specialized analyzers and managers to provide comprehensive
  * development environment recommendations.
- * 
+ *
  * @example
  * ```typescript
  * const engine = new WOARUEngine();
  * const result = await engine.analyzeProject('./my-project');
  * console.log(result.setup_recommendations);
  * ```
- * 
+ *
  * @class WOARUEngine
  * @since 1.0.0
  */
@@ -66,7 +66,7 @@ export class WOARUEngine {
 
   /**
    * Initializes a new instance of the WOARU Engine with all required components
-   * 
+   *
    * Sets up all internal analyzers and managers with default configurations.
    * The engine is ready to analyze projects immediately after construction.
    */
@@ -85,19 +85,19 @@ export class WOARUEngine {
 
   /**
    * Performs comprehensive analysis of a project directory
-   * 
+   *
    * This method orchestrates multiple analysis phases:
    * 1. Project structure and framework detection
    * 2. Code quality and pattern analysis
    * 3. Security vulnerability scanning
    * 4. Infrastructure configuration audit
    * 5. Production readiness assessment
-   * 
+   *
    * @param {string} projectPath - Absolute or relative path to the project directory
    * @returns {Promise<AnalysisResult>} Complete analysis results including recommendations,
    *                                     security findings, and improvement suggestions
    * @throws {Error} If the project path is invalid or analysis fails
-   * 
+   *
    * @example
    * ```typescript
    * const results = await engine.analyzeProject('/path/to/project');
@@ -305,13 +305,13 @@ export class WOARUEngine {
 
   /**
    * Automatically sets up recommended tools and configurations for a project
-   * 
+   *
    * Based on the analysis results, this method can:
    * - Install recommended development tools
    * - Configure linters and formatters
    * - Set up pre-commit hooks
    * - Initialize testing frameworks
-   * 
+   *
    * @param {string} projectPath - Path to the project directory to set up
    * @param {SetupOptions} options - Configuration options for the setup process
    * @param {boolean} options.dryRun - If true, only simulates actions without making changes
@@ -319,7 +319,7 @@ export class WOARUEngine {
    * @param {string[]} options.skip - Array of tool names to skip during setup
    * @returns {Promise<boolean>} True if setup completed successfully, false otherwise
    * @throws {Error} If setup fails due to permissions or other issues
-   * 
+   *
    * @example
    * ```typescript
    * // Perform a dry run first
