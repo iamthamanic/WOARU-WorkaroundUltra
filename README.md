@@ -1081,6 +1081,19 @@ woaru watch
 woaru setup
 ```
 
+### 🤖 **Supervisor-Agent integration (optional)**
+
+WOARU can run a local chat server powered by [supervisor-agent-lib](https://www.npmjs.com/package/supervisor-agent-lib), using your existing WOARU AI config (~/.woaru). Install optional dependencies and start the server:
+
+```bash
+npm install supervisor-agent-lib express   # in the WOARU repo or globally
+woaru chat                                 # default: http://127.0.0.1:3344
+woaru chat --port 3000 --host 0.0.0.0      # custom port and host
+```
+
+- **POST /chat** — send `{ "message": "..." }`, get AI responses (suggests WOARU commands).
+- **GET /health** — health check. Configure AI providers first with `woaru ai setup`.
+
 ## 🎯 **Core Features**
 
 ### 🔍 **Phase 1: Live Quality Agent**
@@ -1189,6 +1202,7 @@ woaru watch          # Start live quality monitoring with security (★ supervis
 woaru review         # Code review with universal directory analysis (★ REFACTORED v3.9.0!)
 woaru docu           # AI-powered code documentation generator
 woaru commands       # Show detailed command reference
+woaru chat           # Start chat server with supervisor-agent-lib (optional deps)
 ```
 
 ### 🔄 Review Commands (★ REFACTORED v3.9.0!)

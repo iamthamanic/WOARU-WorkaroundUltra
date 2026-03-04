@@ -428,6 +428,24 @@ function defineCommands(program: Command) {
       }
     });
 
+  // Chat Command — supervisor-agent-lib integration (optional: npm install supervisor-agent-lib express)
+  program
+    .command('chat')
+    .description('Start chat server with supervisor-agent-lib (optional deps)')
+    .option('-p, --port <number>', 'Port for chat server', '3344')
+    .option('-H, --host <host>', 'Host to bind', '127.0.0.1')
+    .action(async (options: { port?: string; host?: string }) => {
+      try {
+        const { startSupervisorAgentChatServer } = await import('./agent/SupervisorAgentChatServer.js');
+        const port = options.port ? parseInt(options.port, 10) : 3344;
+        const host = options.host ?? '127.0.0.1';
+        await startSupervisorAgentChatServer({ port, host });
+      } catch (error) {
+        console.error(chalk.red('Chat server failed:'), error);
+        process.exit(1);
+      }
+    });
+
   // AI Status Sub-command - Visual AI Status Check
   aiCommand
     .command('status')

@@ -50,6 +50,10 @@
   ],
   "author": "iamthamanic",
   "license": "MIT",
+  "optionalDependencies": {
+    "supervisor-agent-lib": "^0.7.0",
+    "express": "^4.21.0"
+  },
   "dependencies": {
     "@sentry/node": "^7.120.4",
     "axios": "^1.6.2",
@@ -72,6 +76,7 @@
     "zod": "^4.0.14"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@eslint/js": "^9.29.0",
     "@types/blessed": "^0.1.25",
     "@types/debounce": "^1.2.4",
